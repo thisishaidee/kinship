@@ -1,0 +1,11 @@
+node_modules/
+.secrets/
+.env
+.env.*
+.vercel/
+.grok/
+screenshots/
+attachments/
+artifacts/
+dist/
+*.log
