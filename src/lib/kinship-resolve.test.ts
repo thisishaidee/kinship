@@ -109,6 +109,7 @@ describe("exactCandidates", () => {
 describe("search types", () => {
   it("asks only for artist, film, and brand", () => {
     assert.deepEqual(searchParams("Prince").getAll("types"), [...SEARCH_TYPES]);
+    assert.equal(searchParams("Prince").get("take"), "100");
     assert.equal(searchParams("Prince").getAll("types").includes("urn:entity:tv_show"), false);
   });
 });
@@ -129,6 +130,29 @@ describe("resolutionPlan", () => {
 });
 
 describe("resolveKinship", () => {
+  it("resolves the only exact match when it sits past the first 20 results", async () => {
+    const filler = Array.from({ length: 74 }, (_, index) => entity(`Near ${index}`, `near-${index}`, "urn:entity:movie"));
+    const results = [...filler, entity("Radiohead", ARTIST, "urn:entity:artist"), entity("Radiohead tribute", "other", "urn:entity:artist")];
+    assert.equal(results.length, 76);
+    assert.equal(normalizeName(results[74].name), "radiohead");
+    const calls: string[] = [];
+    const get: QlooGetter = async (_key, path, params) => {
+      calls.push(path);
+      assert.equal(params.get("take"), path === "/search" ? "100" : "5");
+      if (path === "/search") return { ok: true, body: { results } };
+      return { ok: true, body: { results: { entities: [hit("Patagonia", BRAND, 0.91)] } } };
+    };
+    const result = await resolveKinship({ seed: "Radiohead" }, { key: async () => "test-key", get });
+    assert.equal(result.status, "matched");
+    if (result.status !== "matched") return;
+    assert.equal(result.entity.entityId, ARTIST);
+    assert.equal(result.entity.typeLabel, "Artist");
+    assert.equal(calls.filter((path) => path === "/v2/insights").length, 4);
+    const serialized = JSON.stringify(result);
+    assert.equal(serialized.includes("Near 0"), false);
+    assert.equal(serialized.includes("test-key"), false);
+  });
+
   it("does not call insights or build pitches when nothing matches exactly", async () => {
     const calls: string[] = [];
     const get: QlooGetter = async (_key, path) => {

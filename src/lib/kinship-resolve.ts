@@ -110,7 +110,7 @@ export function searchParams(seed: string): URLSearchParams {
   const params = new URLSearchParams();
   params.set("query", seed);
   for (const type of SEARCH_TYPES) params.append("types", type);
-  params.set("take", "20");
+  params.set("take", "100");
   return params;
 }
 
