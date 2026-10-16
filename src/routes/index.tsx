@@ -1,53 +1,87 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Check, Copy, Loader2, Search } from "lucide-react";
-import { resolveKinshipSeed, type GraphStatus, type Pitch, type ResolvedEntity } from "@/lib/kinship-door";
+import {
+  copyFailureMessage,
+  isLatestRequest,
+  resolveKinshipSeed,
+  type Candidate,
+  type GraphStatus,
+  type Pitch,
+  type ResolvedEntity,
+  type UncheckedCategory,
+} from "@/lib/kinship-door";
 
 export const Route = createFileRoute("/")({ component: Home });
 
 const EXAMPLE = "Radiohead";
 const PLACEHOLDERS = ["01", "02", "03"] as const;
 
-type Phase = "idle" | "loading" | "matched" | "no-match" | "missing-key" | "refused" | "unavailable";
+type Phase = "idle" | "loading" | "matched" | "ambiguous" | "no-match" | "missing-key" | "refused" | "unavailable";
+
+function problemCopy(reason: "empty" | "too-long" | "invalid"): string {
+  if (reason === "too-long") return "That name is too long. Use 120 characters or fewer.";
+  return "Enter an artist, film, or brand.";
+}
 
 function Home() {
   const resolveSeed = useServerFn(resolveKinshipSeed);
+  const requestSeq = useRef(0);
   const [seed, setSeed] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [heldSeed, setHeldSeed] = useState("");
   const [match, setMatch] = useState<ResolvedEntity | null>(null);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [pitches, setPitches] = useState<Pitch[]>([]);
+  const [unchecked, setUnchecked] = useState<UncheckedCategory[]>([]);
   const [graphStatus, setGraphStatus] = useState<GraphStatus>("empty");
   const [error, setError] = useState("");
 
-  async function run(next: string) {
+  async function run(next: string, entityId?: string) {
     if (!next) {
-      setError("Enter an artist, film, or brand.");
+      setError(problemCopy("empty"));
       return;
     }
+    const requestId = ++requestSeq.current;
     setError("");
     setMatch(null);
+    setCandidates([]);
     setPitches([]);
+    setUnchecked([]);
     setGraphStatus("empty");
     setPhase("loading");
     try {
-      const result = await resolveSeed({ data: { seed: next } });
+      const result = await resolveSeed({ data: { seed: next, entityId } });
+      if (!isLatestRequest(requestId, requestSeq.current)) return;
       if (result.status === "bad-seed") {
         setPhase("idle");
-        setError("Enter an artist, film, or brand.");
+        setError(problemCopy(result.reason));
         return;
       }
       setHeldSeed(result.seed);
+      if (result.status === "ambiguous") {
+        setCandidates(result.candidates);
+        setPhase("ambiguous");
+        return;
+      }
       if (result.status === "matched") {
         setMatch(result.entity);
         setPitches(result.pitches);
+        setUnchecked(result.unchecked);
         setGraphStatus(result.graphStatus);
         setPhase("matched");
         return;
       }
+      if (result.status === "unavailable") {
+        setMatch(result.entity ?? null);
+        setUnchecked(result.unchecked);
+        setPhase("unavailable");
+        return;
+      }
       setPhase(result.status);
     } catch {
+      if (!isLatestRequest(requestId, requestSeq.current)) return;
       setPhase("unavailable");
       setHeldSeed(next);
     }
@@ -102,14 +136,14 @@ function Home() {
             Qloo refused the server key.
           </p>
         ) : null}
-        {phase === "unavailable" ? (
+        {phase === "unavailable" && !match ? (
           <p className="text-sm text-accent" role="alert">
             Qloo did not answer. Try again.
           </p>
         ) : null}
         {phase === "no-match" ? (
           <p className="text-sm text-accent" role="alert">
-            Qloo has no entity for “{heldSeed}”. Kinship will not guess one.
+            No exact Qloo match for “{heldSeed}”. Kinship will not use a similar name.
           </p>
         ) : null}
         <button
@@ -136,7 +170,7 @@ function Home() {
         </button>
       </form>
 
-      {phase === "matched" && match ? (
+      {match ? (
         <section className="flex flex-col gap-1 rounded-card border border-line bg-surface p-4">
           <p className="text-sm text-muted">Resolved on Qloo</p>
           <p className="font-display text-3xl leading-none text-fg">{match.name}</p>
@@ -144,35 +178,67 @@ function Home() {
         </section>
       ) : null}
 
-      <section className="flex flex-col gap-3" aria-busy={busy} aria-live="polite">
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-sm font-medium text-fg">Pitch cards</h2>
-          <p className="text-sm text-muted">
-            {phase === "matched" ? `${pitches.length} from the strongest scores` : "Three at most"}
-          </p>
-        </div>
-        {phase === "matched" && pitches.length === 0 ? (
-          <p className="text-base text-muted">
-            {graphStatus === "unavailable"
-              ? `Qloo resolved ${match?.name ?? "the name"}, but the taste graph did not answer. No pitch was invented.`
-              : `Qloo resolved ${match?.name ?? "the name"}, but no category came back with a score. No pitch was invented.`}
-          </p>
-        ) : null}
-        <ul className="flex flex-col gap-3">
-          {phase === "matched"
-            ? pitches.map((pitch, index) => (
-                <li key={pitch.id}>
-                  <PitchCard pitch={pitch} index={String(index + 1).padStart(2, "0")} />
-                </li>
-              ))
-            : PLACEHOLDERS.map((index) => (
-                <li key={index}>
-                  <EmptyPitch index={index} loading={busy} />
-                </li>
-              ))}
-        </ul>
-        <p className="text-sm text-muted">The line only cites Qloo names and affinity scores. Weaker categories are left off.</p>
-      </section>
+      {phase === "ambiguous" ? (
+        <section className="flex flex-col gap-3" aria-live="polite">
+          <h2 className="text-sm font-medium text-fg">More than one Qloo entity is named “{heldSeed}”.</h2>
+          <ul className="flex flex-col gap-3">
+            {candidates.map((candidate) => (
+              <li key={candidate.entityId}>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void run(heldSeed, candidate.entityId)}
+                  className="flex w-full flex-col items-start gap-1 rounded-card border border-line bg-surface p-4 text-left disabled:opacity-60"
+                >
+                  <span className="font-display text-2xl leading-none text-fg">{candidate.name}</span>
+                  <span className="text-sm font-medium text-accent">{candidate.typeLabel}</span>
+                  {candidate.detail ? <span className="text-sm text-muted">{candidate.detail}</span> : null}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : (
+        <section className="flex flex-col gap-3" aria-busy={busy} aria-live="polite">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-sm font-medium text-fg">Pitch cards</h2>
+            <p className="text-sm text-muted">{phase === "matched" ? `${pitches.length} from the strongest scores` : "Three at most"}</p>
+          </div>
+          {phase === "matched" && pitches.length === 0 ? (
+            <p className="text-base text-muted">
+              {graphStatus === "partial"
+                ? `Qloo resolved ${match?.name ?? "the name"}, but the categories that answered had no score. No pitch was invented.`
+                : `Qloo resolved ${match?.name ?? "the name"}, but no category came back with a score. No pitch was invented.`}
+            </p>
+          ) : null}
+          {phase === "unavailable" && match ? (
+            <p className="text-base text-muted">
+              Qloo resolved {match.name}, but the categories could not be checked. No pitch was invented.
+            </p>
+          ) : null}
+          <ul className="flex flex-col gap-3">
+            {phase === "matched"
+              ? pitches.map((pitch, index) => (
+                  <li key={pitch.id}>
+                    <PitchCard pitch={pitch} index={String(index + 1).padStart(2, "0")} />
+                  </li>
+                ))
+              : PLACEHOLDERS.map((index) => (
+                  <li key={index}>
+                    <EmptyPitch index={index} loading={busy} />
+                  </li>
+                ))}
+          </ul>
+          {unchecked.map((category) => (
+            <p key={category.id} className="text-sm text-accent" role="status">
+              {category.line}
+            </p>
+          ))}
+          {unchecked.length === 0 ? (
+            <p className="text-sm text-muted">The line only cites Qloo names and affinity scores. Weaker categories are left off.</p>
+          ) : null}
+        </section>
+      )}
     </main>
   );
 }
@@ -184,12 +250,8 @@ function EmptyPitch({ index, loading }: { index: string; loading: boolean }) {
         <p className="text-sm text-muted">{index}</p>
         <p className="text-sm font-medium text-fg">Partner type</p>
       </div>
-      <p className={loading ? "animate-pulse text-base text-muted" : "text-base text-fg"}>
-        {loading ? "Asking Qloo" : "Waiting"}
-      </p>
-      <p className="border-t border-line pt-3 font-display text-lg leading-snug text-fg">
-        The line appears when the graph answers.
-      </p>
+      <p className={loading ? "animate-pulse text-base text-muted" : "text-base text-fg"}>{loading ? "Asking Qloo" : "Waiting"}</p>
+      <p className="border-t border-line pt-3 font-display text-lg leading-snug text-fg">The line appears when the graph answers.</p>
     </article>
   );
 }
@@ -235,7 +297,7 @@ function CopyLine({ line }: { line: string }) {
       className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-card border border-line px-4 text-sm font-medium text-fg"
     >
       {state === "copied" ? <Check className="size-4" aria-hidden="true" /> : <Copy className="size-4" aria-hidden="true" />}
-      {state === "copied" ? "Copied" : state === "failed" ? "Select the line" : "Copy line"}
+      {state === "copied" ? "Copied" : state === "failed" ? copyFailureMessage() : "Copy line"}
     </button>
   );
 }

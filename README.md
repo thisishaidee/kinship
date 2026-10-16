@@ -23,7 +23,8 @@ The page sends only the seed. The Qloo key never leaves the server.
 
 | What happened | What you see |
 | --- | --- |
-| Qloo has no entity for the seed | No entity. Nothing is guessed. |
+| Qloo has no exact name for the seed | No exact match. A similar name is not used. |
+| Several entities share that exact name | You choose the artist, film, or brand. |
 | The server has no key | The page says the key is not on the server. |
 | Qloo refuses the key | The page says the key was refused. |
 | Qloo does not answer | Cards stay empty. Try again. |
