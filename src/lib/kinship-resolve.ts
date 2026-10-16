@@ -94,6 +94,11 @@ export function copyFailureMessage(): string {
   return "Couldn't copy";
 }
 
+export function partnerSearchHref(seedName: string, partnerName: string): string {
+  const query = `${seedName} ${partnerName} audience partnership`;
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
 export function readRequest(input: unknown): { ok: true; seed: string; entityId?: string } | { ok: false; reason: SeedProblem } {
   if (!input || typeof input !== "object") return { ok: false, reason: "invalid" };
   const record = input as { seed?: unknown; entityId?: unknown };

@@ -9,6 +9,7 @@ import {
   graphStatus,
   isLatestRequest,
   normalizeName,
+  partnerSearchHref,
   readRequest,
   resolveKinship,
   resolutionPlan,
@@ -288,5 +289,15 @@ describe("input and reliability", () => {
   it("does not claim a failed copy can be selected", () => {
     assert.equal(copyFailureMessage(), "Couldn't copy");
     assert.equal(copyFailureMessage().toLowerCase().includes("select"), false);
+  });
+
+  it("builds a web search for the seed and partner without a profile URL", () => {
+    const href = partnerSearchHref("Nike", "Wiz Khalifa");
+    const parsed = new URL(href);
+    assert.equal(parsed.origin + parsed.pathname, "https://www.google.com/search");
+    assert.equal(parsed.searchParams.get("q"), "Nike Wiz Khalifa audience partnership");
+    const encoded = partnerSearchHref('A & B', 'C "D"');
+    assert.equal(new URL(encoded).searchParams.get("q"), 'A & B C "D" audience partnership');
+    assert.equal(encoded.includes("javascript:"), false);
   });
 });

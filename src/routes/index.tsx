@@ -5,6 +5,7 @@ import { Check, Copy, Loader2, Search } from "lucide-react";
 import {
   copyFailureMessage,
   isLatestRequest,
+  partnerSearchHref,
   resolveKinshipSeed,
   type Candidate,
   type GraphStatus,
@@ -220,7 +221,7 @@ function Home() {
             {phase === "matched"
               ? pitches.map((pitch, index) => (
                   <li key={pitch.id}>
-                    <PitchCard pitch={pitch} index={String(index + 1).padStart(2, "0")} />
+                    <PitchCard pitch={pitch} seedName={match?.name ?? heldSeed} index={String(index + 1).padStart(2, "0")} />
                   </li>
                 ))
               : PLACEHOLDERS.map((index) => (
@@ -256,7 +257,7 @@ function EmptyPitch({ index, loading }: { index: string; loading: boolean }) {
   );
 }
 
-function PitchCard({ pitch, index }: { pitch: Pitch; index: string }) {
+function PitchCard({ pitch, seedName, index }: { pitch: Pitch; seedName: string; index: string }) {
   return (
     <article className="flex flex-col gap-4 rounded-card border border-line bg-surface p-4">
       <div className="flex items-center justify-between gap-3">
@@ -266,7 +267,14 @@ function PitchCard({ pitch, index }: { pitch: Pitch; index: string }) {
       <ul className="flex flex-col gap-2">
         {pitch.hits.map((hit) => (
           <li key={hit.entityId} className="flex items-baseline justify-between gap-3">
-            <span className="text-base text-fg">{hit.name}</span>
+            <a
+              href={partnerSearchHref(seedName, hit.name)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="min-w-0 break-words py-1 text-left text-base text-fg underline decoration-1 underline-offset-4"
+            >
+              {hit.name}
+            </a>
             <span className="shrink-0 text-sm font-medium text-accent">{hit.score.toFixed(2)}</span>
           </li>
         ))}
