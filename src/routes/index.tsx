@@ -203,8 +203,13 @@ function Home() {
         <section className="flex flex-col gap-3" aria-busy={busy} aria-live="polite">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-sm font-medium text-fg">Pitch cards</h2>
-            <p className="text-sm text-muted">{phase === "matched" ? `${pitches.length} from the strongest scores` : "Three at most"}</p>
+            <p className="text-sm text-muted">{phase === "matched" ? `${pitches.length} from the strongest affinity scores` : "Three at most"}</p>
           </div>
+          {phase === "matched" && pitches.length > 0 ? (
+            <p className="text-sm leading-snug text-muted">
+              Audience affinity reflects a connection in Qloo’s taste graph. It does not confirm an existing partnership, prove that a new partnership is available, or guarantee business compatibility. The numbers are affinity scores, not the chance a partnership succeeds.
+            </p>
+          ) : null}
           {phase === "matched" && pitches.length === 0 ? (
             <p className="text-base text-muted">
               {graphStatus === "partial"
@@ -275,7 +280,10 @@ function PitchCard({ pitch, seedName, index }: { pitch: Pitch; seedName: string;
             >
               {hit.name}
             </a>
-            <span className="shrink-0 text-sm font-medium text-accent">{hit.score.toFixed(2)}</span>
+            <span className="shrink-0 text-sm font-medium text-accent">
+              {hit.score.toFixed(2)}
+              <span className="font-normal text-muted"> affinity</span>
+            </span>
           </li>
         ))}
       </ul>
