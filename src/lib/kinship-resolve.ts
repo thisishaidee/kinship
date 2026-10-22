@@ -208,24 +208,21 @@ export async function resolveKinship(
   if (!parsed.ok) return { status: "bad-seed", reason: parsed.reason };
   const key = await deps.key();
   if (!key) return { status: "missing-key", seed: parsed.seed };
-  const searched = await deps.get(key, "/search", searchParams(parsed.seed));
-  if (!searched.ok) {
-    if (searched.status === 401) return { status: "refused", seed: parsed.seed };
-    return { status: "unavailable", seed: parsed.seed, unchecked: [] };
-  }
-  const plan = resolutionPlan(exactCandidates(searchResults(searched.body), parsed.seed), parsed.entityId);
-  if (plan.action === "none") return { status: "no-match", seed: parsed.seed };
-  if (plan.action === "choose") return { status: "ambiguous", seed: parsed.seed, candidates: plan.candidates };
-  const graph = await tasteGraph(deps.get, key, plan.entity.entityId);
+  const found = await searchEntity(deps.get, key, parsed.seed, parsed.entityId);
+  if (found.status === "refused") return { status: "refused", seed: parsed.seed };
+  if (found.status === "unavailable") return { status: "unavailable", seed: parsed.seed, unchecked: [] };
+  if (found.status === "none") return { status: "no-match", seed: parsed.seed };
+  if (found.status === "choose") return { status: "ambiguous", seed: parsed.seed, candidates: found.candidates };
+  const graph = await loadTasteGraph(deps.get, key, found.entity.entityId);
   if (graph === "refused") return { status: "refused", seed: parsed.seed };
   const unchecked = uncheckedCategories(graph);
   const status = graphStatus(graph);
-  if (status === "unavailable") return { status: "unavailable", seed: parsed.seed, entity: plan.entity, unchecked };
+  if (status === "unavailable") return { status: "unavailable", seed: parsed.seed, entity: found.entity, unchecked };
   return {
     status: "matched",
     seed: parsed.seed,
-    entity: plan.entity,
-    pitches: buildPitches(plan.entity.name, graph),
+    entity: found.entity,
+    pitches: buildPitches(found.entity.name, graph),
     graphStatus: status,
     unchecked,
   };
@@ -292,8 +289,37 @@ function insightEntities(body: unknown): unknown[] {
   return results && Array.isArray(results.entities) ? results.entities : [];
 }
 
-async function tasteGraph(get: QlooGetter, key: string, seedId: string): Promise<GraphCategory[] | "refused"> {
-  const categories = await Promise.all(GRAPH.map((category) => categoryInsights(get, key, seedId, category)));
+export async function searchEntity(
+  get: QlooGetter,
+  key: string,
+  seed: string,
+  entityId?: string,
+): Promise<
+  | { status: "use"; entity: Candidate }
+  | { status: "choose"; candidates: Candidate[] }
+  | { status: "none" }
+  | { status: "refused" }
+  | { status: "unavailable" }
+> {
+  const searched = await get(key, "/search", searchParams(seed));
+  if (!searched.ok) {
+    if (searched.status === 401) return { status: "refused" };
+    return { status: "unavailable" };
+  }
+  const plan = resolutionPlan(exactCandidates(searchResults(searched.body), seed), entityId);
+  if (plan.action === "none") return { status: "none" };
+  if (plan.action === "choose") return { status: "choose", candidates: plan.candidates };
+  return { status: "use", entity: plan.entity };
+}
+
+export async function loadTasteGraph(
+  get: QlooGetter,
+  key: string,
+  seedId: string,
+  take = 5,
+  limit = 3,
+): Promise<GraphCategory[] | "refused"> {
+  const categories = await Promise.all(GRAPH.map((category) => categoryInsights(get, key, seedId, category, take, limit)));
   if (categories.every((category) => category === "auth")) return "refused";
   return categories.map((category, index) =>
     category === "auth"
@@ -307,11 +333,13 @@ async function categoryInsights(
   key: string,
   seedId: string,
   category: (typeof GRAPH)[number],
+  take: number,
+  limit: number,
 ): Promise<GraphCategory | "auth"> {
   const params = new URLSearchParams();
   params.set("filter.type", category.filter);
   params.set("signal.interests.entities", seedId);
-  params.set("take", "5");
+  params.set("take", String(take));
   const result = await get(key, "/v2/insights", params);
   if (!result.ok) {
     if (result.status === 401) return "auth";
@@ -320,6 +348,6 @@ async function categoryInsights(
   const hits = insightEntities(result.body)
     .map((item) => asHit(item, seedId))
     .filter((hit): hit is GraphHit => hit !== null)
-    .slice(0, 3);
+    .slice(0, limit);
   return { id: category.id, label: category.label, plural: category.plural, status: hits.length ? "ok" : "empty", hits };
 }
