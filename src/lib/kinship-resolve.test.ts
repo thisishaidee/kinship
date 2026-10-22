@@ -6,6 +6,7 @@ import {
   buildPitches,
   copyFailureMessage,
   exactCandidates,
+  formatAffinity,
   graphStatus,
   isLatestRequest,
   normalizeName,
@@ -24,7 +25,13 @@ const FILM = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
 const BRAND = "cccccccc-cccc-cccc-cccc-cccccccccccc";
 
 function entity(name: string, entityId: string, type: string, disambiguation = "") {
-  return { name, entity_id: entityId, types: [type], disambiguation };
+  return {
+    name,
+    entity_id: entityId,
+    types: [type],
+    disambiguation,
+    properties: undefined as { akas?: { language: string; value: string }[] } | undefined,
+  };
 }
 
 function hit(name: string, entityId: string, affinity: unknown) {
@@ -105,6 +112,61 @@ describe("exactCandidates", () => {
     );
     assert.deepEqual(candidates.map((candidate) => candidate.entityId), [ARTIST]);
   });
+
+  it("accepts an exact English alias and keeps the canonical name", () => {
+    const product = entity("Air Jordan Product Line", BRAND, "urn:entity:brand");
+    product.properties = {
+      akas: [
+        { language: "es", value: "Jordan" },
+        { language: "ru", value: "Jordan Brand" },
+        { language: "fr", value: "Nike Air Jordan" },
+        { language: "en-AU", value: "Air Jordan" },
+        { language: "it", value: "Air Jordan" },
+      ],
+    };
+    const royal = entity("Royal Jordanian", "royal", "urn:entity:brand");
+    royal.properties = { akas: [{ language: "en", value: "Royal Jordanian Airlines" }] };
+    const italianOnly = entity("Scarpa", "it-only", "urn:entity:brand");
+    italianOnly.properties = { akas: [{ language: "it", value: "Air Jordan" }] };
+
+    const air = exactCandidates([royal, italianOnly, product, entity("One Man and His Shoes", FILM, "urn:entity:movie")], "Air Jordan");
+    assert.deepEqual(
+      air.map((candidate) => [candidate.name, candidate.typeLabel, candidate.detail]),
+      [["Air Jordan Product Line", "Brand", "Also called Air Jordan"]],
+    );
+    assert.equal(exactCandidates([product, royal], "Jordan Brand").length, 0);
+    assert.equal(exactCandidates([italianOnly], "Air Jordan").length, 0);
+  });
+
+  it("keeps Jordan's exact artist and films and does not add Air Jordan through a non-English alias", () => {
+    const product = entity("Air Jordan Product Line", BRAND, "urn:entity:brand");
+    product.properties = {
+      akas: [
+        { language: "es", value: "Jordan" },
+        { language: "bg", value: "jordan" },
+        { language: "en_au", value: "Air Jordan" },
+      ],
+    };
+    const candidates = exactCandidates(
+      [
+        product,
+        entity("Jordan", ARTIST, "urn:entity:artist", "Jordan"),
+        entity("Jordan Rudess", "rudess", "urn:entity:artist"),
+        entity("Jordan", FILM, "urn:entity:movie", "2010"),
+        entity("Jordan", "film-2022", "urn:entity:movie", "2022"),
+      ],
+      "Jordan",
+    );
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.entityId, candidate.typeLabel, candidate.detail]),
+      [
+        [ARTIST, "Artist", undefined],
+        [FILM, "Film", "2010"],
+        ["film-2022", "Film", "2022"],
+      ],
+    );
+    assert.equal(resolutionPlan(candidates).action, "choose");
+  });
 });
 
 describe("search types", () => {
@@ -152,6 +214,39 @@ describe("resolveKinship", () => {
     const serialized = JSON.stringify(result);
     assert.equal(serialized.includes("Near 0"), false);
     assert.equal(serialized.includes("test-key"), false);
+  });
+
+  it("does not call insights while Jordan stays ambiguous, and uses the canonical brand for an English alias", async () => {
+    const product = entity("Air Jordan Product Line", BRAND, "urn:entity:brand");
+    product.properties = { akas: [{ language: "en_au", value: "Air Jordan" }, { language: "es", value: "Jordan" }] };
+    const jordanResults = [
+      product,
+      entity("Jordan", ARTIST, "urn:entity:artist", "Jordan"),
+      entity("Jordan", FILM, "urn:entity:movie", "2010"),
+      entity("Jordan", "film-2022", "urn:entity:movie", "2022"),
+    ];
+    const calls: string[] = [];
+    const get: QlooGetter = async (_key, path, params) => {
+      calls.push(path);
+      if (path === "/search") return { ok: true, body: { results: params.get("query") === "Air Jordan" ? [product] : jordanResults } };
+      return { ok: true, body: { results: { entities: [hit("Patagonia", "place-1", 0.91)] } } };
+    };
+    const jordan = await resolveKinship({ seed: "Jordan" }, { key: async () => "test-key", get });
+    assert.equal(jordan.status, "ambiguous");
+    if (jordan.status === "ambiguous") {
+      assert.deepEqual(jordan.candidates.map((candidate) => candidate.name), ["Jordan", "Jordan", "Jordan"]);
+      assert.equal(jordan.candidates.some((candidate) => candidate.name === "Air Jordan Product Line"), false);
+    }
+    assert.equal(calls.includes("/v2/insights"), false);
+
+    const air = await resolveKinship({ seed: "Air Jordan" }, { key: async () => "test-key", get });
+    assert.equal(air.status, "matched");
+    if (air.status === "matched") {
+      assert.equal(air.entity.name, "Air Jordan Product Line");
+      assert.equal(air.entity.typeLabel, "Brand");
+      assert.equal(air.entity.entityId, BRAND);
+    }
+    assert.equal(calls.filter((path) => path === "/v2/insights").length, 4);
   });
 
   it("does not call insights or build pitches when nothing matches exactly", async () => {
@@ -203,9 +298,29 @@ describe("resolveKinship", () => {
     const pitches = buildPitches("Radiohead", graph);
     assert.deepEqual(pitches.map((pitch) => pitch.id), ["brand", "artist", "place"]);
     assert.equal(pitches.length <= 3, true);
-    assert.equal(pitches[0].line.includes("Patagonia (0.99)"), true);
-    assert.equal(pitches[0].line.includes("Arc'teryx (0.50)"), true);
-    assert.equal(pitches[0].hits[0].score.toFixed(2), "0.99");
+    assert.equal(pitches[0].line.includes("Patagonia (0.990)"), true);
+    assert.equal(pitches[0].line.includes("Arc'teryx (0.500)"), true);
+    assert.equal(formatAffinity(pitches[0].hits[0].score), "0.990");
+    assert.equal(pitches[0].hits[0].score, 0.99);
+  });
+
+  it("shows three decimal places in the copied line and keeps the stronger category first", () => {
+    const graph = [
+      category("brand", "ok", [scored("Air Jordan Product Line", "b", 0.969972417154696)]),
+      category("artist", "ok", [
+        scored("Wiz Khalifa", "w", 0.9789124253791885),
+        scored("Jay-Z", "j", 0.9766692852135209),
+        scored("DJ Khaled", "d", 0.9764786784079703),
+      ]),
+    ];
+    const pitches = buildPitches("Nike", graph);
+    assert.deepEqual(pitches.map((pitch) => pitch.id), ["artist", "brand"]);
+    assert.equal(pitches[0].line, "Nike's audience also leans toward Wiz Khalifa (0.979), Jay-Z (0.977), and DJ Khaled (0.976). Open to a partnership?");
+    assert.equal(pitches[0].line.includes("(0.98)"), false);
+    assert.equal(pitches[0].hits[0].score, 0.9789124253791885);
+    assert.equal(formatAffinity(pitches[0].hits[0].score), "0.979");
+    assert.equal(formatAffinity(pitches[0].hits[1].score), "0.977");
+    assert.equal(formatAffinity(pitches[0].hits[2].score), "0.976");
   });
 
   it("keeps valid pitches and names only the category that failed", async () => {

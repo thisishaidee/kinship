@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { Check, Copy, Loader2, Search } from "lucide-react";
 import {
   copyFailureMessage,
+  formatAffinity,
   isLatestRequest,
   partnerSearchHref,
   resolveKinshipSeed,
@@ -181,7 +182,7 @@ function Home() {
 
       {phase === "ambiguous" ? (
         <section className="flex flex-col gap-3" aria-live="polite">
-          <h2 className="text-sm font-medium text-fg">More than one Qloo entity is named “{heldSeed}”.</h2>
+          <h2 className="text-sm font-medium text-fg">More than one Qloo entity matches “{heldSeed}”.</h2>
           <ul className="flex flex-col gap-3">
             {candidates.map((candidate) => (
               <li key={candidate.entityId}>
@@ -281,7 +282,7 @@ function PitchCard({ pitch, seedName, index }: { pitch: Pitch; seedName: string;
               {hit.name}
             </a>
             <span className="shrink-0 text-sm font-medium text-accent">
-              {hit.score.toFixed(2)}
+              {formatAffinity(hit.score)}
               <span className="font-normal text-muted"> affinity</span>
             </span>
           </li>

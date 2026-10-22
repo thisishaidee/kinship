@@ -10,7 +10,7 @@ export type {
   ResolvedEntity,
   UncheckedCategory,
 } from "@/lib/kinship-resolve";
-export { copyFailureMessage, isLatestRequest, partnerSearchHref } from "@/lib/kinship-resolve";
+export { copyFailureMessage, formatAffinity, isLatestRequest, partnerSearchHref } from "@/lib/kinship-resolve";
 
 async function qlooKey(): Promise<string | undefined> {
   const { env } = await import("@/lib/env.server");

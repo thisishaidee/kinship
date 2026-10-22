@@ -94,6 +94,10 @@ export function copyFailureMessage(): string {
   return "Couldn't copy";
 }
 
+export function formatAffinity(score: number): string {
+  return score.toFixed(3);
+}
+
 export function partnerSearchHref(seedName: string, partnerName: string): string {
   const query = `${seedName} ${partnerName} audience partnership`;
   return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
@@ -125,8 +129,12 @@ export function exactCandidates(results: unknown[], seed: string): Candidate[] {
   const candidates: Candidate[] = [];
   for (const item of results) {
     const candidate = asCandidate(item);
-    if (!candidate || normalizeName(candidate.name) !== needle || seen.has(candidate.entityId)) continue;
+    if (!candidate || seen.has(candidate.entityId)) continue;
+    const named = normalizeName(candidate.name) === needle;
+    const alias = named ? undefined : englishAlias(item, needle);
+    if (!named && !alias) continue;
     seen.add(candidate.entityId);
+    if (alias && !candidate.detail) candidate.detail = `Also called ${alias}`;
     candidates.push(candidate);
   }
   return candidates;
@@ -224,7 +232,7 @@ export async function resolveKinship(
 }
 
 function cite(hits: GraphHit[]): string {
-  const parts = hits.map((hit) => `${hit.name} (${hit.score.toFixed(2)})`);
+  const parts = hits.map((hit) => `${hit.name} (${formatAffinity(hit.score)})`);
   if (parts.length <= 1) return parts[0] ?? "";
   if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
   return `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}`;
@@ -249,6 +257,28 @@ function detailFrom(value: unknown, name: string): string | undefined {
   const detail = value.trim().replace(/\s+/g, " ");
   if (!detail || normalizeName(detail) === normalizeName(name)) return undefined;
   return detail.length > 80 ? `${detail.slice(0, 77)}...` : detail;
+}
+
+function isEnglishLanguage(language: string): boolean {
+  const code = language.trim().toLowerCase().replace(/-/g, "_");
+  return code === "en" || code.startsWith("en_");
+}
+
+function englishAlias(item: unknown, needle: string): string | undefined {
+  if (!item || typeof item !== "object") return undefined;
+  const properties = (item as { properties?: unknown }).properties;
+  if (!properties || typeof properties !== "object") return undefined;
+  const akas = (properties as { akas?: unknown }).akas;
+  if (!Array.isArray(akas)) return undefined;
+  for (const aka of akas) {
+    if (!aka || typeof aka !== "object") continue;
+    const language = (aka as { language?: unknown }).language;
+    const value = (aka as { value?: unknown }).value;
+    if (typeof language !== "string" || typeof value !== "string" || !isEnglishLanguage(language)) continue;
+    const alias = value.trim().replace(/\s+/g, " ");
+    if (alias && normalizeName(alias) === needle) return alias;
+  }
+  return undefined;
 }
 
 function searchResults(body: unknown): unknown[] {
