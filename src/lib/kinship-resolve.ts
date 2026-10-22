@@ -155,15 +155,70 @@ export function resolutionPlan(
   return { action: "choose", candidates };
 }
 
-export function asHit(item: unknown, seedId: string): GraphHit | null {
+const GENERIC_TAGS = new Set([
+  "$$",
+  "adults",
+  "ambitious",
+  "atmospheric",
+  "b2b",
+  "b2c",
+  "bold",
+  "catchy",
+  "charismatic",
+  "children",
+  "complex",
+  "confident",
+  "dynamic",
+  "energetic",
+  "engaging",
+  "female",
+  "gender-neutral",
+  "high",
+  "immersive",
+  "innovative",
+  "intense",
+  "lush",
+  "male",
+  "modern",
+  "polished",
+  "power",
+  "premium",
+  "resilient",
+  "thoughtful",
+  "vibrant",
+]);
+
+/** A jammed "&" with no spaces is a bad display name, as in the Drake record returned as "Drake&Orson". */
+export function cleanDisplayName(name: string, aliases: string[]): string | null {
+  const cleaned = name.trim().replace(/\s+/g, " ");
+  if (!cleaned) return null;
+  if (!/[A-Za-z]{3,}&[A-Za-z]{3,}/.test(cleaned)) return cleaned;
+  const prefix = cleaned.split("&")[0]?.trim() ?? "";
+  if (prefix.length < 3) return null;
+  const alias = aliases.find((value) => normalizeName(value) === normalizeName(prefix));
+  return alias ? prefix : null;
+}
+
+export function sharesDomain(seedTags: readonly string[], hitTags: readonly string[]): boolean {
+  if (seedTags.length === 0) return true;
+  const seed = new Set(seedTags.map((tag) => tag.toLowerCase()));
+  return hitTags.some((tag) => {
+    const value = tag.toLowerCase();
+    return seed.has(value) && !GENERIC_TAGS.has(value);
+  });
+}
+
+export function asHit(item: unknown, seedId: string, seedTags: readonly string[] = []): GraphHit | null {
   if (!item || typeof item !== "object") return null;
   const record = item as Record<string, unknown>;
-  const name = typeof record.name === "string" ? record.name.trim() : "";
+  const rawName = typeof record.name === "string" ? record.name.trim() : "";
+  const name = cleanDisplayName(rawName, aliasValues(record.properties));
   const entityId = typeof record.entity_id === "string" ? record.entity_id.trim() : "";
   const query = record.query;
   const affinity = query && typeof query === "object" ? (query as { affinity?: unknown }).affinity : undefined;
   if (!name || !entityId || entityId === seedId) return null;
   if (typeof affinity !== "number" || !Number.isFinite(affinity)) return null;
+  if (!sharesDomain(seedTags, tagNames(record.tags))) return null;
   return { name, entityId, score: affinity };
 }
 
@@ -213,7 +268,7 @@ export async function resolveKinship(
   if (found.status === "unavailable") return { status: "unavailable", seed: parsed.seed, unchecked: [] };
   if (found.status === "none") return { status: "no-match", seed: parsed.seed };
   if (found.status === "choose") return { status: "ambiguous", seed: parsed.seed, candidates: found.candidates };
-  const graph = await loadTasteGraph(deps.get, key, found.entity.entityId);
+  const graph = await loadTasteGraph(deps.get, key, found.entity.entityId, 20, 3, found.tags);
   if (graph === "refused") return { status: "refused", seed: parsed.seed };
   const unchecked = uncheckedCategories(graph);
   const status = graphStatus(graph);
@@ -283,6 +338,43 @@ function searchResults(body: unknown): unknown[] {
   return (body as { results: unknown[] }).results;
 }
 
+function aliasValues(properties: unknown): string[] {
+  if (!properties || typeof properties !== "object") return [];
+  const values: string[] = [];
+  for (const key of ["akas", "aliases"] as const) {
+    const list = (properties as Record<string, unknown>)[key];
+    if (!Array.isArray(list)) continue;
+    for (const item of list) {
+      if (!item || typeof item !== "object") continue;
+      const value = (item as { value?: unknown }).value;
+      if (typeof value === "string" && value.trim()) values.push(value.trim());
+    }
+  }
+  return values;
+}
+
+function tagNames(tags: unknown): string[] {
+  if (!Array.isArray(tags)) return [];
+  return tags.flatMap((tag) => {
+    if (!tag || typeof tag !== "object") return [];
+    const name = (tag as { name?: unknown }).name;
+    const type = (tag as { type?: unknown }).type;
+    if (typeof name !== "string" || !name.trim()) return [];
+    if (typeof type === "string" && type && !/:(keyword|genre|style|brand|category|media|music)/i.test(type)) return [];
+    if (GENERIC_TAGS.has(name.trim().toLowerCase())) return [];
+    return [name.trim()];
+  });
+}
+
+function tagsFor(results: unknown[], entityId: string): string[] {
+  for (const item of results) {
+    if (!item || typeof item !== "object") continue;
+    if ((item as { entity_id?: unknown }).entity_id !== entityId) continue;
+    return tagNames((item as { tags?: unknown }).tags);
+  }
+  return [];
+}
+
 function insightEntities(body: unknown): unknown[] {
   if (!body || typeof body !== "object") return [];
   const results = (body as { results?: { entities?: unknown } }).results;
@@ -295,7 +387,7 @@ export async function searchEntity(
   seed: string,
   entityId?: string,
 ): Promise<
-  | { status: "use"; entity: Candidate }
+  | { status: "use"; entity: Candidate; tags: string[] }
   | { status: "choose"; candidates: Candidate[] }
   | { status: "none" }
   | { status: "refused" }
@@ -306,10 +398,11 @@ export async function searchEntity(
     if (searched.status === 401) return { status: "refused" };
     return { status: "unavailable" };
   }
-  const plan = resolutionPlan(exactCandidates(searchResults(searched.body), seed), entityId);
+  const results = searchResults(searched.body);
+  const plan = resolutionPlan(exactCandidates(results, seed), entityId);
   if (plan.action === "none") return { status: "none" };
   if (plan.action === "choose") return { status: "choose", candidates: plan.candidates };
-  return { status: "use", entity: plan.entity };
+  return { status: "use", entity: plan.entity, tags: tagsFor(results, plan.entity.entityId) };
 }
 
 export async function loadTasteGraph(
@@ -318,8 +411,11 @@ export async function loadTasteGraph(
   seedId: string,
   take = 5,
   limit = 3,
+  seedTags: readonly string[] = [],
 ): Promise<GraphCategory[] | "refused"> {
-  const categories = await Promise.all(GRAPH.map((category) => categoryInsights(get, key, seedId, category, take, limit)));
+  const categories = await Promise.all(
+    GRAPH.map((category) => categoryInsights(get, key, seedId, category, take, limit, seedTags)),
+  );
   if (categories.every((category) => category === "auth")) return "refused";
   return categories.map((category, index) =>
     category === "auth"
@@ -335,6 +431,7 @@ async function categoryInsights(
   category: (typeof GRAPH)[number],
   take: number,
   limit: number,
+  seedTags: readonly string[],
 ): Promise<GraphCategory | "auth"> {
   const params = new URLSearchParams();
   params.set("filter.type", category.filter);
@@ -346,7 +443,7 @@ async function categoryInsights(
     return { id: category.id, label: category.label, plural: category.plural, status: "unavailable", hits: [] };
   }
   const hits = insightEntities(result.body)
-    .map((item) => asHit(item, seedId))
+    .map((item) => asHit(item, seedId, seedTags))
     .filter((hit): hit is GraphHit => hit !== null)
     .slice(0, limit);
   return { id: category.id, label: category.label, plural: category.plural, status: hits.length ? "ok" : "empty", hits };

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useRef, useState, type FormEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import { Check, Copy, Download, Loader2, Search } from "lucide-react";
 import {
   compareKinshipSeeds,
@@ -105,9 +105,11 @@ function Home() {
     }
   }
 
-  async function runCompare(leftId?: string, rightId?: string) {
-    const left = leftSeed.trim();
-    const right = rightSeed.trim();
+  async function runCompare(options?: { left?: string; right?: string; leftId?: string; rightId?: string }) {
+    const left = (options?.left ?? leftSeed).trim();
+    const right = (options?.right ?? rightSeed).trim();
+    const leftId = options?.leftId;
+    const rightId = options?.rightId;
     if (!left || !right) {
       setCompareError("Enter both names.");
       return;
@@ -153,8 +155,18 @@ function Home() {
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (mode === "single") void run(seed.trim());
-    else void runCompare();
+    const data = new FormData(event.currentTarget);
+    if (mode === "single") {
+      const next = String(data.get("seed") ?? seed);
+      setSeed(next);
+      void run(next.trim());
+      return;
+    }
+    const left = String(data.get("left-seed") ?? leftSeed);
+    const right = String(data.get("right-seed") ?? rightSeed);
+    setLeftSeed(left);
+    setRightSeed(right);
+    void runCompare({ left, right });
   }
 
   const busy = mode === "single" ? phase === "loading" : comparePhase === "loading";
@@ -170,6 +182,8 @@ function Home() {
             : "Compare two exact Qloo entities. A shared name appears only when both results use the same entity."}
         </p>
       </header>
+
+      <HowItWorks />
 
       <div className="grid grid-cols-2 gap-2">
         <button type="button" aria-pressed={mode === "single"} onClick={() => setMode("single")} className={modeButton(mode === "single")}>
@@ -192,6 +206,10 @@ function Home() {
               value={seed}
               onChange={(event) => {
                 setSeed(event.target.value);
+                if (error) setError("");
+              }}
+              onInput={(event) => {
+                setSeed(event.currentTarget.value);
                 if (error) setError("");
               }}
               placeholder="Artist, film, or brand"
@@ -223,10 +241,11 @@ function Home() {
         {mode === "single" && phase === "no-match" ? (
           <Alert>No exact Qloo match for “{heldSeed}”. Kinship will not use a similar name.</Alert>
         ) : null}
-        {busy ? <p className="text-sm text-muted">Asking Qloo. Nothing is filled in until the graph answers.</p> : null}
+        {busy ? <LoadingSteps mode={mode} /> : null}
         <button
           type="submit"
           disabled={busy}
+          onPointerDown={(event) => event.preventDefault()}
           className="inline-flex h-12 items-center justify-center gap-2 rounded-card bg-accent px-4 text-base font-medium text-accent-fg disabled:opacity-60"
         >
           {busy ? <Loader2 className="size-5 animate-spin" aria-hidden="true" /> : <Search className="size-5" aria-hidden="true" />}
@@ -314,7 +333,7 @@ function Home() {
               busy={busy}
               onPick={(id) => {
                 picks.current.left = id;
-                void runCompare(id, picks.current.right);
+                void runCompare({ leftId: id, rightId: picks.current.right });
               }}
             />
           ) : null}
@@ -325,7 +344,7 @@ function Home() {
               busy={busy}
               onPick={(id) => {
                 picks.current.right = id;
-                void runCompare(picks.current.left, id);
+                void runCompare({ leftId: picks.current.left, rightId: id });
               }}
             />
           ) : null}
@@ -333,8 +352,59 @@ function Home() {
       ) : null}
 
       {mode === "compare" && pairing ? <CompareView pairing={pairing} /> : null}
+
+      <footer className="mt-auto border-t border-line pt-4 text-sm text-muted">
+        <a href="https://github.com/thisishaidee/kinship" target="_blank" rel="noopener noreferrer" className="text-fg underline decoration-1 underline-offset-4">
+          GitHub repository
+        </a>
+      </footer>
     </main>
   );
+}
+
+function HowItWorks() {
+  const steps = ["You enter a name", "Qloo resolves the entity", "/v2/insights returns affinities", "Pitch cards or a compare", "Optional explanation of those scores"];
+  return (
+    <section className="flex flex-col gap-3" aria-labelledby="how-it-works">
+      <h2 id="how-it-works" className="text-sm font-medium text-fg">
+        How it works
+      </h2>
+      <p className="text-sm leading-snug text-muted">
+        Kinship asks Qloo for the entity, then for audience affinity. The cards and the compare use those scores. Nothing is added when Qloo has no score.
+      </p>
+      <ol className="flex flex-col gap-2 border-l border-line pl-4">
+        {steps.map((step) => (
+          <li key={step} className="text-sm text-fg">
+            {step}
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+function LoadingSteps({ mode }: { mode: Mode }) {
+  const steps =
+    mode === "compare"
+      ? ["Resolving both entities", "Reading both taste graphs", "Finding shared affinities"]
+      : ["Resolving the entity", "Reading the taste graph", "Building the pitch"];
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setStep((current) => (current + 1) % steps.length), 2200);
+    return () => window.clearInterval(id);
+  }, [steps.length]);
+  return (
+    <p className="text-sm text-muted" role="status">
+      {steps[step]}…
+    </p>
+  );
+}
+
+function choiceLine(candidate: Candidate): string {
+  const detail = candidate.detail?.trim();
+  if (!detail) return candidate.typeLabel;
+  if (/^(19|20)\d{2}$/.test(detail)) return `${candidate.typeLabel} · ${detail}`;
+  return `${candidate.typeLabel} · ${detail}`;
 }
 
 function shownPhase(mode: Mode, phase: Phase, comparePhase: Phase): Phase {
@@ -363,8 +433,10 @@ function SeedField({ id, label, value, onChange }: { id: string; label: string; 
       </label>
       <input
         id={id}
+        name={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        onInput={(event) => onChange(event.currentTarget.value)}
         placeholder="Name"
         autoComplete="off"
         enterKeyHint="search"
@@ -388,8 +460,7 @@ function Chooser({ title, candidates, busy, onPick }: { title: string; candidate
               className="flex w-full flex-col items-start gap-1 rounded-card border border-line bg-surface p-4 text-left disabled:opacity-60"
             >
               <span className="font-display text-2xl leading-none text-fg">{candidate.name}</span>
-              <span className="text-sm font-medium text-accent">{candidate.typeLabel}</span>
-              {candidate.detail ? <span className="text-sm text-muted">{candidate.detail}</span> : null}
+              <span className="text-sm font-medium text-accent">{choiceLine(candidate)}</span>
             </button>
           </li>
         ))}
@@ -477,11 +548,6 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
       <div className="flex flex-col gap-2 rounded-card border border-line bg-surface p-4">
         <h2 className="text-sm font-medium text-fg">Why this pairing</h2>
         <p className="font-display text-lg leading-snug text-fg">{pairing.explanation}</p>
-        <p className="text-sm text-muted">
-          {pairing.explanationSource === "model"
-            ? "Written from the affinity JSON above. Names and scores outside that JSON were rejected."
-            : "The model draft went outside the returned scores, so this line cites those scores directly."}
-        </p>
         <p className="text-sm text-muted">{PAIRING_DISCLAIMER}</p>
       </div>
       <a

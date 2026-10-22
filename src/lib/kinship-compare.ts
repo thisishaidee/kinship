@@ -153,8 +153,8 @@ export async function compareKinship(
     };
   }
   const [leftGraph, rightGraph] = await Promise.all([
-    loadTasteGraph(deps.get, key, left.entity.entityId, 20, 20),
-    loadTasteGraph(deps.get, key, right.entity.entityId, 20, 20),
+    loadTasteGraph(deps.get, key, left.entity.entityId, 20, 20, left.tags),
+    loadTasteGraph(deps.get, key, right.entity.entityId, 20, 20, right.tags),
   ]);
   if (leftGraph === "refused" || rightGraph === "refused") return { status: "refused" };
   const overlaps = sharedAffinities(leftGraph, rightGraph).slice(0, 6);

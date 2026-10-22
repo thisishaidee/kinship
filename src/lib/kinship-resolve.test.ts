@@ -4,6 +4,7 @@ import {
   SEARCH_TYPES,
   asHit,
   buildPitches,
+  cleanDisplayName,
   copyFailureMessage,
   exactCandidates,
   formatAffinity,
@@ -15,6 +16,7 @@ import {
   resolveKinship,
   resolutionPlan,
   searchParams,
+  sharesDomain,
   uncheckedCategories,
   type GraphCategory,
   type QlooGetter,
@@ -201,7 +203,7 @@ describe("resolveKinship", () => {
     const calls: string[] = [];
     const get: QlooGetter = async (_key, path, params) => {
       calls.push(path);
-      assert.equal(params.get("take"), path === "/search" ? "100" : "5");
+      assert.equal(params.get("take"), path === "/search" ? "100" : "20");
       if (path === "/search") return { ok: true, body: { results } };
       return { ok: true, body: { results: { entities: [hit("Patagonia", BRAND, 0.91)] } } };
     };
@@ -382,6 +384,41 @@ describe("resolveKinship", () => {
     assert.equal(asHit(hit("Patagonia", BRAND, "0.98"), ARTIST), null);
     assert.equal(asHit(hit("Radiohead", ARTIST, 0.99), ARTIST), null);
     assert.equal(asHit({ name: "Patagonia", entity_id: BRAND }, ARTIST), null);
+  });
+
+  it("repairs a jammed display name and drops one that cannot be repaired", () => {
+    const repaired = asHit(
+      { name: "Drake&Orson", entity_id: "drake", properties: { akas: [{ value: "Drake" }] }, query: { affinity: 0.971 } },
+      "seed",
+    );
+    assert.equal(repaired?.name, "Drake");
+    assert.equal(cleanDisplayName("Drake & Future", []), "Drake & Future");
+    assert.equal(cleanDisplayName("AT&T", []), "AT&T");
+    assert.equal(asHit({ name: "Drake&Orson", entity_id: "bad", query: { affinity: 0.5 } }, "seed"), null);
+  });
+
+  it("drops a brand that only shares a generic tag with a film", () => {
+    const tesla = asHit(
+      { name: "Tesla", entity_id: "tesla", tags: [{ name: "ambitious" }, { name: "Automotive" }], query: { affinity: 0.988 } },
+      "dune",
+      ["ambitious", "Cinematic", "Film score"],
+    );
+    const sony = asHit(
+      { name: "Sony", entity_id: "sony", tags: [{ name: "Cinematography" }], query: { affinity: 0.921 } },
+      "dune",
+      ["Cinematic", "Cinematography"],
+    );
+    assert.equal(tesla, null);
+    assert.equal(sony?.name, "Sony");
+    assert.equal(sharesDomain([], ["Automotive"]), true);
+    assert.equal(
+      asHit(
+        { name: "Top of The Rock", entity_id: "rock", tags: [{ name: "binoculars", type: "urn:tag:amenity:qloo" }], query: { affinity: 0.912 } },
+        "dune",
+        ["binoculars"],
+      ),
+      null,
+    );
   });
 });
 

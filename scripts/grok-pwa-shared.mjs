@@ -209,7 +209,11 @@ export function readGrokProjectId() {
 
 export function readGrokExtensionsEnabled() {
   const fromProcess = typeof process !== "undefined" ? process.env?.VITE_GROK_EXTENSIONS : "";
-  return String(fromProcess ?? "").trim() !== "0";
+  const flag = String(fromProcess ?? "").trim();
+  if (flag === "0") return false;
+  if (flag === "1") return true;
+  const projectId = typeof process !== "undefined" ? process.env?.GROK_PROJECT_ID : "";
+  return !String(projectId ?? "").trim();
 }
 
 export function readXCreator() {

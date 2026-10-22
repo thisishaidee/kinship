@@ -380,6 +380,22 @@ test("streaming injector matches </HEAD> case-insensitively", () => {
   assert.match(out, /<body>hello<\/body>/);
 });
 
+test("omits the builder script on a deployed project unless it is explicitly enabled", () => {
+  const previousFlag = process.env.VITE_GROK_EXTENSIONS;
+  const previousProject = process.env.GROK_PROJECT_ID;
+  delete process.env.VITE_GROK_EXTENSIONS;
+  process.env.GROK_PROJECT_ID = "proj-live";
+  try {
+    const out = injectGrokPwaHead("<html><head></head></html>", { appName: "Kinship", projectId: "proj-live" });
+    assert.doesNotMatch(out, /grok-app-builder\/extensions\.js/);
+  } finally {
+    if (previousFlag === undefined) delete process.env.VITE_GROK_EXTENSIONS;
+    else process.env.VITE_GROK_EXTENSIONS = previousFlag;
+    if (previousProject === undefined) delete process.env.GROK_PROJECT_ID;
+    else process.env.GROK_PROJECT_ID = previousProject;
+  }
+});
+
 test("omits the extensions script when the deployer disables it", () => {
   const previous = process.env.VITE_GROK_EXTENSIONS;
   process.env.VITE_GROK_EXTENSIONS = "0";
