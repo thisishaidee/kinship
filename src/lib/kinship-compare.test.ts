@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { compareKinship, fallbackExplanation, groundedExplanation, sharedAffinities, type CompareEvidence } from "./kinship-compare.ts";
-import { PAIRING_DISCLAIMER, buildPairingPdf } from "./kinship-pdf.ts";
+import { PAIRING_DISCLAIMER, PDF_FILENAME, buildPairingPdf, preparePdfAnchor } from "./kinship-pdf.ts";
 import type { GraphCategory, QlooGetter } from "./kinship-resolve.ts";
 
 const LEFT = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
@@ -131,5 +131,15 @@ describe("pairing pdf", () => {
     assert.equal(text.includes("0.959"), true);
     assert.equal(text.includes(PAIRING_DISCLAIMER), true);
     assert.equal(text.includes("%%EOF"), true);
+  });
+
+  it("keeps the file on the page for iPhone and downloads it elsewhere", () => {
+    const iphone = { download: "", target: "" };
+    preparePdfAnchor(iphone, "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)", 5);
+    assert.equal(iphone.download, PDF_FILENAME);
+    assert.equal(iphone.target, "_blank");
+    const desktop = { download: "", target: "_blank" };
+    preparePdfAnchor(desktop, "Mozilla/5.0 Chrome", 0);
+    assert.equal(desktop.target, "");
   });
 });

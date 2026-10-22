@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useRef, useState, type FormEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import { Check, Copy, Download, Loader2, Search } from "lucide-react";
 import {
   compareKinshipSeeds,
@@ -16,7 +16,7 @@ import {
   type ResolvedEntity,
   type UncheckedCategory,
 } from "@/lib/kinship-door";
-import { PAIRING_DISCLAIMER, buildPairingPdf } from "@/lib/kinship-pdf";
+import { PAIRING_DISCLAIMER, PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/kinship-pdf";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -155,25 +155,6 @@ function Home() {
     event.preventDefault();
     if (mode === "single") void run(seed.trim());
     else void runCompare();
-  }
-
-  function downloadPairing() {
-    if (!pairing) return;
-    const bytes = buildPairingPdf({
-      leftName: pairing.left.name,
-      leftType: pairing.left.typeLabel,
-      rightName: pairing.right.name,
-      rightType: pairing.right.typeLabel,
-      overlaps: pairing.evidence.overlaps,
-      explanation: pairing.explanation,
-    });
-    const blob = new Blob([Uint8Array.from(bytes)], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "kinship-pairing.pdf";
-    link.click();
-    URL.revokeObjectURL(url);
   }
 
   const busy = mode === "single" ? phase === "loading" : comparePhase === "loading";
@@ -351,7 +332,7 @@ function Home() {
         </div>
       ) : null}
 
-      {mode === "compare" && pairing ? <CompareView pairing={pairing} onDownload={downloadPairing} /> : null}
+      {mode === "compare" && pairing ? <CompareView pairing={pairing} /> : null}
     </main>
   );
 }
@@ -417,7 +398,57 @@ function Chooser({ title, candidates, busy, onPick }: { title: string; candidate
   );
 }
 
-function CompareView({ pairing, onDownload }: { pairing: CompareMatch; onDownload: () => void }) {
+function CompareView({ pairing }: { pairing: CompareMatch }) {
+  const pdfUrl = useRef<string | null>(null);
+  const pdfFile = useRef<File | null>(null);
+  const [note, setNote] = useState("");
+
+  function arm(anchor: HTMLAnchorElement) {
+    const blob = pdfBlob(
+      buildPairingPdf({
+        leftName: pairing.left.name,
+        leftType: pairing.left.typeLabel,
+        rightName: pairing.right.name,
+        rightType: pairing.right.typeLabel,
+        overlaps: pairing.evidence.overlaps,
+        explanation: pairing.explanation,
+      }),
+    );
+    pdfFile.current = new File([blob], PDF_FILENAME, { type: "application/pdf" });
+    preparePdfAnchor(anchor, navigator.userAgent, navigator.maxTouchPoints);
+    if (pdfUrl.current) URL.revokeObjectURL(pdfUrl.current);
+    const url = URL.createObjectURL(blob);
+    pdfUrl.current = url;
+    anchor.href = url;
+  }
+
+  function onPointerDown(event: PointerEvent<HTMLAnchorElement>) {
+    arm(event.currentTarget);
+  }
+
+  function onClick(event: MouseEvent<HTMLAnchorElement>) {
+    const anchor = event.currentTarget;
+    if (!anchor.href.startsWith("blob:") || !pdfFile.current) arm(anchor);
+    const file = pdfFile.current;
+    if (!file) return;
+    let shareable = false;
+    try {
+      shareable = typeof navigator.canShare === "function" && navigator.canShare({ files: [file] });
+    } catch {
+      shareable = false;
+    }
+    if (!shareable) return;
+    event.preventDefault();
+    void navigator.share({ files: [file], title: "Kinship pairing" }).then(
+      () => setNote(""),
+      (error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        window.open(anchor.href, "_blank", "noopener");
+        setNote("The download was blocked. The PDF is open in a new tab so you can save it.");
+      },
+    );
+  }
+
   return (
     <section className="flex flex-col gap-4" aria-live="polite">
       <div className="grid grid-cols-2 gap-3">
@@ -453,10 +484,17 @@ function CompareView({ pairing, onDownload }: { pairing: CompareMatch; onDownloa
         </p>
         <p className="text-sm text-muted">{PAIRING_DISCLAIMER}</p>
       </div>
-      <button type="button" onClick={onDownload} className="inline-flex h-12 items-center justify-center gap-2 rounded-card border border-line px-4 text-base font-medium text-fg">
+      <a
+        id="pdf-download"
+        href="#pdf"
+        onPointerDown={onPointerDown}
+        onClick={(event) => void onClick(event)}
+        className="inline-flex h-12 items-center justify-center gap-2 rounded-card border border-line px-4 text-base font-medium text-fg"
+      >
         <Download className="size-5" aria-hidden="true" />
         Download one-page PDF
-      </button>
+      </a>
+      {note ? <p className="text-sm text-muted">{note}</p> : null}
     </section>
   );
 }

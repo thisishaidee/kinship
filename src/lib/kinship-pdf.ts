@@ -1,4 +1,5 @@
 export const PAIRING_DISCLAIMER = "Scores show taste-graph affinity, not partnership availability.";
+export const PDF_FILENAME = "kinship-pairing.pdf";
 
 export type PairingPdfInput = {
   leftName: string;
@@ -8,6 +9,19 @@ export type PairingPdfInput = {
   overlaps: { name: string; category: string; leftScore: string; rightScore: string }[];
   explanation: string;
 };
+
+export function isIos(userAgent: string, touchPoints: number): boolean {
+  return /iPhone|iPad|iPod/i.test(userAgent) || (/Mac/i.test(userAgent) && touchPoints > 1);
+}
+
+export function preparePdfAnchor(anchor: { download: string; target: string }, userAgent: string, touchPoints: number): void {
+  anchor.download = PDF_FILENAME;
+  anchor.target = isIos(userAgent, touchPoints) ? "_blank" : "";
+}
+
+export function pdfBlob(bytes: Uint8Array): Blob {
+  return new Blob([Uint8Array.from(bytes)], { type: "application/pdf" });
+}
 
 export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
   const lines: { text: string; size: number; gap: number }[] = [
