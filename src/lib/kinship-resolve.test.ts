@@ -13,6 +13,7 @@ import {
   normalizeName,
   partnerSearchHref,
   readRequest,
+  relevantHit,
   resolveKinship,
   resolutionPlan,
   searchParams,
@@ -386,15 +387,84 @@ describe("resolveKinship", () => {
     assert.equal(asHit({ name: "Patagonia", entity_id: BRAND }, ARTIST), null);
   });
 
-  it("repairs a jammed display name and drops one that cannot be repaired", () => {
-    const repaired = asHit(
-      { name: "Drake&Orson", entity_id: "drake", properties: { akas: [{ value: "Drake" }] }, query: { affinity: 0.971 } },
-      "seed",
+  it("drops the jammed Drake&Orson name instead of showing a scrape", () => {
+    assert.equal(
+      asHit(
+        { name: "Drake&Orson", entity_id: "drake", properties: { akas: [{ value: "Drake" }] }, query: { affinity: 0.971 } },
+        "seed",
+      ),
+      null,
     );
-    assert.equal(repaired?.name, "Drake");
+    assert.equal(cleanDisplayName("Drake&Orson", ["Drake"]), null);
     assert.equal(cleanDisplayName("Drake & Future", []), "Drake & Future");
     assert.equal(cleanDisplayName("AT&T", []), "AT&T");
-    assert.equal(asHit({ name: "Drake&Orson", entity_id: "bad", query: { affinity: 0.5 } }, "seed"), null);
+  });
+
+  it("keeps screen brands for a film and drops Tesla, Apple, and random places", () => {
+    const film = { seedKind: "movie" as const, category: "brand" as const };
+    assert.equal(
+      relevantHit("movie", "brand", ["sci fi", "film score"], [{ name: "Automotive", type: "urn:tag:industry:qloo" }, { name: "Car & SUV", type: "urn:tag:genre:brand" }], "Tesla"),
+      false,
+    );
+    assert.equal(
+      relevantHit("movie", "brand", ["sci fi"], [{ name: "Consumer Electronics", type: "urn:tag:industry:qloo" }, { name: "Phones & Tablets", type: "urn:tag:genre:brand" }], "Apple Inc"),
+      false,
+    );
+    assert.equal(
+      relevantHit(
+        "movie",
+        "brand",
+        ["sci fi"],
+        [
+          { name: "Production Company", type: "urn:tag:genre:brand" },
+          { name: "Gaming", type: "urn:tag:genre:brand" },
+          { name: "Consumer Electronics", type: "urn:tag:industry:qloo" },
+        ],
+        "Sony",
+      ),
+      true,
+    );
+    assert.equal(relevantHit("movie", "place", ["sci fi"], [{ name: "Observation deck", type: "urn:tag:keyword:qloo" }], "Top of The Rock"), false);
+    assert.equal(relevantHit("movie", "artist", ["cinematic"], [{ name: "Emotional Film Score", type: "urn:tag:style:qloo" }], "Hildur Guðnadóttir"), true);
+    assert.equal(
+      relevantHit("artist", "brand", ["alternative rock"], [{ name: "Fashion & Apparel", type: "urn:tag:industry:qloo" }], "Patagonia"),
+      true,
+    );
+    assert.equal(relevantHit("brand", "artist", ["basketball"], [{ name: "Hip Hop", type: "urn:tag:genre" }], "Wiz Khalifa"), true);
+    assert.equal(relevantHit("brand", "place", ["basketball"], [{ name: "Hotel", type: "urn:tag:keyword" }], "Seven Hotel"), false);
+    assert.equal(film.category, "brand");
+  });
+
+  it("labels a film with its year and a short english line, most popular first", () => {
+    const candidates = exactCandidates(
+      [
+        {
+          name: "Dune",
+          entity_id: "old",
+          types: ["urn:entity:movie"],
+          disambiguation: "1984",
+          popularity: 0.4,
+          properties: { release_year: 1984 },
+        },
+        {
+          name: "Dune",
+          entity_id: "new",
+          types: ["urn:entity:movie"],
+          disambiguation: "2021",
+          popularity: 0.99,
+          properties: {
+            release_year: 2021,
+            short_descriptions: [{ language: "en", value: "A noble house fights over a desert planet." }],
+          },
+        },
+      ],
+      "Dune",
+    );
+    assert.equal(candidates[0]?.entityId, "new");
+    assert.equal(candidates[0]?.detail, "2021");
+    assert.equal(candidates[0]?.typeLabel, "Film");
+    assert.equal(candidates[0]?.blurb, "A noble house fights over a desert planet.");
+    assert.equal(candidates[1]?.detail, "1984");
   });
 
   it("drops a brand that only shares a generic tag with a film", () => {

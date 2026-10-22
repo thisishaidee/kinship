@@ -49,6 +49,16 @@ describe("grounded explanation", () => {
     assert.equal(invented.text.includes("Drake"), false);
   });
 
+  it("never keeps a developer note about the model draft", () => {
+    const leaked = groundedExplanation(
+      "The model draft went outside the returned scores, so this line cites those scores directly. Nike and Adidas both connect to Rihanna at 0.959 and 0.910.",
+      sample,
+    );
+    assert.equal(leaked.source, "scores");
+    assert.equal(leaked.text.includes("model draft"), false);
+    assert.equal(leaked.text.includes("0.959"), true);
+  });
+
   it("does not invent a reason when nothing overlaps", () => {
     const text = fallbackExplanation(evidence());
     assert.equal(text.includes("no shared entity"), true);

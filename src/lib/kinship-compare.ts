@@ -2,6 +2,7 @@ import {
   formatAffinity,
   loadTasteGraph,
   searchEntity,
+  seedKindFromLabel,
   type Candidate,
   type GraphCategory,
   type QlooGetter,
@@ -86,6 +87,9 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
   const fallback = fallbackExplanation(evidence);
   if (!text) return { text: fallback, source: "scores" };
   const cleaned = text.replace(/\s+/g, " ").trim();
+  if (/model draft|outside the returned|cites those scores|stack trace/i.test(cleaned)) {
+    return { text: fallback, source: "scores" };
+  }
   const sentences = cleaned.split(/(?<=[.!?])\s+/).filter(Boolean);
   if (sentences.length !== 2) return { text: fallback, source: "scores" };
   if (/confirmed partnership|partnership is available|guarantee|probability|percent chance/i.test(cleaned)) {
@@ -153,8 +157,8 @@ export async function compareKinship(
     };
   }
   const [leftGraph, rightGraph] = await Promise.all([
-    loadTasteGraph(deps.get, key, left.entity.entityId, 20, 20, left.tags),
-    loadTasteGraph(deps.get, key, right.entity.entityId, 20, 20, right.tags),
+    loadTasteGraph(deps.get, key, left.entity.entityId, 20, 20, left.tags, seedKindFromLabel(left.entity.typeLabel)),
+    loadTasteGraph(deps.get, key, right.entity.entityId, 20, 20, right.tags, seedKindFromLabel(right.entity.typeLabel)),
   ]);
   if (leftGraph === "refused" || rightGraph === "refused") return { status: "refused" };
   const overlaps = sharedAffinities(leftGraph, rightGraph).slice(0, 6);

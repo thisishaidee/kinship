@@ -155,15 +155,18 @@ function Home() {
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
+    const form = event.currentTarget;
     if (mode === "single") {
-      const next = String(data.get("seed") ?? seed);
+      const field = form.elements.namedItem("seed");
+      const next = field instanceof HTMLInputElement ? field.value : seed;
       setSeed(next);
       void run(next.trim());
       return;
     }
-    const left = String(data.get("left-seed") ?? leftSeed);
-    const right = String(data.get("right-seed") ?? rightSeed);
+    const leftField = form.elements.namedItem("left-seed");
+    const rightField = form.elements.namedItem("right-seed");
+    const left = leftField instanceof HTMLInputElement ? leftField.value : leftSeed;
+    const right = rightField instanceof HTMLInputElement ? rightField.value : rightSeed;
     setLeftSeed(left);
     setRightSeed(right);
     void runCompare({ left, right });
@@ -174,7 +177,12 @@ function Home() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-8 px-5 py-8">
       <header className="flex flex-col gap-2">
-        <p className="text-sm font-medium tracking-wide text-accent">Kinship</p>
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-sm font-medium tracking-wide text-accent">Kinship</p>
+          <a href="https://github.com/thisishaidee/kinship" target="_blank" rel="noopener noreferrer" className="text-sm text-fg underline decoration-1 underline-offset-4">
+            GitHub
+          </a>
+        </div>
         <h1 className="font-display text-4xl leading-none text-fg">A partnership, not a playlist.</h1>
         <p className="text-base text-muted">
           {mode === "single"
@@ -214,6 +222,8 @@ function Home() {
               }}
               placeholder="Artist, film, or brand"
               autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
               enterKeyHint="search"
               className="h-12 w-full rounded-card border border-line bg-surface px-4 text-base text-fg outline-none placeholder:text-muted focus:border-accent"
             />
@@ -245,7 +255,6 @@ function Home() {
         <button
           type="submit"
           disabled={busy}
-          onPointerDown={(event) => event.preventDefault()}
           className="inline-flex h-12 items-center justify-center gap-2 rounded-card bg-accent px-4 text-base font-medium text-accent-fg disabled:opacity-60"
         >
           {busy ? <Loader2 className="size-5 animate-spin" aria-hidden="true" /> : <Search className="size-5" aria-hidden="true" />}
@@ -353,9 +362,12 @@ function Home() {
 
       {mode === "compare" && pairing ? <CompareView pairing={pairing} /> : null}
 
-      <footer className="mt-auto border-t border-line pt-4 text-sm text-muted">
+      <footer className="mt-auto flex flex-wrap gap-x-3 gap-y-1 border-t border-line pt-4 text-sm text-muted">
         <a href="https://github.com/thisishaidee/kinship" target="_blank" rel="noopener noreferrer" className="text-fg underline decoration-1 underline-offset-4">
           GitHub repository
+        </a>
+        <a href="https://github.com/thisishaidee/kinship/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="text-fg underline decoration-1 underline-offset-4">
+          MIT license
         </a>
       </footer>
     </main>
@@ -363,19 +375,23 @@ function Home() {
 }
 
 function HowItWorks() {
-  const steps = ["You enter a name", "Qloo resolves the entity", "/v2/insights returns affinities", "Pitch cards or a compare", "Optional explanation of those scores"];
+  const steps = ["You enter a name", "Qloo resolves the entity", "/v2/insights affinity query", "Pitch cards or compare", "Optional explanation of those scores"];
   return (
     <section className="flex flex-col gap-3" aria-labelledby="how-it-works">
       <h2 id="how-it-works" className="text-sm font-medium text-fg">
         How it works
       </h2>
       <p className="text-sm leading-snug text-muted">
-        Kinship asks Qloo for the entity, then for audience affinity. The cards and the compare use those scores. Nothing is added when Qloo has no score.
+        One name goes to Qloo search, which resolves the exact entity. Kinship then calls /v2/insights for audience affinity. The cards and the compare cite only those scores. A short explanation, when it appears, may only use the names and scores Qloo returned.
       </p>
-      <ol className="flex flex-col gap-2 border-l border-line pl-4">
-        {steps.map((step) => (
-          <li key={step} className="text-sm text-fg">
-            {step}
+      <ol className="flex flex-col">
+        {steps.map((step, index) => (
+          <li key={step} className="flex flex-col">
+            <div className="flex items-center gap-3">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-line text-xs font-medium text-accent">{index + 1}</span>
+              <span className="text-sm text-fg">{step}</span>
+            </div>
+            {index < steps.length - 1 ? <span className="ml-3.5 h-3 w-px bg-line" aria-hidden="true" /> : null}
           </li>
         ))}
       </ol>
@@ -386,17 +402,30 @@ function HowItWorks() {
 function LoadingSteps({ mode }: { mode: Mode }) {
   const steps =
     mode === "compare"
-      ? ["Resolving both entities", "Reading both taste graphs", "Finding shared affinities"]
+      ? ["Resolving both entities", "Reading both taste graphs", "Building the compare"]
       : ["Resolving the entity", "Reading the taste graph", "Building the pitch"];
   const [step, setStep] = useState(0);
   useEffect(() => {
-    const id = window.setInterval(() => setStep((current) => (current + 1) % steps.length), 2200);
+    const id = window.setInterval(() => setStep((current) => (current + 1 >= steps.length ? current : current + 1)), 1600);
     return () => window.clearInterval(id);
   }, [steps.length]);
   return (
-    <p className="text-sm text-muted" role="status">
-      {steps[step]}…
-    </p>
+    <div className="flex flex-col gap-3" role="status" aria-live="polite">
+      <ol className="flex flex-col gap-1">
+        {steps.map((label, index) => (
+          <li key={label} className={index === step ? "text-sm text-fg" : "text-sm text-muted"}>
+            {index < step ? "Done. " : index === step ? "Now. " : ""}
+            {label}
+            {index === step ? "…" : ""}
+          </li>
+        ))}
+      </ol>
+      <div className="flex flex-col gap-2" aria-hidden="true">
+        {[0, 1].map((slot) => (
+          <div key={slot} className="h-16 animate-pulse rounded-card border border-line bg-surface" />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -439,6 +468,8 @@ function SeedField({ id, label, value, onChange }: { id: string; label: string; 
         onInput={(event) => onChange(event.currentTarget.value)}
         placeholder="Name"
         autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
         enterKeyHint="search"
         className="h-12 w-full min-w-0 rounded-card border border-line bg-surface px-3 text-base text-fg outline-none placeholder:text-muted focus:border-accent"
       />
@@ -459,8 +490,9 @@ function Chooser({ title, candidates, busy, onPick }: { title: string; candidate
               onClick={() => onPick(candidate.entityId)}
               className="flex w-full flex-col items-start gap-1 rounded-card border border-line bg-surface p-4 text-left disabled:opacity-60"
             >
+              <span className="text-xs font-medium tracking-wide text-accent">{choiceLine(candidate)}</span>
               <span className="font-display text-2xl leading-none text-fg">{candidate.name}</span>
-              <span className="text-sm font-medium text-accent">{choiceLine(candidate)}</span>
+              {candidate.blurb ? <span className="text-sm leading-snug text-muted">{candidate.blurb}</span> : null}
             </button>
           </li>
         ))}
