@@ -318,7 +318,7 @@ describe("resolveKinship", () => {
     ];
     const pitches = buildPitches("Nike", graph);
     assert.deepEqual(pitches.map((pitch) => pitch.id), ["artist", "brand"]);
-    assert.equal(pitches[0].line, "Nike's audience also leans toward Wiz Khalifa (0.979), Jay-Z (0.977), and DJ Khaled (0.976). Open to a partnership?");
+    assert.equal(pitches[0].line, "Nike's audience also leans toward Wiz Khalifa (0.979), Jay-Z (0.977), and DJ Khaled (0.976). Want to pitch them?");
     assert.equal(pitches[0].line.includes("(0.98)"), false);
     assert.equal(pitches[0].hits[0].score, 0.9789124253791885);
     assert.equal(formatAffinity(pitches[0].hits[0].score), "0.979");

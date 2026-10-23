@@ -14,7 +14,7 @@ export const Route = createRootRoute({
       { name: "theme-color", content: "#0a0a0a" },
       {
         name: "description",
-        content: "Kinship finds partnership pitches from a taste graph, not a playlist.",
+        content: "Kinship shows who your fans already love, then helps you pitch them.",
       },
     ],
     links: [

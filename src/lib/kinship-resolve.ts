@@ -401,7 +401,7 @@ export function buildPitches(seedName: string, graph: GraphCategory[]): Pitch[] 
       id: category.id,
       partnerType: PARTNER_TYPE[category.id],
       hits: category.hits,
-      line: `${seedName}'s audience also leans toward ${cite(category.hits)}. Open to a partnership?`,
+      line: `${seedName}'s audience also leans toward ${cite(category.hits)}. Want to pitch them?`,
     }));
 }
 

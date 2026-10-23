@@ -1,4 +1,4 @@
-export const PAIRING_DISCLAIMER = "Scores show taste-graph affinity, not partnership availability.";
+export const PAIRING_DISCLAIMER = "Shared-fans scores show a connection in Qloo’s data, not partnership availability.";
 export const PDF_FILENAME = "kinship-pairing.pdf";
 
 export type PairingPdfInput = {
@@ -26,12 +26,12 @@ export function pdfBlob(bytes: Uint8Array): Blob {
 export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
   const lines: { text: string; size: number; gap: number }[] = [
     { text: "Kinship", size: 22, gap: 8 },
-    { text: "A pairing from Qloo audience affinity", size: 12, gap: 18 },
+    { text: "A pairing from shared fans on Qloo", size: 12, gap: 18 },
     { text: input.leftName, size: 16, gap: 4 },
     { text: input.leftType, size: 11, gap: 12 },
     { text: input.rightName, size: 16, gap: 4 },
     { text: input.rightType, size: 11, gap: 18 },
-    { text: "Shared affinities", size: 13, gap: 8 },
+    { text: "Shared-fans scores", size: 13, gap: 8 },
   ];
   if (input.overlaps.length === 0) {
     lines.push({ text: "No shared entity in these Qloo results.", size: 11, gap: 14 });
