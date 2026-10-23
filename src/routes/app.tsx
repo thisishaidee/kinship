@@ -17,7 +17,7 @@ import {
   type UncheckedCategory,
 } from "@/lib/kinship-door";
 import { KinshipWordmark } from "@/components/kinship-wordmark";
-import { PAIRING_DISCLAIMER, PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/kinship-pdf";
+import { PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/kinship-pdf";
 
 export const Route = createFileRoute("/app")({ component: Home });
 
@@ -603,7 +603,6 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
       <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-5 shadow-card">
         <h2 className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">Why this pairing</h2>
         <p className="font-display text-xl leading-snug text-white">{pairing.explanation}</p>
-        <p className="text-sm text-muted">{PAIRING_DISCLAIMER}</p>
       </div>
       <a
         id="pdf-download"
