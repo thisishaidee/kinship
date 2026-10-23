@@ -7,13 +7,7 @@ export const Route = createFileRoute("/")({ component: Landing });
 const DISCLAIMER =
   "Audience affinity reflects a connection in Qloo’s taste graph. It does not confirm an existing partnership, prove that a new partnership is available, or guarantee business compatibility. The numbers are affinity scores, not the chance a partnership succeeds.";
 
-const STEPS = [
-  "You enter a name",
-  "Qloo resolves the entity",
-  "/v2/insights affinity query",
-  "Pitch cards or compare",
-  "Optional explanation of those scores",
-];
+const STEPS = ["type a name", "qloo finds the affinities", "get your partners, compare, export"];
 
 const SEEDS = ["Nike", "Burna Boy", "Dune (2021)"];
 const RESULTS = [
@@ -22,24 +16,6 @@ const RESULTS = [
   { name: "Real Madrid CF", score: "0.969" },
 ];
 const TRUST = ["Music", "Film", "Brands", "Places"];
-const VALUE_PROPS = [
-  {
-    eyebrow: "Data",
-    title: "Only real data",
-    body: "Every name and score comes straight from Qloo's taste graph. No exact match means no result, never a guessed partner.",
-  },
-  {
-    eyebrow: "Explanation",
-    title: "Grounded explanations",
-    body: "A one-line why, written by AI from the exact scores Qloo returned. If the data is thin, it says nothing.",
-  },
-  {
-    eyebrow: "Output",
-    title: "Pitch-ready output",
-    body: "One tap exports a clean one-page PDF brief with the pairing, the scores, and the affinity disclaimer.",
-  },
-];
-
 const REPO = "https://github.com/thisishaidee/kinship";
 
 const pillBase = "inline-flex items-center justify-center rounded-full text-sm font-medium transition-colors";
@@ -84,7 +60,7 @@ function Landing() {
             <span className="font-display text-accent italic">not a playlist.</span>
           </h1>
           <p className="max-w-xl text-base leading-relaxed text-muted sm:text-lg">
-            Type an artist, film, or brand. Kinship finds its real partners on the Qloo taste graph, and never invents a name.
+            Type an artist, film, or brand. Kinship finds its real partners on the Qloo taste graph and never invents a name.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Link to="/app" className={`${pillBase} h-12 bg-crimson-grad px-7 text-base text-white shadow-[0_10px_28px_-14px_rgba(224,32,44,0.9)]`}>
@@ -112,24 +88,6 @@ function Landing() {
           <MobileDiagram />
         </section>
 
-        <section aria-labelledby="why-kinship" className="flex flex-col gap-8">
-          <div className="flex max-w-2xl flex-col gap-3">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">The promise</p>
-            <h2 id="why-kinship" className="scroll-mt-24 font-sans text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-              Why Kinship
-            </h2>
-          </div>
-          <ul className="grid gap-5 md:grid-cols-3">
-            {VALUE_PROPS.map((prop) => (
-              <li key={prop.title} className="flex min-w-0 flex-col gap-4 rounded-2xl border border-[#27272A] bg-[#111114] p-8">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-accent">{prop.eyebrow}</span>
-                <h3 className="font-sans text-xl font-semibold tracking-tight text-white">{prop.title}</h3>
-                <p className="text-sm leading-relaxed text-zinc-400">{prop.body}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-
         <section className="flex flex-col gap-8" aria-labelledby="how-it-works">
           <div className="flex max-w-2xl flex-col gap-3">
             <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">The flow</p>
@@ -137,7 +95,7 @@ function Landing() {
               How it works
             </h2>
             <p className="text-base leading-relaxed text-muted">
-              One name goes to Qloo search, which resolves the exact entity. Kinship then calls /v2/insights for audience affinity. The cards and the compare cite only those scores. A short explanation, when it appears, may only use the names and scores Qloo returned.
+              Every name and score comes straight from Qloo.
             </p>
           </div>
           <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -154,29 +112,22 @@ function Landing() {
         </section>
 
         <section aria-label="Compare example" className="flex w-full min-w-0 flex-col gap-4">
-          <figure className="mx-auto w-full max-w-5xl overflow-hidden rounded-xl border border-[#2a2a2f] bg-[#0b0b0d] shadow-[0_40px_80px_-40px_rgba(0,0,0,0.95)]">
-            <div className="flex h-9 items-center gap-2 border-b border-[#222226] bg-[#141416] px-3">
-              <span className="size-2.5 rounded-full bg-[#3f3f46]" />
-              <span className="size-2.5 rounded-full bg-[#3f3f46]" />
-              <span className="size-2.5 rounded-full bg-[#3f3f46]" />
-              <span className="ml-3 flex h-5 min-w-0 flex-1 items-center rounded-md bg-[#0b0b0d] px-3 text-[11px] text-zinc-500">
-                kinshipp.vercel.app/app
-              </span>
-            </div>
+          <figure className="mx-auto w-full max-w-5xl overflow-hidden rounded-xl border border-line bg-[#0b0b0d] shadow-[0_40px_80px_-40px_rgba(0,0,0,0.95)]">
             <img
               src="/compare-view.png"
-              alt="Kinship compare of Nike and Adidas, with shared Qloo affinities and a two-sentence explanation."
+              alt="Kinship compare of Nike and Adidas, with shared Qloo affinities and a one-line explanation."
               className="block aspect-video h-auto w-full object-cover object-top"
               loading="lazy"
             />
           </figure>
         </section>
 
-        <p className="mx-auto max-w-3xl text-center text-sm leading-relaxed text-muted">{DISCLAIMER}</p>
       </main>
 
       <footer className="border-t border-line bg-bg pb-6 sm:pb-0">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-8 text-sm text-muted">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-8 text-sm text-muted">
+        <p className="max-w-3xl text-sm leading-relaxed text-muted">{DISCLAIMER}</p>
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
           <KinshipWordmark />
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             <a href={REPO} target="_blank" rel="noopener noreferrer" className="text-fg underline decoration-1 underline-offset-4 hover:text-white">
@@ -191,6 +142,7 @@ function Landing() {
               MIT license
             </a>
           </div>
+        </div>
         </div>
       </footer>
     </div>

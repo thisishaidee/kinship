@@ -74,13 +74,11 @@ export function sharedAffinities(left: GraphCategory[], right: GraphCategory[]):
 export function fallbackExplanation(evidence: CompareEvidence): string {
   const [first, second] = evidence.overlaps;
   if (!first) {
-    return `${evidence.left.name} and ${evidence.right.name} have no shared entity in these Qloo results. No pairing reason was invented.`;
+    return `${evidence.left.name} and ${evidence.right.name} have no shared entity in these Qloo results.`;
   }
-  const lead = `${evidence.left.name} and ${evidence.right.name} both connect to ${first.name} at ${first.leftScore} and ${first.rightScore}.`;
-  const tail = second
-    ? `They also both connect to ${second.name} at ${second.leftScore} and ${second.rightScore}.`
-    : "Those figures are Qloo affinity scores, not proof a partnership is available.";
-  return `${lead} ${tail}`;
+  const lead = `Both pull toward ${first.name} (${first.leftScore} / ${first.rightScore})`;
+  const tail = second ? ` and ${second.name} (${second.leftScore} / ${second.rightScore})` : "";
+  return `${lead}${tail}.`;
 }
 
 export function groundedExplanation(text: string | null, evidence: CompareEvidence): { text: string; source: "model" | "scores" } {
@@ -91,7 +89,7 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
     return { text: fallback, source: "scores" };
   }
   const sentences = cleaned.split(/(?<=[.!?])\s+/).filter(Boolean);
-  if (sentences.length !== 2) return { text: fallback, source: "scores" };
+  if (sentences.length !== 1) return { text: fallback, source: "scores" };
   if (/confirmed partnership|partnership is available|guarantee|probability|percent chance/i.test(cleaned)) {
     return { text: fallback, source: "scores" };
   }

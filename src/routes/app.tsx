@@ -22,8 +22,7 @@ import { PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/
 export const Route = createFileRoute("/app")({ component: Home });
 
 const EXAMPLES = ["Radiohead", "Nike", "Davido"] as const;
-const DISCLAIMER =
-  "Audience affinity reflects a connection in Qloo’s taste graph. It does not confirm an existing partnership, prove that a new partnership is available, or guarantee business compatibility. The numbers are affinity scores, not the chance a partnership succeeds.";
+const RESULT_NOTE = "Scores show taste-graph affinity, not partnership availability.";
 
 type Phase = "idle" | "loading" | "matched" | "ambiguous" | "no-match" | "missing-key" | "refused" | "unavailable";
 type Mode = "single" | "compare";
@@ -194,7 +193,7 @@ function Home() {
         </h1>
         <p className="text-base text-muted">
           {mode === "single"
-            ? "Type an artist, film, or brand. Each pitch can only name entities Qloo scored."
+            ? "Type an artist, film, or brand. Names and scores come from Qloo."
             : "Compare two exact Qloo entities. A shared name appears only when both results use the same entity."}
         </p>
       </header>
@@ -261,13 +260,13 @@ function Home() {
           <Alert>No exact Qloo match for “{heldSeed}”. Kinship will not use a similar name.</Alert>
         ) : null}
         {busy ? <LoadingSteps mode={mode} /> : null}
-        {mode === "compare" ? <SubmitButton busy={busy} label={busy ? "Asking the taste graph" : "Compare affinities"} /> : null}
+        {mode === "compare" ? <SubmitButton busy={busy} label={busy ? "Asking the taste graph" : "Compare"} /> : null}
       </form>
 
       {mode === "single" && phase === "idle" ? (
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-medium text-fg">No pitch yet</h2>
-          <p className="text-base text-muted">The field starts empty. Pick a seed, or type your own. Kinship will not invent a partner.</p>
+          <p className="text-base text-muted">The field starts empty. Pick a seed, or type your own.</p>
           <div className="flex flex-wrap gap-2">
             {EXAMPLES.map((example) => (
               <button
@@ -304,16 +303,15 @@ function Home() {
             <h2 className="text-sm font-medium text-fg">Pitch cards</h2>
             <p className="text-sm text-muted">{phase === "matched" ? `${pitches.length} from the strongest affinity scores` : "No pitch"}</p>
           </div>
-          {phase === "matched" && pitches.length > 0 ? <p className="text-sm leading-snug text-muted">{DISCLAIMER}</p> : null}
           {phase === "matched" && pitches.length === 0 ? (
             <p className="text-base text-muted">
               {graphStatus === "partial"
-                ? `Qloo resolved ${match?.name ?? "the name"}, but the categories that answered had no score. No pitch was invented.`
-                : `Qloo resolved ${match?.name ?? "the name"}, but no category came back with a score. No pitch was invented.`}
+                ? `Qloo resolved ${match?.name ?? "the name"}, but the categories that answered had no score.`
+                : `Qloo resolved ${match?.name ?? "the name"}, but no category came back with a score.`}
             </p>
           ) : null}
           {phase === "unavailable" && match ? (
-            <p className="text-base text-muted">Qloo resolved {match.name}, but the categories could not be checked. No pitch was invented.</p>
+            <p className="text-base text-muted">Qloo resolved {match.name}, but the categories could not be checked.</p>
           ) : null}
           {phase === "matched" && pitches.length > 0 ? (
             <ul className="flex flex-col gap-3">
@@ -330,7 +328,7 @@ function Home() {
             </p>
           ))}
           {phase === "matched" && pitches.length > 0 && unchecked.length === 0 ? (
-            <p className="text-sm text-muted">The line only cites Qloo names and affinity scores. Weaker categories are left off.</p>
+            <p className="text-sm leading-snug text-muted">{RESULT_NOTE}</p>
           ) : null}
         </section>
       ) : null}
@@ -378,14 +376,14 @@ function Home() {
 }
 
 function HowItWorks() {
-  const steps = ["You enter a name", "Qloo resolves the entity", "/v2/insights affinity query", "Pitch cards or compare", "Optional explanation of those scores"];
+  const steps = ["type a name", "qloo finds the affinities", "get your partners, compare, export"];
   return (
     <section className="flex flex-col gap-3" aria-labelledby="how-it-works">
       <h2 id="how-it-works" className="text-sm font-medium text-fg">
         How it works
       </h2>
       <p className="text-sm leading-snug text-muted">
-        One name goes to Qloo search, which resolves the exact entity. Kinship then calls /v2/insights for audience affinity. The cards and the compare cite only those scores. A short explanation, when it appears, may only use the names and scores Qloo returned.
+        Every name and score comes straight from Qloo.
       </p>
       <ol className="flex flex-col">
         {steps.map((step, index) => (
@@ -405,8 +403,8 @@ function HowItWorks() {
 function LoadingSteps({ mode }: { mode: Mode }) {
   const steps =
     mode === "compare"
-      ? ["Resolving both entities", "Reading both taste graphs", "Building the compare"]
-      : ["Resolving the entity", "Reading the taste graph", "Building the pitch"];
+      ? ["resolving both names", "reading the taste graph", "building the compare"]
+      : ["resolving the name", "reading the taste graph", "building your pitch"];
   const [step, setStep] = useState(0);
   useEffect(() => {
     const id = window.setInterval(() => setStep((current) => (current + 1 >= steps.length ? current : current + 1)), 1600);
@@ -417,7 +415,6 @@ function LoadingSteps({ mode }: { mode: Mode }) {
       <ol className="flex flex-col gap-1">
         {steps.map((label, index) => (
           <li key={label} className={index === step ? "text-sm text-white" : "text-sm text-muted"}>
-            {index < step ? "Done. " : index === step ? "Now. " : ""}
             {label}
             {index === step ? "…" : ""}
           </li>
@@ -580,13 +577,11 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
       </div>
       <div className="flex flex-col gap-3">
         <h2 className="text-sm font-medium text-fg">Shared affinities</h2>
-        <p className="text-sm leading-snug text-muted">{DISCLAIMER}</p>
-        {pairing.overlaps.length === 0 ? (
-          <p className="text-base text-muted">No entity appeared in both Qloo results. No overlap was invented.</p>
+                {pairing.overlaps.length === 0 ? (
+          <p className="text-base text-muted">No entity appeared in both Qloo results.</p>
         ) : (
           <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
             {pairing.overlaps.map((overlap) => {
-              const low = Math.min(overlap.leftScore, overlap.rightScore);
               return (
                 <li key={overlap.entityId} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#27272A] bg-[#111114]">
                   <div className="flex items-center justify-between gap-3 bg-accent/15 px-5 py-3">
@@ -598,7 +593,6 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
                   <div className="flex flex-col gap-4 p-5">
                     <div className="flex min-w-0 flex-col items-start gap-2">
                       <p className="min-w-0 break-words font-sans text-lg font-semibold leading-tight text-white">{overlap.name}</p>
-                      <TierPill score={low} />
                     </div>
                     <div className="grid grid-cols-2 gap-4 border-t border-dashed border-[#3f3f46] pt-4">
                       <ScoreBlock label="first" score={overlap.leftScore} />
@@ -610,6 +604,7 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
             })}
           </ul>
         )}
+        <p className="text-sm leading-snug text-muted">{RESULT_NOTE}</p>
       </div>
       <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-5 shadow-card">
         <h2 className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">Why this pairing</h2>
@@ -646,7 +641,6 @@ function PitchCard({ pitch, seedName, index }: { pitch: Pitch; seedName: string;
   return (
     <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#27272A] bg-[#111114]">
       <div className={`flex items-center justify-between gap-3 px-5 py-3 ${primary ? "bg-accent" : "bg-accent/15"}`}>
-        <p className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${primary ? "text-white" : "text-zinc-200"}`}>Partner {index}</p>
         <p className={`font-sans text-xs font-medium tabular-nums ${primary ? "text-white" : "text-zinc-200"}`}>{formatAffinity(top)}</p>
       </div>
       <div className="flex flex-col gap-4 p-5">
@@ -663,7 +657,6 @@ function PitchCard({ pitch, seedName, index }: { pitch: Pitch; seedName: string;
                 >
                   {hit.name}
                 </a>
-                <TierPill score={hit.score} />
               </div>
               <span className="shrink-0 pt-1 font-sans text-sm font-medium tabular-nums text-zinc-400">{formatAffinity(hit.score)}</span>
             </li>
@@ -678,19 +671,6 @@ function PitchCard({ pitch, seedName, index }: { pitch: Pitch; seedName: string;
         </div>
       </div>
     </article>
-  );
-}
-
-function affinityTier(score: number): { label: string; className: string } {
-  if (score >= 0.97) return { label: "high affinity", className: "border-accent/50 bg-accent/20 text-zinc-100" };
-  if (score >= 0.93) return { label: "strong", className: "border-accent/30 bg-accent/10 text-zinc-300" };
-  return { label: "solid", className: "border-[#3f3f46] bg-transparent text-zinc-400" };
-}
-
-function TierPill({ score }: { score: number }) {
-  const tier = affinityTier(score);
-  return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium tracking-wide ${tier.className}`}>{tier.label}</span>
   );
 }
 
@@ -723,7 +703,7 @@ function CopyLine({ line }: { line: string }) {
       className="inline-flex h-10 items-center justify-center gap-2 self-start rounded-full border border-line bg-surface px-4 text-sm font-medium text-fg hover:border-accent"
     >
       {state === "copied" ? <Check className="size-4" aria-hidden="true" /> : <Copy className="size-4" aria-hidden="true" />}
-      {state === "copied" ? "Copied" : state === "failed" ? copyFailureMessage() : "Copy line"}
+      {state === "copied" ? "Copied" : state === "failed" ? copyFailureMessage() : "Copy"}
     </button>
   );
 }

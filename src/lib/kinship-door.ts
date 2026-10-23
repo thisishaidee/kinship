@@ -49,7 +49,7 @@ export const compareKinshipSeeds = createServerFn({ method: "POST" })
   .handler(async ({ data }) => compareKinship(data, { key: qlooKey, get: qlooGet, explain: explainWithGemini }));
 
 const EXPLAIN_PROMPT =
-  "You explain a pairing using only the JSON in the user message. Write one short, plain sentence a partnership lead could say out loud. Name the shared entities without quotes, skip the raw scores, and do not use the words 'entity', 'taste graph', or 'both connect'. You may only name entities and facts present in the returned Qloo scores; if you cannot stay within them, say nothing and the fallback sentence will be used. Do not claim a partnership exists, is available, or will succeed. Do not add causes, history, genres, or locations that are not fields in the JSON. If overlaps is empty, say nothing.";
+  "You explain a pairing using only the JSON in the user message. Write exactly one sentence in this shape: Both pull toward NAME (LEFT / RIGHT) and NAME (LEFT / RIGHT). Use the top shared entities and their two scores from the JSON, without quotes, and do not use the words 'entity' or 'taste graph'. You may only name entities and facts present in the returned Qloo scores; if you cannot stay within them, say nothing and the fallback sentence will be used. Do not claim a partnership exists, is available, or will succeed. Do not add causes, history, genres, or locations that are not fields in the JSON. If overlaps is empty, say nothing.";
 
 async function explainWithGemini(evidence: CompareEvidence): Promise<string | null> {
   const { env } = await import("@/lib/env.server");

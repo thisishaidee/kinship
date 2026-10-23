@@ -36,13 +36,13 @@ describe("shared affinities", () => {
 describe("grounded explanation", () => {
   const sample = evidence([{ name: "Rihanna", category: "Artist", leftScore: "0.959", rightScore: "0.910" }]);
 
-  it("accepts two sentences that cite only returned scores", () => {
-    const result = groundedExplanation("Nike and Adidas both connect to Rihanna at 0.959 and 0.910. Those are the only shared scores in this result.", sample);
+  it("accepts one sentence that cites only returned scores", () => {
+    const result = groundedExplanation("Both pull toward Rihanna (0.959 / 0.910).", sample);
     assert.equal(result.source, "model");
   });
 
   it("rejects an invented name or score and uses the returned scores", () => {
-    const invented = groundedExplanation("Nike and Adidas both love Drake at 0.999. A partnership is available.", sample);
+    const invented = groundedExplanation("Both pull toward Drake (0.999 / 0.910).", sample);
     assert.equal(invented.source, "scores");
     assert.equal(invented.text, fallbackExplanation(sample));
     assert.equal(invented.text.includes("0.959"), true);
@@ -62,7 +62,7 @@ describe("grounded explanation", () => {
   it("does not invent a reason when nothing overlaps", () => {
     const text = fallbackExplanation(evidence());
     assert.equal(text.includes("no shared entity"), true);
-    assert.equal(text.includes("invented"), true);
+    assert.equal(text.includes("invented"), false);
   });
 });
 
@@ -111,7 +111,7 @@ describe("compareKinship", () => {
       {
         key: async () => "test-key",
         get,
-        explain: async (evidence) => `Nike and Adidas both connect to Rihanna at ${evidence.overlaps[0].leftScore} and ${evidence.overlaps[0].rightScore}. No other shared score was used.`,
+        explain: async (evidence) => `Both pull toward Rihanna (${evidence.overlaps[0].leftScore} / ${evidence.overlaps[0].rightScore}).`,
       },
     );
     assert.equal(result.status, "matched");
