@@ -55,23 +55,27 @@ async function explainWithGemini(evidence: CompareEvidence): Promise<string | nu
   const { env } = await import("@/lib/env.server");
   const key = env("GEMINI_API_KEY");
   if (!key) return null;
-  try {
-    const { GoogleGenAI } = await import("@google/genai");
-    const ai = new GoogleGenAI({ apiKey: key });
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: JSON.stringify(evidence),
-      config: {
-        systemInstruction: EXPLAIN_PROMPT,
-        temperature: 0,
-        maxOutputTokens: 256,
-        thinkingConfig: { thinkingBudget: 0 },
-        abortSignal: AbortSignal.timeout(20000),
-      },
-    });
-    const text = response.text;
-    return typeof text === "string" && text.trim() ? text : null;
-  } catch {
-    return null;
+  const { GoogleGenAI } = await import("@google/genai");
+  const ai = new GoogleGenAI({ apiKey: key });
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: JSON.stringify(evidence),
+        config: {
+          systemInstruction: EXPLAIN_PROMPT,
+          temperature: 0,
+          maxOutputTokens: 256,
+          thinkingConfig: { thinkingBudget: 0 },
+          abortSignal: AbortSignal.timeout(20000),
+        },
+      });
+      const text = response.text;
+      if (typeof text === "string" && text.trim()) return text;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      if (attempt === 1 || !/503|429|UNAVAILABLE|high demand/i.test(message)) return null;
+    }
   }
+  return null;
 }

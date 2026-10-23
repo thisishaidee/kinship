@@ -177,7 +177,7 @@ function Home() {
   return (
     <div className="flex w-full flex-col overflow-x-hidden bg-bg">
       <header className="sticky top-0 z-20 border-b border-line bg-bg/90 backdrop-blur">
-        <div className="mx-auto flex h-14 w-full max-w-2xl items-center justify-between gap-3 px-5">
+        <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-3 px-5">
           <a href="/" aria-label="Kinship home" className="shrink-0">
             <KinshipWordmark />
           </a>
@@ -186,7 +186,7 @@ function Home() {
           </a>
         </div>
       </header>
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-5 pb-8 pt-6 sm:pt-8">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 pb-8 pt-6 sm:pt-8">
       <header className="flex flex-col gap-3">
         <h1 className="font-display text-4xl leading-none text-white sm:text-[44px]">
           A partnership, <span className="italic text-accent">not a playlist.</span>
@@ -314,13 +314,25 @@ function Home() {
             <p className="text-base text-muted">Qloo resolved {match.name}, but the categories could not be checked.</p>
           ) : null}
           {phase === "matched" && pitches.length > 0 ? (
-            <ul className="flex flex-col gap-3">
-              {pitches.map((pitch, index) => (
-                <li key={pitch.id}>
-                  <PitchCard pitch={pitch} seedName={match?.name ?? heldSeed} index={String(index + 1).padStart(2, "0")} />
-                </li>
+            <div className="flex flex-col gap-8">
+              {pitches.map((pitch) => (
+                <section key={pitch.id} className="flex flex-col gap-3">
+                  <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    {pitch.hits.map((hit) => (
+                      <li key={hit.entityId}>
+                        <ResultCard
+                          name={hit.name}
+                          href={partnerSearchHref(match?.name ?? heldSeed, hit.name)}
+                          category={pitch.partnerType}
+                          score={hit.score}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                  <CopyLine line={pitch.line} />
+                </section>
               ))}
-            </ul>
+            </div>
           ) : null}
           {unchecked.map((category) => (
             <p key={category.id} className="text-sm text-accent" role="status">
@@ -570,45 +582,42 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
   }
 
   return (
-    <section className="flex flex-col gap-4" aria-live="polite">
-      <div className="grid grid-cols-1 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-        <EntityCard entity={pairing.left} />
-        <EntityCard entity={pairing.right} />
+    <section id="compare-result" className="flex flex-col gap-4" aria-live="polite">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <SeedTicket entity={pairing.left} />
+        <SeedTicket entity={pairing.right} />
       </div>
       <div className="flex flex-col gap-3">
         <h2 className="text-sm font-medium text-fg">Shared affinities</h2>
-                {pairing.overlaps.length === 0 ? (
+        <p className="text-sm leading-snug text-muted">{RESULT_NOTE}</p>
+        {pairing.overlaps.length === 0 ? (
           <p className="text-base text-muted">No entity appeared in both Qloo results.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
-            {pairing.overlaps.map((overlap) => {
-              return (
-                <li key={overlap.entityId} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#27272A] bg-[#111114]">
-                  <div className="flex items-center justify-between gap-3 bg-accent/15 px-5 py-3">
-                    <p className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-200">{overlap.category}</p>
-                    <p className="shrink-0 font-sans text-xs font-medium tabular-nums text-zinc-200">
-                      L {formatAffinity(overlap.leftScore)} · R {formatAffinity(overlap.rightScore)}
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-4 p-5">
-                    <div className="flex min-w-0 flex-col items-start gap-2">
-                      <p className="min-w-0 break-words font-sans text-lg font-semibold leading-tight text-white">{overlap.name}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 border-t border-dashed border-[#3f3f46] pt-4">
-                      <ScoreBlock label="first" score={overlap.leftScore} />
-                      <ScoreBlock label="second" score={overlap.rightScore} />
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
+          <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
+            {pairing.overlaps.map((overlap, index) => (
+              <li key={overlap.entityId} className="flex items-center justify-between gap-4 border-t border-line px-4 py-3 first:border-t-0">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-fg">{overlap.name}</p>
+                  <p className="text-xs text-muted">{overlap.category}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                  {index === highMatchIndex(pairing.overlaps) ? (
+                    <span className="rounded-full border border-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent">High match</span>
+                  ) : null}
+                  <p className="text-sm tabular-nums">
+                    <span className={scoreTone(overlap.leftScore)}>{formatAffinity(overlap.leftScore)}</span>
+                    <span className="text-muted"> / </span>
+                    <span className={scoreTone(overlap.rightScore)}>{formatAffinity(overlap.rightScore)}</span>
+                  </p>
+                </div>
+              </li>
+            ))}
           </ul>
         )}
-        <p className="text-sm leading-snug text-muted">{RESULT_NOTE}</p>
       </div>
       <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-5 shadow-card">
-        <h2 className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">Why this pairing</h2>
-        <p className="font-display text-xl leading-snug text-white">{pairing.explanation}</p>
+        <h2 className="text-sm font-medium text-fg">Why this pairing</h2>
+        <p className="text-base leading-snug text-fg">{pairing.explanation}</p>
       </div>
       <a
         id="pdf-download"
@@ -625,61 +634,50 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
   );
 }
 
-function EntityCard({ entity }: { entity: ResolvedEntity }) {
+function highMatchIndex(overlaps: CompareMatch["overlaps"]): number {
+  const first = overlaps[0];
+  if (!first) return -1;
+  const weak = Math.min(first.leftScore, first.rightScore);
+  if (weak < 0.95) return -1;
+  const next = overlaps[1];
+  if (!next) return 0;
+  return weak - Math.min(next.leftScore, next.rightScore) >= 0.015 ? 0 : -1;
+}
+
+function scoreTone(score: number): string {
+  return score >= 0.95 ? "font-semibold text-accent" : "font-medium text-muted";
+}
+
+function SeedTicket({ entity }: { entity: ResolvedEntity }) {
   return (
-    <article className="flex min-w-0 flex-col gap-2 p-4 sm:p-5">
-      <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted">Resolved on Qloo</p>
-      <p className="break-words font-sans text-lg font-semibold leading-tight text-white sm:text-xl">{entity.name}</p>
-      <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-accent">{entity.typeLabel}</p>
+    <article className="min-w-0 overflow-hidden rounded-2xl border border-line bg-surface">
+      <div className="bg-accent/10 px-4 py-2">
+        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-accent">{entity.typeLabel}</p>
+      </div>
+      <div className="px-4 py-4">
+        <p className="break-words text-lg font-semibold text-fg">{entity.name}</p>
+        <p className="mt-1 text-xs text-muted">Resolved on Qloo</p>
+      </div>
     </article>
   );
 }
 
-function PitchCard({ pitch, seedName, index }: { pitch: Pitch; seedName: string; index: string }) {
-  const primary = index === "01";
-  const top = pitch.hits.reduce((best, hit) => Math.max(best, hit.score), 0);
+function ResultCard({ name, href, category, score }: { name: string; href: string; category: string; score: number }) {
   return (
-    <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#27272A] bg-[#111114]">
-      <div className={`flex items-center justify-between gap-3 px-5 py-3 ${primary ? "bg-accent" : "bg-accent/15"}`}>
-        <p className={`font-sans text-xs font-medium tabular-nums ${primary ? "text-white" : "text-zinc-200"}`}>{formatAffinity(top)}</p>
+    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface">
+      <div className="bg-accent/10 px-4 py-2">
+        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-accent">{category.split(" ")[0]}</p>
       </div>
-      <div className="flex flex-col gap-4 p-5">
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">{pitch.partnerType}</p>
-        <ul className="flex flex-col gap-4">
-          {pitch.hits.map((hit) => (
-            <li key={hit.entityId} className="flex min-w-0 items-start justify-between gap-3">
-              <div className="flex min-w-0 flex-col items-start gap-2">
-                <a
-                  href={partnerSearchHref(seedName, hit.name)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="min-w-0 break-words font-sans text-xl font-semibold leading-tight text-white underline decoration-1 underline-offset-4"
-                >
-                  {hit.name}
-                </a>
-              </div>
-              <span className="shrink-0 pt-1 font-sans text-sm font-medium tabular-nums text-zinc-400">{formatAffinity(hit.score)}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="flex flex-col gap-4 border-t border-dashed border-[#3f3f46] pt-4">
-          <p className="font-display text-lg leading-snug text-white">{pitch.line}</p>
-          <div className="flex items-end justify-between gap-3">
-            <span className={`font-sans text-5xl font-semibold leading-none tracking-[-0.03em] tabular-nums ${primary ? "text-accent" : "text-white"}`}>{formatAffinity(top)}</span>
-            <CopyLine line={pitch.line} />
-          </div>
+      <div className="flex flex-1 items-end justify-between gap-4 px-4 py-4">
+        <div className="min-w-0">
+          <a href={href} target="_blank" rel="noopener noreferrer" className="block break-words text-lg font-semibold text-fg underline decoration-white/25 underline-offset-4">
+            {name}
+          </a>
+          <p className="mt-1 text-xs text-muted">shared-fans score</p>
         </div>
+        <p className={`shrink-0 text-4xl leading-none tabular-nums ${scoreTone(score)}`}>{formatAffinity(score)}</p>
       </div>
     </article>
-  );
-}
-
-function ScoreBlock({ label, score }: { label: string; score: number }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <span className="text-[9px] font-medium uppercase tracking-[0.22em] text-muted/80">{label}</span>
-      <span className="font-sans text-2xl font-medium leading-none tracking-[-0.02em] tabular-nums text-white">{formatAffinity(score)}</span>
-    </div>
   );
 }
 

@@ -112,13 +112,14 @@ function Landing() {
         </section>
 
         <section aria-label="Compare example" className="flex w-full min-w-0 flex-col gap-4">
-          <figure className="mx-auto w-full max-w-5xl overflow-hidden rounded-xl border border-line bg-[#0b0b0d] shadow-[0_40px_80px_-40px_rgba(0,0,0,0.95)]">
-            <img
-              src="/compare-view.png"
-              alt="Kinship compare of Nike and Adidas, with shared Qloo affinities and a one-line explanation."
-              className="block h-auto w-full"
-              loading="lazy"
-            />
+          <figure className="mx-auto w-full max-w-6xl rounded-2xl border border-[#27272A] bg-[#111114] p-2 sm:p-3">
+            <div className="overflow-hidden rounded-xl border border-[#27272A] bg-black">
+              <img
+                src="/compare-view.png"
+                alt="Desktop Kinship compare of Nike and Adidas, with shared Qloo affinities and a one-line explanation."
+                className="block h-auto w-full"
+              />
+            </div>
           </figure>
         </section>
 

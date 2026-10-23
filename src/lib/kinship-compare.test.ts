@@ -41,6 +41,14 @@ describe("grounded explanation", () => {
     assert.equal(result.source, "model");
   });
 
+  it("accepts type and category words that are already in the evidence", () => {
+    const result = groundedExplanation(
+      "Both pull toward the Artist Wiz Khalifa (0.979 / 0.947).",
+      evidence([{ name: "Wiz Khalifa", category: "Artist", leftScore: "0.979", rightScore: "0.947" }]),
+    );
+    assert.equal(result.source, "model");
+  });
+
   it("rejects an invented name or score and uses the returned scores", () => {
     const invented = groundedExplanation("Both pull toward Drake (0.999 / 0.910).", sample);
     assert.equal(invented.source, "scores");

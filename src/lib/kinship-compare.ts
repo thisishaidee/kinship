@@ -99,7 +99,13 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
     return { text: fallback, source: "scores" };
   }
   const allowedWords = new Set(SAFE_WORDS);
-  for (const name of [evidence.left.name, evidence.right.name, ...evidence.overlaps.map((overlap) => overlap.name)]) {
+  for (const name of [
+    evidence.left.name,
+    evidence.right.name,
+    evidence.left.typeLabel,
+    evidence.right.typeLabel,
+    ...evidence.overlaps.flatMap((overlap) => [overlap.name, overlap.category]),
+  ]) {
     for (const word of name.split(/\s+/)) allowedWords.add(word.toLowerCase().replace(/[^a-z0-9']/g, ""));
   }
   for (const sentence of sentences) {
