@@ -28,7 +28,7 @@ const pillBase = "inline-flex items-center justify-center rounded-full text-sm f
 
 function Landing() {
   return (
-    <div className="flex min-h-dvh w-full flex-col overflow-x-hidden bg-bg text-fg">
+    <div data-landing="v2" className="flex min-h-dvh w-full flex-col overflow-x-hidden bg-bg text-fg">
       <header className="sticky top-0 z-20 border-b border-line/60 bg-bg/90 backdrop-blur">
         <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-2 px-5">
           <Link to="/" aria-label="Kinship home" className="shrink-0">
