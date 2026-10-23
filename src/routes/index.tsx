@@ -106,15 +106,29 @@ function Landing() {
           </ol>
         </section>
 
-        <section aria-label="Compare example" className="flex w-full min-w-0 flex-col gap-4">
-          <figure className="mx-auto w-full max-w-6xl overflow-hidden rounded-2xl border border-[#27272A] bg-[#111114] p-0 sm:p-3">
-            <div className="relative w-full overflow-hidden rounded-none bg-black sm:rounded-xl sm:border sm:border-[#27272A]">
-              <img
-                src="/compare-view.png"
-                alt="Desktop Kinship compare of Nike and Adidas, with shared Qloo fans and a one-line explanation."
-                className="block h-auto w-full"
-              />
+        <section aria-label="Compare example" className="flex w-full min-w-0 justify-center py-2 sm:py-4">
+          <figure className="w-full max-w-3xl overflow-hidden rounded-2xl border border-[#27272A] bg-[#0A0A0A] shadow-[0_28px_50px_-28px_rgba(0,0,0,0.9)]">
+            <div className="grid h-11 grid-cols-[3.25rem_minmax(0,1fr)_3.25rem] items-center border-b border-[#27272A] px-2.5 sm:h-12 sm:grid-cols-[4.5rem_minmax(0,1fr)_4.5rem] sm:px-3">
+              <div className="flex items-center gap-1 text-[#9CA3AF]" aria-hidden="true">
+                <svg viewBox="0 0 16 16" className="size-4" fill="none">
+                  <path d="M9.5 3.5 L5 8 l4.5 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <svg viewBox="0 0 16 16" className="size-4" fill="none">
+                  <path d="M6.5 3.5 L11 8 l-4.5 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <p className="mx-auto max-w-full truncate rounded-full border border-[#27272A] px-3 py-1 text-center text-[11px] leading-none text-[#9CA3AF] sm:text-xs">
+                kinshipp.vercel.app
+              </p>
+              <span className="sr-only">Browser preview of the Kinship compare</span>
             </div>
+            <img
+              src="/compare-view.png"
+              alt="Desktop Kinship compare of Nike and Adidas, with shared Qloo fans and a one-line explanation."
+              width={1920}
+              height={1080}
+              className="block h-auto w-full"
+            />
           </figure>
         </section>
 
