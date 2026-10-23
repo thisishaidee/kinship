@@ -585,18 +585,29 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
           <p className="text-base text-muted">No entity appeared in both Qloo results. No overlap was invented.</p>
         ) : (
           <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
-            {pairing.overlaps.map((overlap) => (
-              <li key={overlap.entityId} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 flex-col gap-1">
-                  <p className="break-words text-base font-semibold text-white">{overlap.name}</p>
-                  <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted">{overlap.category}</p>
-                </div>
-                <div className="grid w-full shrink-0 grid-cols-2 gap-6 sm:w-auto sm:gap-8">
-                  <ScoreFigure score={overlap.leftScore} />
-                  <ScoreFigure score={overlap.rightScore} />
-                </div>
-              </li>
-            ))}
+            {pairing.overlaps.map((overlap) => {
+              const low = Math.min(overlap.leftScore, overlap.rightScore);
+              return (
+                <li key={overlap.entityId} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#27272A] bg-[#111114]">
+                  <div className="flex items-center justify-between gap-3 bg-accent/15 px-5 py-3">
+                    <p className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-200">{overlap.category}</p>
+                    <p className="shrink-0 font-sans text-xs font-medium tabular-nums text-zinc-200">
+                      L {formatAffinity(overlap.leftScore)} · R {formatAffinity(overlap.rightScore)}
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-4 p-5">
+                    <div className="flex min-w-0 flex-col items-start gap-2">
+                      <p className="min-w-0 break-words font-sans text-lg font-semibold leading-tight text-white">{overlap.name}</p>
+                      <TierPill score={low} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 border-t border-dashed border-[#3f3f46] pt-4">
+                      <ScoreBlock label="first" score={overlap.leftScore} />
+                      <ScoreBlock label="second" score={overlap.rightScore} />
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
@@ -630,43 +641,65 @@ function EntityCard({ entity }: { entity: ResolvedEntity }) {
 }
 
 function PitchCard({ pitch, seedName, index }: { pitch: Pitch; seedName: string; index: string }) {
+  const primary = index === "01";
+  const top = pitch.hits.reduce((best, hit) => Math.max(best, hit.score), 0);
   return (
-    <article className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5 shadow-card">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">{index}</p>
-        <h3 className="text-right text-[11px] font-medium uppercase tracking-[0.16em] text-muted">{pitch.partnerType}</h3>
+    <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#27272A] bg-[#111114]">
+      <div className={`flex items-center justify-between gap-3 px-5 py-3 ${primary ? "bg-accent" : "bg-accent/15"}`}>
+        <p className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${primary ? "text-white" : "text-zinc-200"}`}>Partner {index}</p>
+        <p className={`font-sans text-xs font-medium tabular-nums ${primary ? "text-white" : "text-zinc-200"}`}>{formatAffinity(top)}</p>
       </div>
-      <ul className="flex flex-col divide-y divide-line">
-        {pitch.hits.map((hit) => (
-          <li key={hit.entityId} className="flex items-center justify-between gap-3 py-3">
-            <a
-              href={partnerSearchHref(seedName, hit.name)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="min-w-0 break-words text-left text-base font-semibold text-white underline decoration-1 underline-offset-4"
-            >
-              {hit.name}
-            </a>
-            <ScoreFigure score={hit.score} />
-          </li>
-        ))}
-      </ul>
-      <p className="border-t border-line pt-4 font-display text-lg leading-snug text-white">{pitch.line}</p>
-      <CopyLine line={pitch.line} />
+      <div className="flex flex-col gap-4 p-5">
+        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">{pitch.partnerType}</p>
+        <ul className="flex flex-col gap-4">
+          {pitch.hits.map((hit) => (
+            <li key={hit.entityId} className="flex min-w-0 items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-col items-start gap-2">
+                <a
+                  href={partnerSearchHref(seedName, hit.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="min-w-0 break-words font-sans text-xl font-semibold leading-tight text-white underline decoration-1 underline-offset-4"
+                >
+                  {hit.name}
+                </a>
+                <TierPill score={hit.score} />
+              </div>
+              <span className="shrink-0 pt-1 font-sans text-sm font-medium tabular-nums text-zinc-400">{formatAffinity(hit.score)}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="flex flex-col gap-4 border-t border-dashed border-[#3f3f46] pt-4">
+          <p className="font-display text-lg leading-snug text-white">{pitch.line}</p>
+          <div className="flex items-end justify-between gap-3">
+            <span className={`font-sans text-5xl font-semibold leading-none tracking-[-0.03em] tabular-nums ${primary ? "text-accent" : "text-white"}`}>{formatAffinity(top)}</span>
+            <CopyLine line={pitch.line} />
+          </div>
+        </div>
+      </div>
     </article>
   );
 }
 
-function scoreTone(score: number): string {
-  return score >= 0.9 ? "text-accent/90" : "text-muted/70";
+function affinityTier(score: number): { label: string; className: string } {
+  if (score >= 0.97) return { label: "high affinity", className: "border-accent/50 bg-accent/20 text-zinc-100" };
+  if (score >= 0.93) return { label: "strong", className: "border-accent/30 bg-accent/10 text-zinc-300" };
+  return { label: "solid", className: "border-[#3f3f46] bg-transparent text-zinc-400" };
 }
 
-function ScoreFigure({ score }: { score: number }) {
+function TierPill({ score }: { score: number }) {
+  const tier = affinityTier(score);
   return (
-    <span className="flex min-w-[4.5rem] shrink-0 flex-col items-end border-l border-line pl-3 text-right">
-      <span className={`font-sans text-2xl font-medium leading-none tracking-[-0.02em] tabular-nums ${scoreTone(score)}`}>{formatAffinity(score)}</span>
-      <span className="mt-1.5 text-[9px] font-medium uppercase tracking-[0.22em] text-muted/80">affinity</span>
-    </span>
+    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium tracking-wide ${tier.className}`}>{tier.label}</span>
+  );
+}
+
+function ScoreBlock({ label, score }: { label: string; score: number }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1">
+      <span className="text-[9px] font-medium uppercase tracking-[0.22em] text-muted/80">{label}</span>
+      <span className="font-sans text-2xl font-medium leading-none tracking-[-0.02em] tabular-nums text-white">{formatAffinity(score)}</span>
+    </div>
   );
 }
 

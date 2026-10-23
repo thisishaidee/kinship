@@ -24,76 +24,21 @@ const RESULTS = [
 const TRUST = ["Music", "Film", "Brands", "Places"];
 const VALUE_PROPS = [
   {
+    eyebrow: "Data",
     title: "Only real data",
     body: "Every name and score comes straight from Qloo's taste graph. No exact match means no result, never a guessed partner.",
   },
   {
+    eyebrow: "Explanation",
     title: "Grounded explanations",
     body: "A one-line why, written by AI from the exact scores Qloo returned. If the data is thin, it says nothing.",
   },
   {
+    eyebrow: "Output",
     title: "Pitch-ready output",
     body: "One tap exports a clean one-page PDF brief with the pairing, the scores, and the affinity disclaimer.",
   },
 ];
-
-function VisualSeedToTaste() {
-  return (
-    <div className="flex h-36 w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-[#222226] bg-[#0b0b0d] px-4">
-      <span className="shrink-0 rounded-full border border-accent/50 bg-accent/10 px-3 py-1 text-xs font-medium text-white">
-        {SEEDS[0]}
-      </span>
-      <span className="relative h-px min-w-0 flex-1 bg-gradient-to-r from-accent/70 via-accent/30 to-transparent">
-        <span className="absolute -top-[3px] right-0 size-[7px] rounded-full bg-accent" />
-      </span>
-      <div className="flex shrink-0 flex-col items-end gap-1.5 rounded-lg border border-[#222226] bg-[#141416] px-3 py-2">
-        <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Qloo Taste Graph</span>
-        <span className="flex items-baseline gap-2">
-          <span className="text-xs text-white">{RESULTS[0].name}</span>
-          <span className="font-sans text-sm font-semibold tabular-nums text-accent">{RESULTS[0].score}</span>
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function VisualAffinityBubble() {
-  return (
-    <div className="relative flex h-36 w-full min-w-0 flex-col justify-center gap-3 rounded-xl border border-[#222226] bg-[#0b0b0d] px-4">
-      <div className="flex min-w-0 flex-col gap-2 rounded-xl border border-[#2a2a2f] bg-[#141416] p-3 shadow-[0_18px_30px_-20px_rgba(0,0,0,0.9)]">
-        <div className="flex items-center justify-between gap-2">
-          <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">
-            Affinity Match
-          </span>
-          <span className="font-sans text-sm font-semibold tabular-nums text-white">{RESULTS[1].score}</span>
-        </div>
-        <p className="min-w-0 text-xs leading-snug text-zinc-300">
-          {SEEDS[1]} and {RESULTS[1].name} sit close together in the taste graph.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function VisualExportCard() {
-  return (
-    <div className="flex h-36 w-full min-w-0 items-center justify-center rounded-xl border border-[#222226] bg-[#0b0b0d] px-4">
-      <div className="flex h-28 w-[58%] max-w-[150px] flex-col gap-2 rounded-md border border-[#2a2a2f] bg-[#f4f4f5] p-2.5 shadow-[0_16px_28px_-18px_rgba(0,0,0,0.9)]">
-        <div className="flex items-center justify-between">
-          <span className="h-1.5 w-1/2 rounded-sm bg-[#18181b]" />
-          <span className="size-2 rounded-full bg-accent" />
-        </div>
-        <div className="h-px w-full bg-[#d4d4d8]" />
-        <div className="h-1 w-full rounded-full bg-[#d4d4d8]" />
-        <div className="h-1 w-11/12 rounded-full bg-[#d4d4d8]" />
-        <div className="h-1 w-3/4 rounded-full bg-[#d4d4d8]" />
-        <div className="mt-auto h-4 w-full rounded-sm bg-accent" />
-      </div>
-    </div>
-  );
-}
-
-const VALUE_VISUALS = [VisualSeedToTaste, VisualAffinityBubble, VisualExportCard];
 
 const REPO = "https://github.com/thisishaidee/kinship";
 
@@ -175,16 +120,13 @@ function Landing() {
             </h2>
           </div>
           <ul className="grid gap-5 md:grid-cols-3">
-            {VALUE_PROPS.map((prop, index) => {
-              const Visual = VALUE_VISUALS[index];
-              return (
-                <li key={prop.title} className="flex min-w-0 flex-col rounded-2xl border border-[#222226] bg-[#111114] p-6">
-                  <Visual />
-                  <h3 className="mt-4 font-sans text-lg font-semibold text-white">{prop.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-400">{prop.body}</p>
-                </li>
-              );
-            })}
+            {VALUE_PROPS.map((prop) => (
+              <li key={prop.title} className="flex min-w-0 flex-col gap-4 rounded-2xl border border-[#27272A] bg-[#111114] p-8">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-accent">{prop.eyebrow}</span>
+                <h3 className="font-sans text-xl font-semibold tracking-tight text-white">{prop.title}</h3>
+                <p className="text-sm leading-relaxed text-zinc-400">{prop.body}</p>
+              </li>
+            ))}
           </ul>
         </section>
 
