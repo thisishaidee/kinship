@@ -45,6 +45,66 @@ const VALUE_PROPS = [
     ],
   },
 ];
+function MockSeeds() {
+  return (
+    <div className="relative flex h-28 w-full min-w-0 items-center justify-between overflow-hidden rounded-xl border border-line bg-bg px-3 py-3">
+      <div className="flex min-w-0 flex-col gap-1.5">
+        {SEEDS.map((seed) => (
+          <span key={seed} className="w-fit max-w-full truncate rounded-full border border-line bg-surface px-2 py-0.5 text-[10px] leading-tight text-fg">
+            {seed}
+          </span>
+        ))}
+      </div>
+      <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="absolute inset-y-0 left-[30%] h-full w-[30%]" aria-hidden="true">
+        <path d="M0 10 C50 10 50 30 100 30 M0 30 L100 30 M0 50 C50 50 50 30 100 30" fill="none" stroke="#3f3f46" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+      </svg>
+      <div className="relative flex shrink-0 items-center gap-2">
+        <span className="flex size-9 items-center justify-center rounded-full border-2 border-accent">
+          <span className="size-2 rounded-full bg-accent" />
+        </span>
+        <span className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2 py-1">
+          <span className="text-[10px] text-muted">{RESULTS[0].name}</span>
+          <span className="font-sans text-xs font-semibold text-accent">{RESULTS[0].score}</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function MockExplanation() {
+  return (
+    <div className="flex h-28 w-full min-w-0 flex-col justify-center gap-3 overflow-hidden rounded-xl border border-line bg-bg p-3">
+      <div className="flex min-w-0 items-start gap-2 rounded-lg border border-line bg-surface p-2.5">
+        <p className="min-w-0 flex-1 break-words text-[11px] leading-snug text-fg">
+          Audience affinity links {SEEDS[1]} with {RESULTS[0].name} in the taste graph.
+        </p>
+        <span className="shrink-0 rounded-md border border-accent/60 px-1.5 py-0.5 font-sans text-[10px] font-semibold text-accent">
+          {RESULTS[0].score}
+        </span>
+      </div>
+      <div className="h-1 w-3/4 rounded-full bg-line" />
+      <div className="h-1 w-1/2 rounded-full bg-line" />
+    </div>
+  );
+}
+
+function MockBrief() {
+  return (
+    <div className="flex h-28 w-full min-w-0 items-center justify-center overflow-hidden rounded-xl border border-line bg-bg p-3">
+      <div className="flex h-full w-[62%] max-w-[120px] flex-col gap-1.5 rounded-md border border-line bg-white p-2">
+        <div className="h-2 w-4/5 rounded-sm bg-[#3f3f46]" />
+        <div className="h-px w-full bg-[#d4d4d8]" />
+        <div className="h-1 w-full rounded-full bg-[#d4d4d8]" />
+        <div className="h-1 w-11/12 rounded-full bg-[#d4d4d8]" />
+        <div className="h-1 w-3/4 rounded-full bg-[#d4d4d8]" />
+        <div className="mt-auto h-6 w-full rounded-sm bg-accent" />
+      </div>
+    </div>
+  );
+}
+
+const VALUE_MOCKS = [MockSeeds, MockExplanation, MockBrief];
+
 const REPO = "https://github.com/thisishaidee/kinship";
 
 const pillBase = "inline-flex items-center justify-center rounded-full text-sm font-medium transition-colors";
@@ -125,8 +185,11 @@ function Landing() {
             </h2>
           </div>
           <ul className="grid gap-4 md:grid-cols-3">
-            {VALUE_PROPS.map((prop, index) => (
-              <li key={prop.title} className="flex flex-col gap-4 rounded-2xl border border-[#27272A] bg-[#111113] p-6">
+            {VALUE_PROPS.map((prop, index) => {
+              const Mock = VALUE_MOCKS[index];
+              return (
+              <li key={prop.title} className="flex min-w-0 flex-col gap-4 rounded-2xl border border-[#27272A] bg-[#111113] p-5 sm:p-6">
+                <Mock />
                 <span className="font-sans text-sm font-semibold leading-none text-accent">{String(index + 1).padStart(2, "0")}</span>
                 <h3 className="font-sans text-xl font-semibold tracking-tight text-white">{prop.title}</h3>
                 <div className="flex flex-col gap-2">
@@ -137,7 +200,8 @@ function Landing() {
                   ))}
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </section>
 
