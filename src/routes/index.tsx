@@ -109,8 +109,8 @@ function Landing() {
         </section>
 
         <section aria-label="Compare example" className="flex w-full min-w-0 flex-col gap-4">
-          <figure className="mx-auto w-full max-w-6xl rounded-2xl border border-[#27272A] bg-[#111114] p-2 sm:p-3">
-            <div className="overflow-hidden rounded-xl border border-[#27272A] bg-black">
+          <figure className="mx-auto w-full max-w-6xl overflow-hidden rounded-2xl border border-[#27272A] bg-[#111114] p-0 sm:p-3">
+            <div className="relative w-full overflow-hidden rounded-none bg-black sm:rounded-xl sm:border sm:border-[#27272A]">
               <img
                 src="/compare-view.png"
                 alt="Desktop Kinship compare of Nike and Adidas, with shared Qloo affinities and a one-line explanation."
