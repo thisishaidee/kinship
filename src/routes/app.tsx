@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState, type FormEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
-import { Check, Copy, Download, Loader2, Search } from "lucide-react";
+import { ArrowRight, Check, Copy, Download, Loader2, Search } from "lucide-react";
 import {
   compareKinshipSeeds,
   copyFailureMessage,
@@ -16,6 +16,7 @@ import {
   type ResolvedEntity,
   type UncheckedCategory,
 } from "@/lib/kinship-door";
+import { KinshipWordmark } from "@/components/kinship-wordmark";
 import { PAIRING_DISCLAIMER, PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/kinship-pdf";
 
 export const Route = createFileRoute("/app")({ component: Home });
@@ -175,15 +176,22 @@ function Home() {
   const busy = mode === "single" ? phase === "loading" : comparePhase === "loading";
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-8 px-5 py-8">
-      <header className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="text-sm font-medium tracking-wide text-accent">Kinship</p>
-          <a href="https://github.com/thisishaidee/kinship" target="_blank" rel="noopener noreferrer" className="text-sm text-fg underline decoration-1 underline-offset-4">
+    <div className="flex min-h-dvh w-full flex-col overflow-x-hidden bg-bg">
+      <header className="sticky top-0 z-20 border-b border-line bg-bg/90 backdrop-blur">
+        <div className="mx-auto flex h-14 w-full max-w-2xl items-center justify-between gap-3 px-5">
+          <a href="/" aria-label="Kinship home" className="shrink-0">
+            <KinshipWordmark />
+          </a>
+          <a href="https://github.com/thisishaidee/kinship" target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-muted hover:text-white sm:text-sm">
             GitHub
           </a>
         </div>
-        <h1 className="font-display text-4xl leading-none text-fg">A partnership, not a playlist.</h1>
+      </header>
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-5 pb-10 pt-8">
+      <header className="flex flex-col gap-3">
+        <h1 className="font-display text-4xl leading-none text-white sm:text-[44px]">
+          A partnership, <span className="italic text-accent">not a playlist.</span>
+        </h1>
         <p className="text-base text-muted">
           {mode === "single"
             ? "Type an artist, film, or brand. Each pitch can only name entities Qloo scored."
@@ -204,8 +212,8 @@ function Home() {
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         {mode === "single" ? (
-          <>
-            <label htmlFor="seed" className="text-sm font-medium text-fg">
+          <div className="flex min-w-0 items-center gap-2 rounded-full border border-line bg-surface py-1.5 pl-5 pr-1.5 focus-within:border-accent">
+            <label htmlFor="seed" className="sr-only">
               Seed
             </label>
             <input
@@ -225,9 +233,10 @@ function Home() {
               autoCorrect="off"
               spellCheck={false}
               enterKeyHint="search"
-              className="h-12 w-full rounded-card border border-line bg-surface px-4 text-base text-fg outline-none placeholder:text-muted focus:border-accent"
+              className="h-10 min-w-0 flex-1 bg-transparent text-base text-fg outline-none placeholder:text-muted"
             />
-          </>
+            <SubmitButton busy={busy} label={busy ? "Asking the taste graph" : "Find partners"} inline />
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             <SeedField id="left-seed" label="First" value={leftSeed} onChange={setLeftSeed} />
@@ -252,14 +261,7 @@ function Home() {
           <Alert>No exact Qloo match for “{heldSeed}”. Kinship will not use a similar name.</Alert>
         ) : null}
         {busy ? <LoadingSteps mode={mode} /> : null}
-        <button
-          type="submit"
-          disabled={busy}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-card bg-accent px-4 text-base font-medium text-accent-fg disabled:opacity-60"
-        >
-          {busy ? <Loader2 className="size-5 animate-spin" aria-hidden="true" /> : <Search className="size-5" aria-hidden="true" />}
-          {busy ? "Asking the taste graph" : mode === "single" ? "Find partners" : "Compare affinities"}
-        </button>
+        {mode === "compare" ? <SubmitButton busy={busy} label={busy ? "Asking the taste graph" : "Compare affinities"} /> : null}
       </form>
 
       {mode === "single" && phase === "idle" ? (
@@ -275,7 +277,7 @@ function Home() {
                   setSeed(example);
                   void run(example);
                 }}
-                className="inline-flex h-11 items-center rounded-card border border-line px-4 text-sm font-medium text-fg"
+                className="inline-flex h-10 items-center rounded-full border border-line bg-surface px-4 text-sm font-medium text-fg hover:border-accent"
               >
                 {example}
               </button>
@@ -285,10 +287,10 @@ function Home() {
       ) : null}
 
       {mode === "single" && match ? (
-        <section className="flex flex-col gap-1 rounded-card border border-line bg-surface p-4">
-          <p className="text-sm text-muted">Resolved on Qloo</p>
-          <p className="font-display text-3xl leading-none text-fg">{match.name}</p>
-          <p className="text-sm font-medium text-accent">{match.typeLabel}</p>
+        <section className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-5 shadow-card">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">Resolved on Qloo</p>
+          <p className="font-sans text-2xl font-semibold leading-tight text-white">{match.name}</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-accent">{match.typeLabel}</p>
         </section>
       ) : null}
 
@@ -362,7 +364,7 @@ function Home() {
 
       {mode === "compare" && pairing ? <CompareView pairing={pairing} /> : null}
 
-      <footer className="mt-auto flex flex-wrap gap-x-3 gap-y-1 border-t border-line pt-4 text-sm text-muted">
+      <footer className="mt-auto flex flex-wrap gap-x-5 gap-y-2 border-t border-line pt-5 text-sm text-muted">
         <a href="https://github.com/thisishaidee/kinship" target="_blank" rel="noopener noreferrer" className="text-fg underline decoration-1 underline-offset-4">
           GitHub repository
         </a>
@@ -371,6 +373,7 @@ function Home() {
         </a>
       </footer>
     </main>
+    </div>
   );
 }
 
@@ -410,10 +413,10 @@ function LoadingSteps({ mode }: { mode: Mode }) {
     return () => window.clearInterval(id);
   }, [steps.length]);
   return (
-    <div className="flex flex-col gap-3" role="status" aria-live="polite">
+    <div className="border-l-[3px] border-l-accent flex flex-col gap-3 rounded-xl border border-line bg-surface px-4 py-3 shadow-card" role="status" aria-live="polite">
       <ol className="flex flex-col gap-1">
         {steps.map((label, index) => (
-          <li key={label} className={index === step ? "text-sm text-fg" : "text-sm text-muted"}>
+          <li key={label} className={index === step ? "text-sm text-white" : "text-sm text-muted"}>
             {index < step ? "Done. " : index === step ? "Now. " : ""}
             {label}
             {index === step ? "…" : ""}
@@ -422,7 +425,7 @@ function LoadingSteps({ mode }: { mode: Mode }) {
       </ol>
       <div className="flex flex-col gap-2" aria-hidden="true">
         {[0, 1].map((slot) => (
-          <div key={slot} className="h-16 animate-pulse rounded-card border border-line bg-surface" />
+          <div key={slot} className="h-16 animate-pulse rounded-2xl border border-line bg-surface" />
         ))}
       </div>
     </div>
@@ -442,15 +445,32 @@ function shownPhase(mode: Mode, phase: Phase, comparePhase: Phase): Phase {
 
 function modeButton(active: boolean): string {
   return active
-    ? "inline-flex h-11 items-center justify-center rounded-card bg-accent px-4 text-sm font-medium text-accent-fg"
-    : "inline-flex h-11 items-center justify-center rounded-card border border-line px-4 text-sm font-medium text-fg";
+    ? "inline-flex h-10 items-center justify-center rounded-full bg-accent px-4 text-sm font-medium text-white"
+    : "inline-flex h-10 items-center justify-center rounded-full border border-line bg-surface px-4 text-sm font-medium text-muted hover:text-white";
 }
 
 function Alert({ children }: { children: ReactNode }) {
   return (
-    <p className="text-sm text-accent" role="alert">
+    <p className="border-l-[3px] border-l-accent rounded-xl border border-line bg-surface px-4 py-3 text-sm leading-snug text-fg shadow-card" role="alert">
       {children}
     </p>
+  );
+}
+
+function SubmitButton({ busy, label, inline = false }: { busy: boolean; label: string; inline?: boolean }) {
+  return (
+    <button
+      type="submit"
+      disabled={busy}
+      className={
+        inline
+          ? "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-crimson-grad px-4 text-sm font-medium text-white disabled:opacity-60 sm:px-5"
+          : "inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-crimson-grad px-4 text-base font-medium text-white disabled:opacity-60"
+      }
+    >
+      {busy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : inline ? <ArrowRight className="size-4" aria-hidden="true" /> : <Search className="size-5" aria-hidden="true" />}
+      <span className={inline ? "sr-only sm:not-sr-only" : undefined}>{label}</span>
+    </button>
   );
 }
 
@@ -471,7 +491,7 @@ function SeedField({ id, label, value, onChange }: { id: string; label: string; 
         autoCorrect="off"
         spellCheck={false}
         enterKeyHint="search"
-        className="h-12 w-full min-w-0 rounded-card border border-line bg-surface px-3 text-base text-fg outline-none placeholder:text-muted focus:border-accent"
+        className="h-12 w-full min-w-0 rounded-full border border-line bg-surface px-4 text-base text-fg outline-none placeholder:text-muted focus:border-accent"
       />
     </div>
   );
@@ -488,9 +508,9 @@ function Chooser({ title, candidates, busy, onPick }: { title: string; candidate
               type="button"
               disabled={busy}
               onClick={() => onPick(candidate.entityId)}
-              className="flex w-full flex-col items-start gap-1 rounded-card border border-line bg-surface p-4 text-left disabled:opacity-60"
+              className="flex w-full flex-col items-start gap-1 rounded-2xl border border-line bg-surface p-4 text-left shadow-card transition-colors hover:border-accent disabled:opacity-60"
             >
-              <span className="text-xs font-medium tracking-wide text-accent">{choiceLine(candidate)}</span>
+              <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted">{choiceLine(candidate)}</span>
               <span className="font-display text-2xl leading-none text-fg">{candidate.name}</span>
               {candidate.blurb ? <span className="text-sm leading-snug text-muted">{candidate.blurb}</span> : null}
             </button>
@@ -554,7 +574,7 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
 
   return (
     <section className="flex flex-col gap-4" aria-live="polite">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 divide-x divide-line overflow-hidden rounded-2xl border border-line bg-surface">
         <EntityCard entity={pairing.left} />
         <EntityCard entity={pairing.right} />
       </div>
@@ -564,22 +584,25 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
         {pairing.overlaps.length === 0 ? (
           <p className="text-base text-muted">No entity appeared in both Qloo results. No overlap was invented.</p>
         ) : (
-          <ul className="flex flex-col gap-3">
+          <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
             {pairing.overlaps.map((overlap) => (
-              <li key={overlap.entityId} className="flex flex-col gap-1 rounded-card border border-line bg-surface p-4">
-                <p className="text-base text-fg">{overlap.name}</p>
-                <p className="text-sm text-muted">{overlap.category}</p>
-                <p className="text-sm text-accent">
-                  {formatAffinity(overlap.leftScore)} / {formatAffinity(overlap.rightScore)} affinity
-                </p>
+              <li key={overlap.entityId} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 flex-col gap-1">
+                  <p className="break-words text-base font-semibold text-white">{overlap.name}</p>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted">{overlap.category}</p>
+                </div>
+                <div className="grid shrink-0 grid-cols-2 gap-6 sm:gap-8">
+                  <ScoreFigure score={overlap.leftScore} />
+                  <ScoreFigure score={overlap.rightScore} />
+                </div>
               </li>
             ))}
           </ul>
         )}
       </div>
-      <div className="flex flex-col gap-2 rounded-card border border-line bg-surface p-4">
-        <h2 className="text-sm font-medium text-fg">Why this pairing</h2>
-        <p className="font-display text-lg leading-snug text-fg">{pairing.explanation}</p>
+      <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-5 shadow-card">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">Why this pairing</h2>
+        <p className="font-display text-xl leading-snug text-white">{pairing.explanation}</p>
         <p className="text-sm text-muted">{PAIRING_DISCLAIMER}</p>
       </div>
       <a
@@ -587,7 +610,7 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
         href="#pdf"
         onPointerDown={onPointerDown}
         onClick={(event) => void onClick(event)}
-        className="inline-flex h-12 items-center justify-center gap-2 rounded-card border border-line px-4 text-base font-medium text-fg"
+        className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 text-base font-medium text-fg hover:border-accent"
       >
         <Download className="size-5" aria-hidden="true" />
         Download one-page PDF
@@ -599,42 +622,52 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
 
 function EntityCard({ entity }: { entity: ResolvedEntity }) {
   return (
-    <article className="flex min-w-0 flex-col gap-1 rounded-card border border-line bg-surface p-4">
-      <p className="text-sm text-muted">Resolved on Qloo</p>
-      <p className="break-words font-display text-2xl leading-none text-fg">{entity.name}</p>
-      <p className="text-sm font-medium text-accent">{entity.typeLabel}</p>
+    <article className="flex min-w-0 flex-col gap-2 p-4 sm:p-5">
+      <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted">Resolved on Qloo</p>
+      <p className="break-words font-sans text-lg font-semibold leading-tight text-white sm:text-xl">{entity.name}</p>
+      <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-accent">{entity.typeLabel}</p>
     </article>
   );
 }
 
 function PitchCard({ pitch, seedName, index }: { pitch: Pitch; seedName: string; index: string }) {
   return (
-    <article className="flex flex-col gap-4 rounded-card border border-line bg-surface p-4">
+    <article className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5 shadow-card">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted">{index}</p>
-        <h3 className="text-sm font-medium text-fg">{pitch.partnerType}</h3>
+        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">{index}</p>
+        <h3 className="text-right text-[11px] font-medium uppercase tracking-[0.16em] text-muted">{pitch.partnerType}</h3>
       </div>
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-col divide-y divide-line">
         {pitch.hits.map((hit) => (
-          <li key={hit.entityId} className="flex items-baseline justify-between gap-3">
+          <li key={hit.entityId} className="flex items-center justify-between gap-3 py-3">
             <a
               href={partnerSearchHref(seedName, hit.name)}
               target="_blank"
               rel="noopener noreferrer"
-              className="min-w-0 break-words py-1 text-left text-base text-fg underline decoration-1 underline-offset-4"
+              className="min-w-0 break-words text-left text-base font-semibold text-white underline decoration-1 underline-offset-4"
             >
               {hit.name}
             </a>
-            <span className="shrink-0 text-sm font-medium text-accent">
-              {formatAffinity(hit.score)}
-              <span className="font-normal text-muted"> affinity</span>
-            </span>
+            <ScoreFigure score={hit.score} />
           </li>
         ))}
       </ul>
-      <p className="border-t border-line pt-3 font-display text-lg leading-snug text-fg">{pitch.line}</p>
+      <p className="border-t border-line pt-4 font-display text-lg leading-snug text-white">{pitch.line}</p>
       <CopyLine line={pitch.line} />
     </article>
+  );
+}
+
+function scoreTone(score: number): string {
+  return score >= 0.9 ? "text-accent" : "text-muted";
+}
+
+function ScoreFigure({ score }: { score: number }) {
+  return (
+    <span className="flex shrink-0 flex-col items-end gap-0.5">
+      <span className={`font-sans text-3xl font-semibold tabular-nums leading-none ${scoreTone(score)}`}>{formatAffinity(score)}</span>
+      <span className="text-[10px] uppercase tracking-[0.2em] text-muted">affinity</span>
+    </span>
   );
 }
 
@@ -655,7 +688,7 @@ function CopyLine({ line }: { line: string }) {
     <button
       type="button"
       onClick={onCopy}
-      className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-card border border-line px-4 text-sm font-medium text-fg"
+      className="inline-flex h-10 items-center justify-center gap-2 self-start rounded-full border border-line bg-surface px-4 text-sm font-medium text-fg hover:border-accent"
     >
       {state === "copied" ? <Check className="size-4" aria-hidden="true" /> : <Copy className="size-4" aria-hidden="true" />}
       {state === "copied" ? "Copied" : state === "failed" ? copyFailureMessage() : "Copy line"}

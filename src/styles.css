@@ -1,16 +1,24 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #12110e;
-  --color-surface: #1c1b17;
-  --color-fg: #f3efe6;
-  --color-muted: #a39e93;
-  --color-line: #2e2c26;
-  --color-accent: #e7a15a;
-  --color-accent-fg: #1a1208;
-  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Newsreader", ui-serif, Georgia, serif;
-  --radius-card: 1.25rem;
+  --color-bg: #0a0a0a;
+  --color-surface: #111113;
+  --color-fg: #f4f4f5;
+  --color-muted: #9ca3af;
+  --color-line: #27272a;
+  --color-accent: #e0202c;
+  --color-accent-fg: #ffffff;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Instrument Serif", ui-serif, Georgia, serif;
+  --radius-card: 1rem;
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 16px 32px -22px rgba(0, 0, 0, 0.9);
+}
+
+@layer components {
+  .bg-crimson-grad {
+    background-image: linear-gradient(180deg, #e0202c 0%, #b3121c 100%);
+  }
 }
 
 @layer base {
@@ -22,15 +30,18 @@
   html {
     background: var(--color-bg);
     color: var(--color-fg);
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     margin: 0;
     min-height: 100dvh;
+    overflow-x: hidden;
     background: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
   }
 
   @media (prefers-reduced-motion: reduce) {
