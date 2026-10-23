@@ -116,7 +116,7 @@ function Landing() {
             <img
               src="/compare-view.png"
               alt="Kinship compare of Nike and Adidas, with shared Qloo affinities and a one-line explanation."
-              className="block aspect-video h-auto w-full object-cover object-top"
+              className="block h-auto w-full"
               loading="lazy"
             />
           </figure>
