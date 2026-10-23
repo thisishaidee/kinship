@@ -5,9 +5,9 @@ import { KinshipWordmark } from "@/components/kinship-wordmark";
 export const Route = createFileRoute("/")({ component: Landing });
 
 const DISCLAIMER =
-  "Audience affinity reflects a connection in Qloo’s taste graph. It does not confirm an existing partnership, prove that a new partnership is available, or guarantee business compatibility. The numbers are affinity scores, not the chance a partnership succeeds.";
+  "A shared-fans score shows a connection in Qloo’s data. It does not confirm an existing partnership, prove that a new partnership is available, or guarantee business compatibility. The numbers are shared-fans scores, not the chance a partnership succeeds.";
 
-const STEPS = ["type a name", "qloo finds the affinities", "get your partners, compare, export"];
+const STEPS = ["type a name", "qloo finds shared fans", "get your partners, compare, export"];
 
 const SEEDS = ["Nike", "Burna Boy", "Dune (2021)"];
 const RESULTS = [
@@ -15,7 +15,7 @@ const RESULTS = [
   { name: "Air Jordan", score: "0.970" },
   { name: "Real Madrid CF", score: "0.969" },
 ];
-const TRUST = ["Music", "Film", "Brands", "Places"];
+const TRUST = ["Artists", "Film", "Brands", "Places"];
 const REPO = "https://github.com/thisishaidee/kinship";
 
 const pillBase = "inline-flex items-center justify-center rounded-full text-sm font-medium transition-colors";
@@ -29,14 +29,6 @@ function Landing() {
             <KinshipWordmark />
           </Link>
           <div className="flex items-center gap-2">
-            <a
-              href={REPO}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${pillBase} h-9 bg-surface px-3 text-xs text-fg ring-1 ring-line sm:px-4 sm:text-sm`}
-            >
-              View repo
-            </a>
             <Link
               to="/app"
               className={`${pillBase} h-9 gap-2 bg-crimson-grad pl-4 pr-1.5 text-sm text-white shadow-[0_6px_18px_-10px_rgba(224,32,44,0.9)]`}
@@ -60,11 +52,17 @@ function Landing() {
             <span className="font-display text-accent italic">not a playlist.</span>
           </h1>
           <p className="max-w-xl text-base leading-relaxed text-muted sm:text-lg">
-            Type an artist, film, or brand. Kinship finds its real partners on the Qloo taste graph and never invents a name.
+            Type an artist, film, or brand. Kinship finds its real partners on Qloo’s data and never invents a name.
+          </p>
+          <p className="max-w-xl text-base font-medium leading-relaxed text-white sm:text-lg">
+            Kinship shows who your fans already love, then helps you pitch them.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Link to="/app" className={`${pillBase} h-12 bg-crimson-grad px-7 text-base text-white shadow-[0_10px_28px_-14px_rgba(224,32,44,0.9)]`}>
               Launch app
+            </Link>
+            <Link to="/app" search={{ try: "Nike" }} className={`${pillBase} h-12 bg-surface px-7 text-base text-fg ring-1 ring-line hover:bg-line/40`}>
+              Try Nike
             </Link>
             <a href="#how-it-works" className={`${pillBase} h-12 bg-surface px-7 text-base text-fg ring-1 ring-line hover:bg-line/40`}>
               How it works
@@ -83,7 +81,7 @@ function Landing() {
           </ul>
         </section>
 
-        <section aria-label="How Kinship connects a seed to partners" className="flex flex-col items-center gap-10">
+        <section aria-label="How Kinship connects a name to partners" className="flex flex-col items-center gap-10">
           <DesktopDiagram />
           <MobileDiagram />
         </section>
@@ -113,7 +111,7 @@ function Landing() {
             <div className="relative w-full overflow-hidden rounded-none bg-black sm:rounded-xl sm:border sm:border-[#27272A]">
               <img
                 src="/compare-view.png"
-                alt="Desktop Kinship compare of Nike and Adidas, with shared Qloo affinities and a one-line explanation."
+                alt="Desktop Kinship compare of Nike and Adidas, with shared Qloo fans and a one-line explanation."
                 className="block h-auto w-full"
               />
             </div>
@@ -162,7 +160,7 @@ function ResultCard({ name, score, top = false, className = "" }: { name: string
       <span className="min-w-0 break-words text-sm font-semibold text-white">{name}</span>
       <span className="flex shrink-0 items-baseline gap-2">
         <span className={`text-[22px] font-medium leading-none tabular-nums ${top ? "text-accent" : "text-[#9CA3AF]"}`}>{score}</span>
-        <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-[#9CA3AF]/80">affinity</span>
+        <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-[#9CA3AF]/80">shared-fans score</span>
       </span>
     </div>
   );
@@ -172,14 +170,14 @@ function HubCircle() {
   return (
     <div className="flex size-28 flex-col items-center justify-center gap-1 rounded-full border border-accent/60 bg-surface text-center shadow-[0_0_0_8px_rgba(224,32,44,0.06)] sm:size-36">
       <span className="text-[10px] uppercase tracking-[0.2em] text-muted">Qloo</span>
-      <span className="px-3 text-sm font-semibold leading-tight text-white">taste graph</span>
+      <span className="px-3 text-sm font-semibold leading-tight text-white">Qloo’s data</span>
     </div>
   );
 }
 
 function DesktopDiagram() {
   return (
-    <div className="relative hidden h-[380px] w-full max-w-4xl md:block" role="img" aria-label="Seeds Nike, Burna Boy, and Dune connect through the Qloo taste graph to Wiz Khalifa, Air Jordan, and Real Madrid CF.">
+    <div className="relative hidden h-[380px] w-full max-w-4xl md:block" role="img" aria-label="Names Nike, Burna Boy, and Dune connect through Qloo’s data to Wiz Khalifa, Air Jordan, and Real Madrid CF.">
       <svg className="absolute inset-0 size-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         {[16, 50, 84].map((y) => (
           <line key={`l${y}`} x1="19" y1={y} x2="42" y2="50" stroke="#3f3f46" strokeWidth="1" vectorEffect="non-scaling-stroke" />

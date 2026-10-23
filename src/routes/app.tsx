@@ -19,10 +19,13 @@ import {
 import { KinshipWordmark } from "@/components/kinship-wordmark";
 import { PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/kinship-pdf";
 
-export const Route = createFileRoute("/app")({ component: Home });
+export const Route = createFileRoute("/app")({
+  validateSearch: (search: Record<string, unknown>): { try?: string } => (typeof search.try === "string" ? { try: search.try } : {}),
+  component: Home,
+});
 
 const EXAMPLES = ["Radiohead", "Nike", "Davido"] as const;
-const RESULT_NOTE = "Scores show taste-graph affinity, not partnership availability.";
+const RESULT_NOTE = "Shared-fans scores show a connection in Qloo’s data, not partnership availability.";
 
 type Phase = "idle" | "loading" | "matched" | "ambiguous" | "no-match" | "missing-key" | "refused" | "unavailable";
 type Mode = "single" | "compare";
@@ -34,6 +37,7 @@ function problemCopy(reason: "empty" | "too-long" | "invalid"): string {
 }
 
 function Home() {
+  const { try: tryName } = Route.useSearch();
   const resolveSeed = useServerFn(resolveKinshipSeed);
   const compareSeeds = useServerFn(compareKinshipSeeds);
   const requestSeq = useRef(0);
@@ -174,15 +178,21 @@ function Home() {
 
   const busy = mode === "single" ? phase === "loading" : comparePhase === "loading";
 
+  const tryRan = useRef(false);
+  useEffect(() => {
+    if (!tryName || tryRan.current) return;
+    tryRan.current = true;
+    setSeed(tryName);
+    void run(tryName.trim());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tryName]);
+
   return (
     <div className="flex w-full flex-col overflow-x-hidden bg-bg">
       <header className="sticky top-0 z-20 border-b border-line bg-bg/90 backdrop-blur">
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-3 px-5">
           <a href="/" aria-label="Kinship home" className="shrink-0">
             <KinshipWordmark />
-          </a>
-          <a href="https://github.com/thisishaidee/kinship" target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-muted hover:text-white sm:text-sm">
-            GitHub
           </a>
         </div>
       </header>
@@ -202,7 +212,7 @@ function Home() {
 
       <div className="grid grid-cols-2 gap-2">
         <button type="button" aria-pressed={mode === "single"} onClick={() => setMode("single")} className={modeButton(mode === "single")}>
-          One seed
+          one name
         </button>
         <button type="button" aria-pressed={mode === "compare"} onClick={() => setMode("compare")} className={modeButton(mode === "compare")}>
           Compare
@@ -213,7 +223,7 @@ function Home() {
         {mode === "single" ? (
           <div className="flex min-w-0 items-center gap-2 rounded-full border border-line bg-surface py-1.5 pl-5 pr-1.5 focus-within:border-accent">
             <label htmlFor="seed" className="sr-only">
-              Seed
+              Name
             </label>
             <input
               id="seed"
@@ -234,7 +244,7 @@ function Home() {
               enterKeyHint="search"
               className="h-10 min-w-0 flex-1 bg-transparent text-base text-fg outline-none placeholder:text-muted"
             />
-            <SubmitButton busy={busy} label={busy ? "Asking the taste graph" : "Find partners"} inline />
+            <SubmitButton busy={busy} label={busy ? "Asking Qloo" : "Find partners"} inline />
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -260,13 +270,13 @@ function Home() {
           <Alert>No exact Qloo match for “{heldSeed}”. Kinship will not use a similar name.</Alert>
         ) : null}
         {busy ? <LoadingSteps mode={mode} /> : null}
-        {mode === "compare" ? <SubmitButton busy={busy} label={busy ? "Asking the taste graph" : "Compare"} /> : null}
+        {mode === "compare" ? <SubmitButton busy={busy} label={busy ? "Asking Qloo" : "Compare"} /> : null}
       </form>
 
       {mode === "single" && phase === "idle" ? (
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-medium text-fg">No pitch yet</h2>
-          <p className="text-base text-muted">The field starts empty. Pick a seed, or type your own.</p>
+          <p className="text-base text-muted">The field starts empty. Pick a name, or type your own.</p>
           <div className="flex flex-wrap gap-2">
             {EXAMPLES.map((example) => (
               <button
@@ -301,7 +311,7 @@ function Home() {
         <section className="flex flex-col gap-3" aria-busy={busy} aria-live="polite">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-sm font-medium text-fg">Pitch cards</h2>
-            <p className="text-sm text-muted">{phase === "matched" ? `${pitches.length} from the strongest affinity scores` : "No pitch"}</p>
+            <p className="text-sm text-muted">{phase === "matched" ? `${pitches.length} from the strongest shared-fans scores` : "No pitch"}</p>
           </div>
           {phase === "matched" && pitches.length === 0 ? (
             <p className="text-base text-muted">
@@ -389,7 +399,7 @@ function Home() {
 }
 
 function HowItWorks() {
-  const steps = ["type a name", "qloo finds the affinities", "get your partners, compare, export"];
+  const steps = ["type a name", "qloo finds shared fans", "get your partners, compare, export"];
   return (
     <section className="flex flex-col gap-3" aria-labelledby="how-it-works">
       <h2 id="how-it-works" className="text-sm font-medium text-fg">
@@ -416,8 +426,8 @@ function HowItWorks() {
 function LoadingSteps({ mode }: { mode: Mode }) {
   const steps =
     mode === "compare"
-      ? ["resolving both names", "reading the taste graph", "building the compare"]
-      : ["resolving the name", "reading the taste graph", "building your pitch"];
+      ? ["resolving both names", "reading Qloo’s data", "building the compare"]
+      : ["resolving the name", "reading Qloo’s data", "building your pitch"];
   const [step, setStep] = useState(0);
   useEffect(() => {
     const id = window.setInterval(() => setStep((current) => (current + 1 >= steps.length ? current : current + 1)), 1600);
@@ -589,7 +599,7 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
         <SeedTicket entity={pairing.right} />
       </div>
       <div className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium text-fg">Shared affinities</h2>
+        <h2 className="text-sm font-medium text-fg">Shared-fans scores</h2>
         <p className="text-sm leading-snug text-muted">{RESULT_NOTE}</p>
         {pairing.overlaps.length === 0 ? (
           <p className="text-base text-muted">No entity appeared in both Qloo results.</p>
@@ -678,7 +688,7 @@ function ResultCard({ name, href, category, score, top = false }: { name: string
         </div>
         <p className="flex shrink-0 items-baseline gap-2">
           <span className={`text-[22px] leading-none tabular-nums ${top ? "font-semibold text-accent" : "font-medium text-[#9CA3AF]"}`}>{formatAffinity(score)}</span>
-          <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-[#9CA3AF]/80">affinity</span>
+          <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-[#9CA3AF]/80">shared-fans score</span>
         </p>
       </div>
     </article>
