@@ -111,7 +111,7 @@ const pillBase = "inline-flex items-center justify-center rounded-full text-sm f
 
 function Landing() {
   return (
-    <div data-landing="v2" className="flex min-h-dvh w-full flex-col overflow-x-hidden bg-bg text-fg">
+    <div data-landing="v2" className="flex w-full flex-col overflow-x-hidden bg-bg text-fg">
       <header className="sticky top-0 z-20 border-b border-line/60 bg-bg/90 backdrop-blur">
         <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-2 px-5">
           <Link to="/" aria-label="Kinship home" className="shrink-0">
@@ -139,7 +139,7 @@ function Landing() {
         </nav>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-16 px-5 pb-16 pt-12 sm:gap-24 sm:pt-24">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-5 pb-12 pt-10 sm:gap-24 sm:pb-16 sm:pt-24">
         <section className="flex flex-col items-center gap-7 text-center">
           <span className="inline-flex items-center rounded-full border border-accent/70 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.24em] text-accent">
             Powered by Qloo
@@ -242,7 +242,7 @@ function Landing() {
         <p className="mx-auto max-w-3xl text-center text-sm leading-relaxed text-muted">{DISCLAIMER}</p>
       </main>
 
-      <footer className="mt-auto border-t border-line bg-bg">
+      <footer className="mt-16 border-t border-line bg-bg sm:mt-24">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-8 text-sm text-muted">
           <KinshipWordmark />
           <div className="flex flex-wrap gap-x-5 gap-y-2">
@@ -277,9 +277,9 @@ function ResultCard({ name, score, className = "" }: { name: string; score: stri
   return (
     <div className={`flex w-full flex-col gap-2 rounded-2xl border border-line bg-surface p-4 ${className}`}>
       <span className="text-sm font-semibold text-fg">{name}</span>
-      <div className="flex items-baseline gap-2">
-        <span className="font-sans text-3xl font-semibold tabular-nums leading-none text-accent">{score}</span>
-        <span className="text-[10px] uppercase tracking-[0.2em] text-muted">affinity</span>
+      <div className="flex items-end justify-between gap-3 border-t border-line pt-2">
+        <span className="text-[9px] font-medium uppercase tracking-[0.22em] text-muted/80">affinity</span>
+        <span className="font-sans text-2xl font-medium leading-none tracking-[-0.02em] tabular-nums text-accent/90">{score}</span>
       </div>
     </div>
   );

@@ -176,7 +176,7 @@ function Home() {
   const busy = mode === "single" ? phase === "loading" : comparePhase === "loading";
 
   return (
-    <div className="flex min-h-dvh w-full flex-col overflow-x-hidden bg-bg">
+    <div className="flex w-full flex-col overflow-x-hidden bg-bg">
       <header className="sticky top-0 z-20 border-b border-line bg-bg/90 backdrop-blur">
         <div className="mx-auto flex h-14 w-full max-w-2xl items-center justify-between gap-3 px-5">
           <a href="/" aria-label="Kinship home" className="shrink-0">
@@ -187,7 +187,7 @@ function Home() {
           </a>
         </div>
       </header>
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-5 pb-10 pt-8">
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-5 pb-8 pt-6 sm:pt-8">
       <header className="flex flex-col gap-3">
         <h1 className="font-display text-4xl leading-none text-white sm:text-[44px]">
           A partnership, <span className="italic text-accent">not a playlist.</span>
@@ -364,7 +364,7 @@ function Home() {
 
       {mode === "compare" && pairing ? <CompareView pairing={pairing} /> : null}
 
-      <footer className="mt-auto flex flex-wrap gap-x-5 gap-y-2 border-t border-line pt-5 text-sm text-muted">
+      <footer className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-line pt-5 text-sm text-muted sm:mt-8">
         <a href="https://github.com/thisishaidee/kinship" target="_blank" rel="noopener noreferrer" className="text-fg underline decoration-1 underline-offset-4">
           GitHub repository
         </a>
@@ -658,14 +658,14 @@ function PitchCard({ pitch, seedName, index }: { pitch: Pitch; seedName: string;
 }
 
 function scoreTone(score: number): string {
-  return score >= 0.9 ? "text-accent" : "text-muted";
+  return score >= 0.9 ? "text-accent/90" : "text-muted/70";
 }
 
 function ScoreFigure({ score }: { score: number }) {
   return (
-    <span className="flex shrink-0 flex-col items-end gap-0.5">
-      <span className={`font-sans text-3xl font-semibold tabular-nums leading-none ${scoreTone(score)}`}>{formatAffinity(score)}</span>
-      <span className="text-[10px] uppercase tracking-[0.2em] text-muted">affinity</span>
+    <span className="flex min-w-[4.5rem] shrink-0 flex-col items-end border-l border-line pl-3 text-right">
+      <span className={`font-sans text-2xl font-medium leading-none tracking-[-0.02em] tabular-nums ${scoreTone(score)}`}>{formatAffinity(score)}</span>
+      <span className="mt-1.5 text-[9px] font-medium uppercase tracking-[0.22em] text-muted/80">affinity</span>
     </span>
   );
 }
