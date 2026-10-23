@@ -125,8 +125,6 @@ function Landing() {
             <img
               src="/compare-view.png"
               alt="Desktop Kinship compare of Nike and Adidas, with shared Qloo fans and a one-line explanation."
-              width={1920}
-              height={1080}
               className="block h-auto w-full"
             />
           </figure>
