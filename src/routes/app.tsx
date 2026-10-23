@@ -318,13 +318,14 @@ function Home() {
               {pitches.map((pitch) => (
                 <section key={pitch.id} className="flex flex-col gap-3">
                   <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                    {pitch.hits.map((hit) => (
+                    {pitch.hits.map((hit, hitIndex) => (
                       <li key={hit.entityId}>
                         <ResultCard
                           name={hit.name}
                           href={partnerSearchHref(match?.name ?? heldSeed, hit.name)}
                           category={pitch.partnerType}
                           score={hit.score}
+                          top={hitIndex === 0}
                         />
                       </li>
                     ))}
@@ -662,20 +663,23 @@ function SeedTicket({ entity }: { entity: ResolvedEntity }) {
   );
 }
 
-function ResultCard({ name, href, category, score }: { name: string; href: string; category: string; score: number }) {
+function ResultCard({ name, href, category, score, top = false }: { name: string; href: string; category: string; score: number; top?: boolean }) {
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface">
       <div className="bg-accent/10 px-4 py-2">
         <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-accent">{category.split(" ")[0]}</p>
       </div>
-      <div className="flex flex-1 items-end justify-between gap-4 px-4 py-4">
+      <div className="flex flex-1 items-baseline justify-between gap-4 px-4 py-3.5">
         <div className="min-w-0">
-          <a href={href} target="_blank" rel="noopener noreferrer" className="block break-words text-lg font-semibold text-fg underline decoration-white/25 underline-offset-4">
+          <a href={href} target="_blank" rel="noopener noreferrer" className="block break-words text-sm font-semibold text-white underline decoration-white/25 underline-offset-4">
             {name}
           </a>
-          <p className="mt-1 text-xs text-muted">shared-fans score</p>
+          <p className="mt-0.5 text-[10px] uppercase tracking-[0.18em] text-[#9CA3AF]/80">shared-fans score</p>
         </div>
-        <p className={`shrink-0 text-4xl leading-none tabular-nums ${scoreTone(score)}`}>{formatAffinity(score)}</p>
+        <p className="flex shrink-0 items-baseline gap-2">
+          <span className={`text-[22px] leading-none tabular-nums ${top ? "font-semibold text-accent" : "font-medium text-[#9CA3AF]"}`}>{formatAffinity(score)}</span>
+          <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-[#9CA3AF]/80">affinity</span>
+        </p>
       </div>
     </article>
   );

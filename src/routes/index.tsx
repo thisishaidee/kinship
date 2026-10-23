@@ -98,13 +98,10 @@ function Landing() {
               Every name and score comes straight from Qloo.
             </p>
           </div>
-          <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <ol className="grid gap-2 sm:grid-cols-3">
             {STEPS.map((step, index) => (
-              <li
-                key={step}
-                className="flex flex-col gap-6 rounded-2xl border border-line bg-surface p-5 shadow-[0_16px_32px_-24px_rgba(0,0,0,0.9)] last:sm:col-span-2 lg:last:col-span-1"
-              >
-                <span className="font-sans text-3xl font-semibold leading-none text-accent">{String(index + 1).padStart(2, "0")}</span>
+              <li key={step} className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3.5">
+                <span className="shrink-0 font-mono text-[12px] leading-none tabular-nums text-accent">{String(index + 1).padStart(2, "0")}</span>
                 <span className="text-sm leading-snug text-fg">{step}</span>
               </li>
             ))}
@@ -159,14 +156,14 @@ function SeedPill({ label, className = "" }: { label: string; className?: string
   );
 }
 
-function ResultCard({ name, score, className = "" }: { name: string; score: string; className?: string }) {
+function ResultCard({ name, score, top = false, className = "" }: { name: string; score: string; top?: boolean; className?: string }) {
   return (
-    <div className={`flex w-full flex-col gap-2 rounded-2xl border border-line bg-surface p-4 ${className}`}>
-      <span className="text-sm font-semibold text-fg">{name}</span>
-      <div className="flex items-end justify-between gap-3 border-t border-line pt-2">
-        <span className="text-[9px] font-medium uppercase tracking-[0.22em] text-muted/80">affinity</span>
-        <span className="font-sans text-2xl font-medium leading-none tracking-[-0.02em] tabular-nums text-accent/90">{score}</span>
-      </div>
+    <div className={`flex w-full items-baseline justify-between gap-4 rounded-xl border border-line bg-surface px-4 py-3.5 ${className}`}>
+      <span className="min-w-0 break-words text-sm font-semibold text-white">{name}</span>
+      <span className="flex shrink-0 items-baseline gap-2">
+        <span className={`text-[22px] font-medium leading-none tabular-nums ${top ? "text-accent" : "text-[#9CA3AF]"}`}>{score}</span>
+        <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-[#9CA3AF]/80">affinity</span>
+      </span>
     </div>
   );
 }
@@ -204,7 +201,7 @@ function DesktopDiagram() {
         <HubCircle />
       </div>
       <div className="absolute right-0 top-[16%] w-[210px] -translate-y-1/2">
-        <ResultCard name={RESULTS[0].name} score={RESULTS[0].score} />
+        <ResultCard name={RESULTS[0].name} score={RESULTS[0].score} top />
       </div>
       <div className="absolute right-0 top-1/2 w-[210px] -translate-y-1/2">
         <ResultCard name={RESULTS[1].name} score={RESULTS[1].score} />
@@ -231,7 +228,7 @@ function MobileDiagram() {
       </div>
       <div className="flex flex-col gap-3">
         {RESULTS.map((result) => (
-          <ResultCard key={result.name} name={result.name} score={result.score} />
+          <ResultCard key={result.name} name={result.name} score={result.score} top={result === RESULTS[0]} />
         ))}
       </div>
     </div>
