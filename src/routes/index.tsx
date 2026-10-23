@@ -106,8 +106,8 @@ function Landing() {
           </ol>
         </section>
 
-        <section aria-label="Compare example" className="hidden w-full min-w-0 justify-center py-2 md:flex sm:py-4">
-          <figure className="w-full max-w-[1280px] overflow-hidden rounded-2xl border border-[#27272A] bg-[#0A0A0A] shadow-[0_28px_50px_-28px_rgba(0,0,0,0.9)]">
+        <section aria-label="Compare example" className="hidden min-w-0 justify-center py-2 md:flex md:relative md:left-1/2 md:w-[min(calc(100vw-3rem),1440px)] md:-translate-x-1/2 sm:py-4">
+          <figure className="w-full max-w-[1440px] overflow-hidden rounded-2xl border border-[#27272A] bg-[#0A0A0A] shadow-[0_28px_50px_-28px_rgba(0,0,0,0.9)]">
             <div className="grid h-11 grid-cols-[3.25rem_minmax(0,1fr)_3.25rem] items-center border-b border-[#27272A] px-2.5 sm:h-12 sm:grid-cols-[4.5rem_minmax(0,1fr)_4.5rem] sm:px-3">
               <div className="flex items-center gap-1 text-[#9CA3AF]" aria-hidden="true">
                 <svg viewBox="0 0 16 16" className="size-4" fill="none">
