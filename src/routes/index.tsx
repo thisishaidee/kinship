@@ -25,85 +25,75 @@ const TRUST = ["Music", "Film", "Brands", "Places"];
 const VALUE_PROPS = [
   {
     title: "Only real data",
-    lines: [
-      "Every name and score comes straight from Qloo's taste graph.",
-      "Kinship never invents a partner. No exact match means no result.",
-    ],
+    body: "Every name and score comes straight from Qloo's taste graph. No exact match means no result, never a guessed partner.",
   },
   {
     title: "Grounded explanations",
-    lines: [
-      "A one-line why, written by AI.",
-      "It is told to use only the exact scores Qloo returned, and to say nothing if it cannot.",
-    ],
+    body: "A one-line why, written by AI from the exact scores Qloo returned. If the data is thin, it says nothing.",
   },
   {
     title: "Pitch-ready output",
-    lines: [
-      "One tap exports a clean one-page PDF brief.",
-      "It carries the pairing, the scores, and the affinity disclaimer.",
-    ],
+    body: "One tap exports a clean one-page PDF brief with the pairing, the scores, and the affinity disclaimer.",
   },
 ];
-function MockSeeds() {
+
+function VisualSeedToTaste() {
   return (
-    <div className="relative flex h-28 w-full min-w-0 items-center justify-between overflow-hidden rounded-xl border border-line bg-bg px-3 py-3">
-      <div className="flex min-w-0 flex-col gap-1.5">
-        {SEEDS.map((seed) => (
-          <span key={seed} className="w-fit max-w-full truncate rounded-full border border-line bg-surface px-2 py-0.5 text-[10px] leading-tight text-fg">
-            {seed}
+    <div className="flex h-36 w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-[#222226] bg-[#0b0b0d] px-4">
+      <span className="shrink-0 rounded-full border border-accent/50 bg-accent/10 px-3 py-1 text-xs font-medium text-white">
+        {SEEDS[0]}
+      </span>
+      <span className="relative h-px min-w-0 flex-1 bg-gradient-to-r from-accent/70 via-accent/30 to-transparent">
+        <span className="absolute -top-[3px] right-0 size-[7px] rounded-full bg-accent" />
+      </span>
+      <div className="flex shrink-0 flex-col items-end gap-1.5 rounded-lg border border-[#222226] bg-[#141416] px-3 py-2">
+        <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Qloo Taste Graph</span>
+        <span className="flex items-baseline gap-2">
+          <span className="text-xs text-white">{RESULTS[0].name}</span>
+          <span className="font-sans text-sm font-semibold tabular-nums text-accent">{RESULTS[0].score}</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function VisualAffinityBubble() {
+  return (
+    <div className="relative flex h-36 w-full min-w-0 flex-col justify-center gap-3 rounded-xl border border-[#222226] bg-[#0b0b0d] px-4">
+      <div className="flex min-w-0 flex-col gap-2 rounded-xl border border-[#2a2a2f] bg-[#141416] p-3 shadow-[0_18px_30px_-20px_rgba(0,0,0,0.9)]">
+        <div className="flex items-center justify-between gap-2">
+          <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">
+            Affinity Match
           </span>
-        ))}
-      </div>
-      <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="absolute inset-y-0 left-[30%] h-full w-[30%]" aria-hidden="true">
-        <path d="M0 10 C50 10 50 30 100 30 M0 30 L100 30 M0 50 C50 50 50 30 100 30" fill="none" stroke="#3f3f46" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-      </svg>
-      <div className="relative flex shrink-0 items-center gap-2">
-        <span className="flex size-9 items-center justify-center rounded-full border-2 border-accent">
-          <span className="size-2 rounded-full bg-accent" />
-        </span>
-        <span className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2 py-1">
-          <span className="text-[10px] text-muted">{RESULTS[0].name}</span>
-          <span className="font-sans text-xs font-semibold text-accent">{RESULTS[0].score}</span>
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function MockExplanation() {
-  return (
-    <div className="flex h-28 w-full min-w-0 flex-col justify-center gap-3 overflow-hidden rounded-xl border border-line bg-bg p-3">
-      <div className="flex min-w-0 items-start gap-2 rounded-lg border border-line bg-surface p-2.5">
-        <p className="min-w-0 flex-1 break-words text-[11px] leading-snug text-fg">
-          Audience affinity links {SEEDS[1]} with {RESULTS[0].name} in the taste graph.
+          <span className="font-sans text-sm font-semibold tabular-nums text-white">{RESULTS[1].score}</span>
+        </div>
+        <p className="min-w-0 text-xs leading-snug text-zinc-300">
+          {SEEDS[1]} and {RESULTS[1].name} sit close together in the taste graph.
         </p>
-        <span className="shrink-0 rounded-md border border-accent/60 px-1.5 py-0.5 font-sans text-[10px] font-semibold text-accent">
-          {RESULTS[0].score}
-        </span>
       </div>
-      <div className="h-1 w-3/4 rounded-full bg-line" />
-      <div className="h-1 w-1/2 rounded-full bg-line" />
     </div>
   );
 }
 
-function MockBrief() {
+function VisualExportCard() {
   return (
-    <div className="flex h-28 w-full min-w-0 items-center justify-center overflow-hidden rounded-xl border border-line bg-bg p-3">
-      <div className="flex h-full w-[62%] max-w-[120px] flex-col gap-1.5 rounded-md border border-line bg-white p-2">
-        <div className="h-2 w-4/5 rounded-sm bg-[#3f3f46]" />
+    <div className="flex h-36 w-full min-w-0 items-center justify-center rounded-xl border border-[#222226] bg-[#0b0b0d] px-4">
+      <div className="flex h-28 w-[58%] max-w-[150px] flex-col gap-2 rounded-md border border-[#2a2a2f] bg-[#f4f4f5] p-2.5 shadow-[0_16px_28px_-18px_rgba(0,0,0,0.9)]">
+        <div className="flex items-center justify-between">
+          <span className="h-1.5 w-1/2 rounded-sm bg-[#18181b]" />
+          <span className="size-2 rounded-full bg-accent" />
+        </div>
         <div className="h-px w-full bg-[#d4d4d8]" />
         <div className="h-1 w-full rounded-full bg-[#d4d4d8]" />
         <div className="h-1 w-11/12 rounded-full bg-[#d4d4d8]" />
         <div className="h-1 w-3/4 rounded-full bg-[#d4d4d8]" />
-        <div className="mt-auto h-6 w-full rounded-sm bg-accent" />
+        <div className="mt-auto h-4 w-full rounded-sm bg-accent" />
       </div>
     </div>
   );
 }
 
-const VALUE_MOCKS = [MockSeeds, MockExplanation, MockBrief];
+const VALUE_VISUALS = [VisualSeedToTaste, VisualAffinityBubble, VisualExportCard];
 
 const REPO = "https://github.com/thisishaidee/kinship";
 
@@ -139,7 +129,7 @@ function Landing() {
         </nav>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-5 pb-12 pt-10 sm:gap-24 sm:pb-16 sm:pt-24">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-5 pb-28 pt-8 sm:gap-24 sm:pb-16 sm:pt-24">
         <section className="flex flex-col items-center gap-7 text-center">
           <span className="inline-flex items-center rounded-full border border-accent/70 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.24em] text-accent">
             Powered by Qloo
@@ -184,22 +174,15 @@ function Landing() {
               Why Kinship
             </h2>
           </div>
-          <ul className="grid gap-4 md:grid-cols-3">
+          <ul className="grid gap-5 md:grid-cols-3">
             {VALUE_PROPS.map((prop, index) => {
-              const Mock = VALUE_MOCKS[index];
+              const Visual = VALUE_VISUALS[index];
               return (
-              <li key={prop.title} className="flex min-w-0 flex-col gap-4 rounded-2xl border border-[#27272A] bg-[#111113] p-5 sm:p-6">
-                <Mock />
-                <span className="font-sans text-sm font-semibold leading-none text-accent">{String(index + 1).padStart(2, "0")}</span>
-                <h3 className="font-sans text-xl font-semibold tracking-tight text-white">{prop.title}</h3>
-                <div className="flex flex-col gap-2">
-                  {prop.lines.map((line) => (
-                    <p key={line} className="text-sm leading-relaxed text-muted">
-                      {line}
-                    </p>
-                  ))}
-                </div>
-              </li>
+                <li key={prop.title} className="flex min-w-0 flex-col rounded-2xl border border-[#222226] bg-[#111114] p-6">
+                  <Visual />
+                  <h3 className="mt-4 font-sans text-lg font-semibold text-white">{prop.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-zinc-400">{prop.body}</p>
+                </li>
               );
             })}
           </ul>
@@ -229,11 +212,19 @@ function Landing() {
         </section>
 
         <section aria-label="Compare example" className="flex w-full min-w-0 flex-col gap-4">
-          <figure className="overflow-hidden rounded-2xl border border-line bg-surface">
+          <figure className="mx-auto w-full max-w-5xl overflow-hidden rounded-xl border border-[#2a2a2f] bg-[#0b0b0d] shadow-[0_40px_80px_-40px_rgba(0,0,0,0.95)]">
+            <div className="flex h-9 items-center gap-2 border-b border-[#222226] bg-[#141416] px-3">
+              <span className="size-2.5 rounded-full bg-[#3f3f46]" />
+              <span className="size-2.5 rounded-full bg-[#3f3f46]" />
+              <span className="size-2.5 rounded-full bg-[#3f3f46]" />
+              <span className="ml-3 flex h-5 min-w-0 flex-1 items-center rounded-md bg-[#0b0b0d] px-3 text-[11px] text-zinc-500">
+                kinshipp.vercel.app/app
+              </span>
+            </div>
             <img
               src="/compare-view.png"
               alt="Kinship compare of Nike and Adidas, with shared Qloo affinities and a two-sentence explanation."
-              className="block h-auto w-full max-w-full"
+              className="block aspect-video h-auto w-full object-cover object-top"
               loading="lazy"
             />
           </figure>
@@ -242,7 +233,7 @@ function Landing() {
         <p className="mx-auto max-w-3xl text-center text-sm leading-relaxed text-muted">{DISCLAIMER}</p>
       </main>
 
-      <footer className="mt-16 border-t border-line bg-bg sm:mt-24">
+      <footer className="border-t border-line bg-bg pb-6 sm:pb-0">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-8 text-sm text-muted">
           <KinshipWordmark />
           <div className="flex flex-wrap gap-x-5 gap-y-2">
