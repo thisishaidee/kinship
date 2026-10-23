@@ -22,6 +22,29 @@ const RESULTS = [
   { name: "Real Madrid CF", score: "0.969" },
 ];
 const TRUST = ["Music", "Film", "Brands", "Places"];
+const VALUE_PROPS = [
+  {
+    title: "Only real data",
+    lines: [
+      "Every name and score comes straight from Qloo's taste graph.",
+      "Kinship never invents a partner. No exact match means no result.",
+    ],
+  },
+  {
+    title: "Grounded explanations",
+    lines: [
+      "A one-line why, written by AI.",
+      "It is told to use only the exact scores Qloo returned, and to say nothing if it cannot.",
+    ],
+  },
+  {
+    title: "Pitch-ready output",
+    lines: [
+      "One tap exports a clean one-page PDF brief.",
+      "It carries the pairing, the scores, and the affinity disclaimer.",
+    ],
+  },
+];
 const REPO = "https://github.com/thisishaidee/kinship";
 
 const pillBase = "inline-flex items-center justify-center rounded-full text-sm font-medium transition-colors";
@@ -56,12 +79,12 @@ function Landing() {
         </nav>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-24 px-5 pb-16 pt-16 sm:gap-32 sm:pt-24">
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-16 px-5 pb-16 pt-12 sm:gap-24 sm:pt-24">
         <section className="flex flex-col items-center gap-7 text-center">
           <span className="inline-flex items-center rounded-full border border-accent/70 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.24em] text-accent">
             Powered by Qloo
           </span>
-          <h1 className="flex max-w-3xl flex-col items-center font-sans text-[40px] font-semibold leading-[1.05] tracking-tight text-white sm:text-[56px]">
+          <h1 className="flex max-w-3xl flex-col items-center font-sans text-[40px] font-semibold leading-[1.05] tracking-tight text-white break-words sm:text-[56px]">
             <span>A partnership,</span>
             <span className="font-display text-accent italic">not a playlist.</span>
           </h1>
@@ -94,6 +117,30 @@ function Landing() {
           <MobileDiagram />
         </section>
 
+        <section aria-labelledby="why-kinship" className="flex flex-col gap-8">
+          <div className="flex max-w-2xl flex-col gap-3">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">The promise</p>
+            <h2 id="why-kinship" className="scroll-mt-24 font-sans text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+              Why Kinship
+            </h2>
+          </div>
+          <ul className="grid gap-4 md:grid-cols-3">
+            {VALUE_PROPS.map((prop, index) => (
+              <li key={prop.title} className="flex flex-col gap-4 rounded-2xl border border-[#27272A] bg-[#111113] p-6">
+                <span className="font-sans text-sm font-semibold leading-none text-accent">{String(index + 1).padStart(2, "0")}</span>
+                <h3 className="font-sans text-xl font-semibold tracking-tight text-white">{prop.title}</h3>
+                <div className="flex flex-col gap-2">
+                  {prop.lines.map((line) => (
+                    <p key={line} className="text-sm leading-relaxed text-muted">
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
         <section className="flex flex-col gap-8" aria-labelledby="how-it-works">
           <div className="flex max-w-2xl flex-col gap-3">
             <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">The flow</p>
@@ -108,7 +155,7 @@ function Landing() {
             {STEPS.map((step, index) => (
               <li
                 key={step}
-                className="flex flex-col gap-6 rounded-2xl border border-line bg-surface p-5 shadow-[0_16px_32px_-24px_rgba(0,0,0,0.9)]"
+                className="flex flex-col gap-6 rounded-2xl border border-line bg-surface p-5 shadow-[0_16px_32px_-24px_rgba(0,0,0,0.9)] last:sm:col-span-2 lg:last:col-span-1"
               >
                 <span className="font-sans text-3xl font-semibold leading-none text-accent">{String(index + 1).padStart(2, "0")}</span>
                 <span className="text-sm leading-snug text-fg">{step}</span>
@@ -117,12 +164,12 @@ function Landing() {
           </ol>
         </section>
 
-        <section aria-label="Compare example" className="flex flex-col gap-4">
+        <section aria-label="Compare example" className="flex w-full min-w-0 flex-col gap-4">
           <figure className="overflow-hidden rounded-2xl border border-line bg-surface">
             <img
               src="/compare-view.png"
               alt="Kinship compare of Nike and Adidas, with shared Qloo affinities and a two-sentence explanation."
-              className="block w-full"
+              className="block h-auto w-full max-w-full"
               loading="lazy"
             />
           </figure>

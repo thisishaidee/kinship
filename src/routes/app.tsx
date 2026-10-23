@@ -187,7 +187,7 @@ function Home() {
           </a>
         </div>
       </header>
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-5 pb-10 pt-8">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-5 pb-10 pt-8">
       <header className="flex flex-col gap-3">
         <h1 className="font-display text-4xl leading-none text-white sm:text-[44px]">
           A partnership, <span className="italic text-accent">not a playlist.</span>
@@ -238,7 +238,7 @@ function Home() {
             <SubmitButton busy={busy} label={busy ? "Asking the taste graph" : "Find partners"} inline />
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <SeedField id="left-seed" label="First" value={leftSeed} onChange={setLeftSeed} />
             <SeedField id="right-seed" label="Second" value={rightSeed} onChange={setRightSeed} />
           </div>
@@ -574,7 +574,7 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
 
   return (
     <section className="flex flex-col gap-4" aria-live="polite">
-      <div className="grid grid-cols-2 divide-x divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+      <div className="grid grid-cols-1 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface sm:grid-cols-2 sm:divide-x sm:divide-y-0">
         <EntityCard entity={pairing.left} />
         <EntityCard entity={pairing.right} />
       </div>
@@ -591,7 +591,7 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
                   <p className="break-words text-base font-semibold text-white">{overlap.name}</p>
                   <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted">{overlap.category}</p>
                 </div>
-                <div className="grid shrink-0 grid-cols-2 gap-6 sm:gap-8">
+                <div className="grid w-full shrink-0 grid-cols-2 gap-6 sm:w-auto sm:gap-8">
                   <ScoreFigure score={overlap.leftScore} />
                   <ScoreFigure score={overlap.rightScore} />
                 </div>
