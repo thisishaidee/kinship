@@ -7,9 +7,9 @@ export const Route = createFileRoute("/")({ component: Landing });
 const REPO = "https://github.com/thisishaidee/kinship";
 
 const CLAIMS = [
-  { head: "One seed.", body: "Type a name, get its real partner universe." },
-  { head: "Real fans, not surveys.", body: "Affinity comes from Qloo’s live taste graph." },
-  { head: "You can read why.", body: "Every compare shows its reasoning in plain English." },
+  { head: "One seed.", body: "Type one name. Kinship looks it up on Qloo’s taste graph and shows the artists, brands and films its fans already love. You never have to invent a partner from thin air." },
+  { head: "Real fans, not surveys.", body: "Every score comes from Qloo’s live data on what real people actually listen to, watch and wear. Nobody ticked a box, so the numbers hold up in a pitch." },
+  { head: "You can read why.", body: "When you compare two names, Kinship explains the match in plain sentences. You can repeat the reasoning out loud to anyone, no data science needed." },
 ];
 
 const FOOT_COLS = [
