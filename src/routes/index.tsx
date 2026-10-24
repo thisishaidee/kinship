@@ -1,8 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { KinshipWordmark } from "@/components/kinship-wordmark";
+import { getHeroResults, type HeroResult } from "@/lib/kinship-door";
 
-export const Route = createFileRoute("/")({ component: Landing });
+export const Route = createFileRoute("/")({
+  loader: () => getHeroResults(),
+  component: Landing,
+});
 
 const REPO = "https://github.com/thisishaidee/kinship";
 
@@ -13,22 +17,18 @@ const CLAIMS = [
 ];
 
 const FOOT_COLS = [
-  { label: "Product", links: [{ t: "Open app", to: "/app" }, { t: "How it works", href: "#how-it-works" }, { t: "Compare", href: "#compare" }] },
+  { label: "Product", links: [{ t: "Open app", to: "/app" }, { t: "How it works", href: "#how-it-works" }] },
   { label: "Data", links: [{ t: "Qloo attribution", href: "https://www.qloo.com" }, { t: "Methodology", href: REPO + "#readme" }] },
   { label: "Company", links: [{ t: "About", href: REPO }, { t: "Contact", href: REPO + "/issues" }] },
 ];
 
 const SEEDS = ["Nike", "Burna Boy", "Dune (2021)"];
-const RESULTS = [
-  { name: "Wiz Khalifa", score: "0.979" },
-  { name: "Air Jordan", score: "0.970" },
-  { name: "Real Madrid CF", score: "0.969" },
-];
 const TRUST = ["Artists", "Film", "Brands", "Places"];
 
 const pillBase = "inline-flex items-center justify-center rounded-full text-sm font-medium transition-colors";
 
 function Landing() {
+  const results = Route.useLoaderData() as HeroResult[] | null;
   return (
     <div data-landing="v2" className="flex w-full flex-col overflow-x-hidden bg-bg text-fg">
       <header className="sticky top-0 z-20 border-b border-line/60 bg-bg/90 backdrop-blur">
@@ -90,8 +90,8 @@ function Landing() {
         </section>
 
         <section aria-label="How Kinship connects a name to partners" className="flex flex-col items-center gap-10">
-          <DesktopDiagram />
-          <MobileDiagram />
+          <DesktopDiagram results={results} />
+          <MobileDiagram results={results} />
         </section>
 
         <section className="flex flex-col" aria-labelledby="how-it-works">
@@ -106,29 +106,6 @@ function Landing() {
           ))}
         </section>
 
-        <section id="compare" aria-label="Compare example" className="hidden min-w-0 justify-center py-2 md:flex md:relative md:left-1/2 md:w-[min(calc(100vw-3rem),1440px)] md:-translate-x-1/2 sm:py-4">
-          <figure className="w-full max-w-[1440px] overflow-hidden rounded-2xl border border-[#27272A] bg-[#0A0A0A] shadow-[0_28px_50px_-28px_rgba(0,0,0,0.9)]">
-            <div className="grid h-11 grid-cols-[3.25rem_minmax(0,1fr)_3.25rem] items-center border-b border-[#27272A] px-2.5 sm:h-12 sm:grid-cols-[4.5rem_minmax(0,1fr)_4.5rem] sm:px-3">
-              <div className="flex items-center gap-1 text-[#9CA3AF]" aria-hidden="true">
-                <svg viewBox="0 0 16 16" className="size-4" fill="none">
-                  <path d="M9.5 3.5 L5 8 l4.5 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <svg viewBox="0 0 16 16" className="size-4" fill="none">
-                  <path d="M6.5 3.5 L11 8 l-4.5 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <p className="mx-auto max-w-full truncate rounded-full border border-[#27272A] px-3 py-1 text-center text-[11px] leading-none text-[#9CA3AF] sm:text-xs">
-                kinshipp.vercel.app
-              </p>
-              <span className="sr-only">Browser preview of the Kinship compare</span>
-            </div>
-            <img
-              src="/compare-view.png"
-              alt="Desktop Kinship compare of Nike and Adidas, with shared Qloo fans and a one-line explanation."
-              className="block h-auto w-full"
-            />
-          </figure>
-        </section>
 
       </main>
 
@@ -206,9 +183,9 @@ function HubCircle() {
   );
 }
 
-function DesktopDiagram() {
+function DesktopDiagram({ results }: { results: HeroResult[] | null }) {
   return (
-    <div className="relative hidden h-[380px] w-full max-w-4xl md:block" role="img" aria-label="Names Nike, Burna Boy, and Dune connect through Qloo’s data to Wiz Khalifa, Air Jordan, and Real Madrid CF.">
+    <div className="relative hidden h-[380px] w-full max-w-4xl md:block" role="img" aria-label="Names Nike, Burna Boy, and Dune connect through Qloo’s data to partner names.">
       <svg className="absolute inset-0 size-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         {[16, 50, 84].map((y) => (
           <line key={`l${y}`} x1="19" y1={y} x2="42" y2="50" stroke="#3f3f46" strokeWidth="1" vectorEffect="non-scaling-stroke" />
@@ -229,20 +206,26 @@ function DesktopDiagram() {
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
         <HubCircle />
       </div>
-      <div className="absolute right-0 top-[16%] w-[210px] -translate-y-1/2">
-        <ResultCard name={RESULTS[0].name} score={RESULTS[0].score} top />
-      </div>
-      <div className="absolute right-0 top-1/2 w-[210px] -translate-y-1/2">
-        <ResultCard name={RESULTS[1].name} score={RESULTS[1].score} />
-      </div>
-      <div className="absolute right-0 top-[84%] w-[210px] -translate-y-1/2">
-        <ResultCard name={RESULTS[2].name} score={RESULTS[2].score} />
-      </div>
+      {results?.[0] ? (
+        <div className="absolute right-0 top-[16%] w-[210px] -translate-y-1/2">
+          <ResultCard name={results[0].name} score={results[0].score} top />
+        </div>
+      ) : null}
+      {results?.[1] ? (
+        <div className="absolute right-0 top-1/2 w-[210px] -translate-y-1/2">
+          <ResultCard name={results[1].name} score={results[1].score} />
+        </div>
+      ) : null}
+      {results?.[2] ? (
+        <div className="absolute right-0 top-[84%] w-[210px] -translate-y-1/2">
+          <ResultCard name={results[2].name} score={results[2].score} />
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function MobileDiagram() {
+function MobileDiagram({ results }: { results: HeroResult[] | null }) {
   return (
     <div className="flex w-full max-w-sm flex-col items-stretch gap-3 md:hidden">
       <div className="flex flex-col items-start gap-2">
@@ -256,8 +239,8 @@ function MobileDiagram() {
         <span className="h-6 w-px bg-line" />
       </div>
       <div className="flex flex-col gap-3">
-        {RESULTS.map((result) => (
-          <ResultCard key={result.name} name={result.name} score={result.score} top={result === RESULTS[0]} />
+        {results?.map((result, index) => (
+          <ResultCard key={result.name} name={result.name} score={result.score} top={index === 0} />
         ))}
       </div>
     </div>

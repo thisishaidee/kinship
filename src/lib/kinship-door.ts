@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { compareKinship, type CompareEvidence } from "@/lib/kinship-compare";
-import { resolveKinship, type QlooGetter } from "@/lib/kinship-resolve";
+import { formatAffinity, resolveKinship, type QlooGetter } from "@/lib/kinship-resolve";
 
 export type {
   Candidate,
@@ -79,3 +79,23 @@ async function explainWithGemini(evidence: CompareEvidence): Promise<string | nu
   }
   return null;
 }
+
+export type HeroResult = { name: string; score: string };
+
+// Landing hero: the top hit of up to three partner categories for the example seed,
+// fetched live through the same server proxy. Null when Qloo cannot answer, so the
+// page shows no names or numbers rather than invented ones.
+export const getHeroResults = createServerFn({ method: "GET" }).handler(async (): Promise<HeroResult[] | null> => {
+  try {
+    const result = await resolveKinship({ seed: "Nike" }, { key: qlooKey, get: qlooGet });
+    if (result.status !== "matched") return null;
+    const top = result.pitches
+      .map((pitch) => pitch.hits[0])
+      .filter((hit): hit is NonNullable<typeof hit> => Boolean(hit))
+      .slice(0, 3)
+      .map((hit) => ({ name: hit.name, score: formatAffinity(hit.score) }));
+    return top.length === 3 ? top : null;
+  } catch {
+    return null;
+  }
+});
