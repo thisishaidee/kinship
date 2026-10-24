@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { compareKinship, type CompareEvidence } from "@/lib/kinship-compare";
 import { formatAffinity, resolveKinship, type QlooGetter, type ResolveResult } from "@/lib/kinship-resolve";
 import { DEMO_SEEDS, readDemoCache, writeDemoCache } from "@/lib/kinship-demo-cache.server";
+import { groundedExplanation } from "@/lib/kinship-compare";
 
 export type {
   Candidate,
@@ -59,9 +60,58 @@ async function resolveWithDemoFallback(input: unknown): Promise<ResolveResult> {
   return live;
 }
 
+// Per-card pitch line: one grounded sentence per partner card, built only from that
+// card's returned hits. Reuses the compare validator (groundedExplanation). If Gemini is
+// unavailable or the output fails the check, the card keeps its template line. Fails quiet.
+async function pitchForCard(seedName: string, partnerType: string, hits: { name: string; score: number }[]): Promise<string | null> {
+  const { env } = await import("@/lib/env.server");
+  const key = env("GEMINI_API_KEY");
+  if (!key || hits.length === 0) return null;
+  const top = hits.slice(0, 2).map((hit) => ({ name: hit.name, score: formatAffinity(hit.score) }));
+  const evidence = {
+    left: { name: seedName, typeLabel: partnerType },
+    right: { name: partnerType, typeLabel: partnerType },
+    overlaps: top.map((hit) => ({ name: hit.name, category: partnerType, leftScore: hit.score, rightScore: hit.score })),
+  };
+  try {
+    const { GoogleGenAI } = await import("@google/genai");
+    const ai = new GoogleGenAI({ apiKey: key });
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: JSON.stringify({ seed: seedName, partnerType, hits: top }),
+      config: {
+        systemInstruction: CARD_PITCH_PROMPT,
+        temperature: 0,
+        maxOutputTokens: 120,
+        thinkingConfig: { thinkingBudget: 0 },
+        abortSignal: AbortSignal.timeout(15000),
+      },
+    });
+    const text = response.text;
+    if (typeof text !== "string" || !text.trim()) return null;
+    const checked = groundedExplanation(text, evidence as never);
+    return checked.source === "model" ? checked.text : null;
+  } catch {
+    return null;
+  }
+}
+
+const CARD_PITCH_PROMPT =
+  "Write exactly one short sentence pitching the named partner type, using only the JSON in the user message. Name only entities and numbers in the JSON. Do not claim a partnership exists or will succeed. Do not add causes or facts not in the JSON.";
+
 export const resolveKinshipSeed = createServerFn({ method: "POST" })
   .validator((input: unknown) => input)
-  .handler(async ({ data }) => resolveWithDemoFallback(data));
+  .handler(async ({ data }) => {
+    const result = await resolveWithDemoFallback(data);
+    if (result.status !== "matched") return result;
+    const pitches = await Promise.all(
+      result.pitches.map(async (pitch) => {
+        const line = await pitchForCard(result.entity.name, pitch.partnerType, pitch.hits);
+        return line ? { ...pitch, line } : pitch;
+      }),
+    );
+    return { ...result, pitches };
+  });
 
 export const compareKinshipSeeds = createServerFn({ method: "POST" })
   .validator((input: unknown) => input)
