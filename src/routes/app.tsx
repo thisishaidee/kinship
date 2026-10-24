@@ -9,6 +9,7 @@ import {
   isLatestRequest,
   partnerSearchHref,
   resolveKinshipSeed,
+  runAgenticPitch,
   type Candidate,
   type CompareResult,
   type GraphStatus,
@@ -18,6 +19,7 @@ import {
 } from "@/lib/kinship-door";
 import { KinshipWordmark } from "@/components/kinship-wordmark";
 import { PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/kinship-pdf";
+import type { AgentStep } from "@/lib/kinship-agent";
 
 export const Route = createFileRoute("/app")({
   validateSearch: (search: Record<string, unknown>): { try?: string } => (typeof search.try === "string" ? { try: search.try } : {}),
@@ -60,6 +62,8 @@ function Home() {
   const [leftCandidates, setLeftCandidates] = useState<Candidate[]>([]);
   const [rightCandidates, setRightCandidates] = useState<Candidate[]>([]);
   const [pairing, setPairing] = useState<CompareMatch | null>(null);
+  const [agentSteps, setAgentSteps] = useState<AgentStep[]>([]);
+  const runAgent = useServerFn(runAgenticPitch);
 
   async function run(next: string, entityId?: string) {
     if (!next) {
@@ -73,6 +77,7 @@ function Home() {
     setPitches([]);
     setUnchecked([]);
     setGraphStatus("empty");
+    setAgentSteps([]);
     setPhase("loading");
     try {
       const result = await resolveSeed({ data: { seed: next, entityId } });
@@ -95,6 +100,10 @@ function Home() {
         setUnchecked(result.unchecked);
         setGraphStatus(result.graphStatus);
         setPhase("matched");
+        void runAgent({ data: { seed: next, entityId } }).then((agent) => {
+          if (!isLatestRequest(requestId, requestSeq.current)) return;
+          if (agent && agent.status === "pitch") setAgentSteps(agent.steps);
+        }).catch(() => undefined);
         return;
       }
       if (result.status === "unavailable") {
@@ -330,6 +339,7 @@ function Home() {
           {phase === "unavailable" && match ? (
             <p className="text-base text-muted">Qloo resolved {match.name}, but the categories could not be checked.</p>
           ) : null}
+          {phase === "matched" && agentSteps.length > 0 ? <AgentTrace steps={agentSteps} /> : null}
           {phase === "matched" && pitches.length > 0 ? (
             <div className="flex flex-col gap-8">
               {pitches.map((pitch) => (
@@ -424,6 +434,21 @@ function HowItWorks() {
         ))}
       </div>
     </section>
+  );
+}
+
+function AgentTrace({ steps }: { steps: AgentStep[] }) {
+  return (
+    <details className="flex flex-col gap-2 border-t border-line pt-3 text-sm text-muted">
+      <summary className="cursor-pointer text-muted">how the agent worked</summary>
+      <ol className="mt-2 flex flex-col gap-1">
+        {steps.map((step, index) => (
+          <li key={index} className={step.ok ? "text-muted" : "text-muted line-through"}>
+            {step.label}
+          </li>
+        ))}
+      </ol>
+    </details>
   );
 }
 
