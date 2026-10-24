@@ -4,10 +4,17 @@ import { KinshipWordmark } from "@/components/kinship-wordmark";
 
 export const Route = createFileRoute("/")({ component: Landing });
 
-const DISCLAIMER =
-  "A shared-fans score shows a connection in Qloo’s data. It does not confirm an existing partnership, prove that a new partnership is available, or guarantee business compatibility. The numbers are shared-fans scores, not the chance a partnership succeeds.";
+const CLAIMS = [
+  { head: "One seed.", body: "Type a name, get its real partner universe." },
+  { head: "Real fans, not surveys.", body: "Affinity comes from Qloo’s live taste graph." },
+  { head: "You can read why.", body: "Every compare shows its reasoning in plain English." },
+];
 
-const STEPS = ["type a name", "qloo finds shared fans", "get your partners, compare, export"];
+const FOOT_COLS = [
+  { label: "Product", links: [{ t: "Open app", to: "/app" }, { t: "How it works", href: "#how-it-works" }, { t: "Compare", href: "#compare" }] },
+  { label: "Data", links: [{ t: "Qloo attribution", href: "https://www.qloo.com" }, { t: "Methodology", href: REPO + "#readme" }] },
+  { label: "Company", links: [{ t: "About", href: REPO }, { t: "Contact", href: REPO + "/issues" }] },
+];
 
 const SEEDS = ["Nike", "Burna Boy", "Dune (2021)"];
 const RESULTS = [
@@ -86,27 +93,19 @@ function Landing() {
           <MobileDiagram />
         </section>
 
-        <section className="flex flex-col gap-8" aria-labelledby="how-it-works">
-          <div className="flex max-w-2xl flex-col gap-3">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">The flow</p>
-            <h2 id="how-it-works" className="scroll-mt-24 font-sans text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-              How it works
-            </h2>
-            <p className="text-base leading-relaxed text-muted">
-              Every name and score comes straight from Qloo.
-            </p>
-          </div>
-          <ol className="grid gap-2 sm:grid-cols-3">
-            {STEPS.map((step, index) => (
-              <li key={step} className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3.5">
-                <span className="shrink-0 font-mono text-[12px] leading-none tabular-nums text-accent">{String(index + 1).padStart(2, "0")}</span>
-                <span className="text-sm leading-snug text-fg">{step}</span>
-              </li>
-            ))}
-          </ol>
+        <section className="flex flex-col" aria-labelledby="how-it-works">
+          <h2 id="how-it-works" className="scroll-mt-24 pb-10 font-sans text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            How it works
+          </h2>
+          {CLAIMS.map((claim) => (
+            <div key={claim.head} className="flex flex-col gap-3 border-t border-white/10 py-14 first:border-t sm:py-20">
+              <p className="font-sans text-xl font-semibold tracking-tight text-white sm:text-2xl">{claim.head}</p>
+              <p className="max-w-xl text-base leading-relaxed text-muted sm:text-lg">{claim.body}</p>
+            </div>
+          ))}
         </section>
 
-        <section aria-label="Compare example" className="hidden min-w-0 justify-center py-2 md:flex md:relative md:left-1/2 md:w-[min(calc(100vw-3rem),1440px)] md:-translate-x-1/2 sm:py-4">
+        <section id="compare" aria-label="Compare example" className="hidden min-w-0 justify-center py-2 md:flex md:relative md:left-1/2 md:w-[min(calc(100vw-3rem),1440px)] md:-translate-x-1/2 sm:py-4">
           <figure className="w-full max-w-[1440px] overflow-hidden rounded-2xl border border-[#27272A] bg-[#0A0A0A] shadow-[0_28px_50px_-28px_rgba(0,0,0,0.9)]">
             <div className="grid h-11 grid-cols-[3.25rem_minmax(0,1fr)_3.25rem] items-center border-b border-[#27272A] px-2.5 sm:h-12 sm:grid-cols-[4.5rem_minmax(0,1fr)_4.5rem] sm:px-3">
               <div className="flex items-center gap-1 text-[#9CA3AF]" aria-hidden="true">
@@ -132,25 +131,44 @@ function Landing() {
 
       </main>
 
-      <footer className="border-t border-line bg-bg pb-6 sm:pb-0">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-8 text-sm text-muted">
-        <p className="max-w-3xl text-sm leading-relaxed text-muted">{DISCLAIMER}</p>
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-          <KinshipWordmark />
-          <div className="flex flex-wrap gap-x-5 gap-y-2">
-            <a href={REPO} target="_blank" rel="noopener noreferrer" className="text-fg underline decoration-1 underline-offset-4 hover:text-white">
-              GitHub repository
-            </a>
-            <a
-              href="https://github.com/thisishaidee/kinship/blob/main/LICENSE"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-fg underline decoration-1 underline-offset-4 hover:text-white"
-            >
-              MIT license
-            </a>
+      <footer className="border-t border-white/10 bg-bg">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-5 py-20">
+          <div className="flex flex-col gap-12 md:flex-row md:justify-between md:gap-24">
+            <div className="flex max-w-xs flex-col gap-5">
+              <KinshipWordmark />
+              <p className="text-sm text-white">Partner discovery from shared fans.</p>
+              <a href={REPO + "/issues"} target="_blank" rel="noopener noreferrer" className="text-sm text-white hover:underline underline-offset-4">
+                Contact on GitHub
+              </a>
+            </div>
+            <nav aria-label="Footer" className="grid grid-cols-2 gap-12 sm:grid-cols-3 sm:gap-16">
+              {FOOT_COLS.map((col) => (
+                <div key={col.label} className="flex flex-col gap-4">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-muted">{col.label}</p>
+                  {col.links.map((link) =>
+                    "to" in link ? (
+                      <Link key={link.t} to={link.to} className="text-sm text-white hover:underline underline-offset-4">
+                        {link.t}
+                      </Link>
+                    ) : (
+                      <a
+                        key={link.t}
+                        href={link.href}
+                        {...(link.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                        className="text-sm text-white hover:underline underline-offset-4"
+                      >
+                        {link.t}
+                      </a>
+                    ),
+                  )}
+                </div>
+              ))}
+            </nav>
           </div>
-        </div>
+          <div className="flex flex-col gap-3 border-t border-white/10 pt-8 text-xs text-muted sm:flex-row sm:justify-between">
+            <p>affinity scores come from qloo's taste graph, not surveys. beta: scores are estimates.</p>
+            <p>© 2026 Kinship</p>
+          </div>
         </div>
       </footer>
     </div>
