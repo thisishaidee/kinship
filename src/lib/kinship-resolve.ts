@@ -662,7 +662,17 @@ export async function loadTasteGraph(
   );
 }
 
-async function categoryInsights(
+export async function searchCandidates(
+  get: QlooGetter,
+  key: string,
+  query: string,
+): Promise<{ status: "ok"; candidates: Candidate[] } | { status: "refused" } | { status: "unavailable" }> {
+  const searched = await get(key, "/search", searchParams(query));
+  if (!searched.ok) return searched.status === 401 ? { status: "refused" } : { status: "unavailable" };
+  return { status: "ok", candidates: topCandidates(searchResults(searched.body), 5) };
+}
+
+export async function categoryInsights(
   get: QlooGetter,
   key: string,
   seedId: string,
