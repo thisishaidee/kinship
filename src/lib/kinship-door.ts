@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { compareKinship, type CompareEvidence } from "@/lib/kinship-compare";
-import { formatAffinity, resolveKinship, type QlooGetter } from "@/lib/kinship-resolve";
+import { formatAffinity, resolveKinship, type QlooGetter, type ResolveResult } from "@/lib/kinship-resolve";
+import { DEMO_SEEDS, readDemoCache, writeDemoCache } from "@/lib/kinship-demo-cache.server";
 
 export type {
   Candidate,
@@ -40,9 +41,27 @@ const qlooGet: QlooGetter = async (key, path, params) => {
   }
 };
 
+// Live lookup with a private fallback for the three demo seeds. A successful Qloo
+// answer is saved to a gitignored file; if the key dies or quota runs out, the last
+// saved answer is served instead. Only a live match or ambiguity is ever saved.
+async function resolveWithDemoFallback(input: unknown): Promise<ResolveResult> {
+  const seed = typeof (input as { seed?: unknown })?.seed === "string" ? ((input as { seed: string }).seed).trim() : "";
+  const demo = (DEMO_SEEDS as readonly string[]).includes(seed);
+  const live = await resolveKinship(input, { key: qlooKey, get: qlooGet });
+  if (demo && (live.status === "matched" || live.status === "ambiguous")) {
+    await writeDemoCache(seed, live);
+    return live;
+  }
+  if (demo && (live.status === "missing-key" || live.status === "unavailable" || live.status === "refused")) {
+    const saved = await readDemoCache<ResolveResult>(seed);
+    if (saved) return saved;
+  }
+  return live;
+}
+
 export const resolveKinshipSeed = createServerFn({ method: "POST" })
   .validator((input: unknown) => input)
-  .handler(async ({ data }) => resolveKinship(data, { key: qlooKey, get: qlooGet }));
+  .handler(async ({ data }) => resolveWithDemoFallback(data));
 
 export const compareKinshipSeeds = createServerFn({ method: "POST" })
   .validator((input: unknown) => input)
@@ -87,7 +106,7 @@ export type HeroResult = { name: string; score: string };
 // page shows no names or numbers rather than invented ones.
 export const getHeroResults = createServerFn({ method: "GET" }).handler(async (): Promise<HeroResult[] | null> => {
   try {
-    const result = await resolveKinship({ seed: "Nike" }, { key: qlooKey, get: qlooGet });
+    const result = await resolveWithDemoFallback({ seed: "Nike" });
     if (result.status !== "matched") return null;
     const top = result.pitches
       .map((pitch) => pitch.hits[0])

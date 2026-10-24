@@ -11,3 +11,4 @@ dist/
 *.log
 .project_id
 .node_modules.lock
+.secrets/qloo-demo-cache.json
