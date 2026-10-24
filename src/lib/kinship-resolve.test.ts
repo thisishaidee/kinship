@@ -252,16 +252,37 @@ describe("resolveKinship", () => {
     assert.equal(calls.filter((path) => path === "/v2/insights").length, 4);
   });
 
-  it("does not call insights or build pitches when nothing matches exactly", async () => {
+  it("offers the closest hits as a chooser when nothing matches exactly, and does not call insights before a pick", async () => {
     const calls: string[] = [];
     const get: QlooGetter = async (_key, path) => {
       calls.push(path);
       return { ok: true, body: { results: [entity("Spider-Man: No Way Home", FILM, "urn:entity:movie")] } };
     };
     const result = await resolveKinship({ seed: "zzzz-kinship-no-such-entity" }, { key: async () => "test-key", get });
-    assert.equal(result.status, "no-match");
+    assert.equal(result.status, "ambiguous");
+    assert.equal(result.exact, false);
+    assert.equal(result.candidates[0].name, "Spider-Man: No Way Home");
     assert.deepEqual(calls, ["/search"]);
     assert.equal(JSON.stringify(result).includes("test-key"), false);
+  });
+
+  it("keeps the honest dead end only when Qloo returns zero hits", async () => {
+    const get: QlooGetter = async () => ({ ok: true, body: { results: [] } });
+    const result = await resolveKinship({ seed: "Nikee" }, { key: async () => "test-key", get });
+    assert.equal(result.status, "no-match");
+  });
+
+  it("resolves a fuzzy chooser pick (not an exact name) on the second request", async () => {
+    const calls: string[] = [];
+    const get: QlooGetter = async (_key, path, params) => {
+      calls.push(`${path}?${params.get("signal.interests.entities") ?? ""}`);
+      if (path === "/search") return { ok: true, body: { results: [entity("Nike", BRAND, "urn:entity:brand"), entity("Nikon", FILM, "urn:entity:movie")] } };
+      return { ok: true, body: { results: [] } };
+    };
+    const picked = await resolveKinship({ seed: "Nikee", entityId: FILM }, { key: async () => "test-key", get });
+    assert.notEqual(picked.status, "no-match");
+    assert.notEqual(picked.status, "ambiguous");
+    assert.equal(picked.status === "matched" || picked.status === "unavailable" || picked.status === "refused", true);
   });
 
   it("returns a selection state and does not call insights until one entity is chosen", async () => {

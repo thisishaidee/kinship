@@ -66,7 +66,7 @@ export type ResolveResult =
       graphStatus: GraphStatus;
       unchecked: UncheckedCategory[];
     }
-  | { status: "ambiguous"; seed: string; candidates: Candidate[] }
+  | { status: "ambiguous"; seed: string; candidates: Candidate[]; exact: boolean }
   | { status: "no-match"; seed: string }
   | { status: "missing-key"; seed: string }
   | { status: "refused"; seed: string }
@@ -450,7 +450,7 @@ export async function resolveKinship(
   if (found.status === "refused") return { status: "refused", seed: parsed.seed };
   if (found.status === "unavailable") return { status: "unavailable", seed: parsed.seed, unchecked: [] };
   if (found.status === "none") return { status: "no-match", seed: parsed.seed };
-  if (found.status === "choose") return { status: "ambiguous", seed: parsed.seed, candidates: found.candidates };
+  if (found.status === "choose") return { status: "ambiguous", seed: parsed.seed, candidates: found.candidates, exact: found.exact };
   const graph = await loadTasteGraph(deps.get, key, found.entity.entityId, 20, 3, found.tags, seedKindFromLabel(found.entity.typeLabel));
   if (graph === "refused") return { status: "refused", seed: parsed.seed };
   const unchecked = uncheckedCategories(graph);
@@ -612,7 +612,7 @@ export async function searchEntity(
   entityId?: string,
 ): Promise<
   | { status: "use"; entity: Candidate; tags: string[] }
-  | { status: "choose"; candidates: Candidate[] }
+  | { status: "choose"; candidates: Candidate[]; exact: boolean }
   | { status: "none" }
   | { status: "refused" }
   | { status: "unavailable" }
@@ -623,16 +623,22 @@ export async function searchEntity(
     return { status: "unavailable" };
   }
   const results = searchResults(searched.body);
-  const exact = exactCandidates(results, seed);
-  const plan = resolutionPlan(exact, entityId);
-  if (plan.action === "none") {
-    // No exact name match: offer the top 5 Qloo hits as a chooser instead of a dead end.
-    // The user picks one. Nothing is used automatically.
-    if (entityId) return { status: "none" };
-    const top = topCandidates(results, 5);
-    return top.length > 0 ? { status: "choose", candidates: top } : { status: "none" };
+  // A pick from the chooser can be any hit Qloo returned (exact or fuzzy), so look it up
+  // in the full hit list, not only in the exact-name list.
+  if (entityId) {
+    const chosen = topCandidates(results, results.length).find((candidate) => candidate.entityId === entityId);
+    if (!chosen) return { status: "none" };
+    return { status: "use", entity: chosen, tags: tagsFor(results, chosen.entityId) };
   }
-  if (plan.action === "choose") return { status: "choose", candidates: plan.candidates };
+  const exact = exactCandidates(results, seed);
+  const plan = resolutionPlan(exact);
+  if (plan.action === "none") {
+    // No exact name match: offer the top 5 Qloo hits (fuzzy/similar) as a chooser instead of
+    // a dead end. The user picks one. Nothing is used automatically. Zero hits = honest dead end.
+    const top = topCandidates(results, 5);
+    return top.length > 0 ? { status: "choose", candidates: top, exact: false } : { status: "none" };
+  }
+  if (plan.action === "choose") return { status: "choose", candidates: plan.candidates, exact: true };
   return { status: "use", entity: plan.entity, tags: tagsFor(results, plan.entity.entityId) };
 }
 
