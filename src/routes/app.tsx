@@ -685,6 +685,7 @@ function ResultCard({ name, href, category, score, top = false }: { name: string
             {name}
           </a>
           <p className="mt-0.5 text-[10px] uppercase tracking-[0.18em] text-[#9CA3AF]/80">shared-fans score</p>
+          <p className="mt-2 text-xs font-medium text-accent">Want to pitch them?</p>
         </div>
         <p className="flex shrink-0 items-baseline gap-2">
           <span className={`text-[22px] leading-none tabular-nums ${top ? "font-semibold text-accent" : "font-medium text-[#9CA3AF]"}`}>{formatAffinity(score)}</span>
