@@ -4,6 +4,8 @@ import { KinshipWordmark } from "@/components/kinship-wordmark";
 
 export const Route = createFileRoute("/")({ component: Landing });
 
+const REPO = "https://github.com/thisishaidee/kinship";
+
 const CLAIMS = [
   { head: "One seed.", body: "Type a name, get its real partner universe." },
   { head: "Real fans, not surveys.", body: "Affinity comes from Qloo’s live taste graph." },
@@ -23,7 +25,6 @@ const RESULTS = [
   { name: "Real Madrid CF", score: "0.969" },
 ];
 const TRUST = ["Artists", "Film", "Brands", "Places"];
-const REPO = "https://github.com/thisishaidee/kinship";
 
 const pillBase = "inline-flex items-center justify-center rounded-full text-sm font-medium transition-colors";
 
@@ -154,7 +155,7 @@ function Landing() {
                       <a
                         key={link.t}
                         href={link.href}
-                        {...(link.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                        {...((link.href ?? "").startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                         className="text-sm text-white hover:underline underline-offset-4"
                       >
                         {link.t}
