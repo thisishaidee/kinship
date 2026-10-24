@@ -50,6 +50,7 @@ function Home() {
   const [heldSeed, setHeldSeed] = useState("");
   const [match, setMatch] = useState<ResolvedEntity | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [candidatesExact, setCandidatesExact] = useState(true);
   const [pitches, setPitches] = useState<Pitch[]>([]);
   const [unchecked, setUnchecked] = useState<UncheckedCategory[]>([]);
   const [graphStatus, setGraphStatus] = useState<GraphStatus>("empty");
@@ -84,6 +85,7 @@ function Home() {
       setHeldSeed(result.seed);
       if (result.status === "ambiguous") {
         setCandidates(result.candidates);
+        setCandidatesExact(result.exact);
         setPhase("ambiguous");
         return;
       }
@@ -304,7 +306,12 @@ function Home() {
       ) : null}
 
       {mode === "single" && phase === "ambiguous" ? (
-        <Chooser title={`More than one Qloo entity matches “${heldSeed}”.`} candidates={candidates} busy={busy} onPick={(id) => void run(heldSeed, id)} />
+        <Chooser
+          title={candidatesExact ? `More than one Qloo entity matches “${heldSeed}”.` : `No exact Qloo match for “${heldSeed}”. Closest Qloo results, pick one:`}
+          candidates={candidates}
+          busy={busy}
+          onPick={(id) => void run(heldSeed, id)}
+        />
       ) : null}
 
       {mode === "single" && (phase === "matched" || (phase === "unavailable" && match)) ? (
@@ -340,6 +347,7 @@ function Home() {
                       </li>
                     ))}
                   </ul>
+                  {pitch.line ? <p className="text-base leading-snug text-fg">{pitch.line}</p> : null}
                   <CopyLine line={pitch.line} />
                 </section>
               ))}
