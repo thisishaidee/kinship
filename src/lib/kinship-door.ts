@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { compareKinship, type CompareEvidence } from "@/lib/kinship-compare";
-import { formatAffinity, resolveKinship, type QlooGetter, type ResolveResult } from "@/lib/kinship-resolve";
+import { formatAffinity, readRequest, resolveKinship, searchEntity, seedKindFromLabel, type QlooGetter, type ResolveResult } from "@/lib/kinship-resolve";
 import { DEMO_SEEDS, readDemoCache, writeDemoCache } from "@/lib/kinship-demo-cache.server";
 import { groundedExplanation } from "@/lib/kinship-compare";
 
@@ -111,6 +111,39 @@ export const resolveKinshipSeed = createServerFn({ method: "POST" })
       }),
     );
     return { ...result, pitches };
+  });
+
+// Agentic pass: Gemini chooses which Qloo reads to make (capped), then writes one
+// grounded sentence. Any failure returns null and the caller keeps the fixed pipeline.
+// The step trace is returned so the UI can show what the agent asked.
+export type AgentPassResult =
+  | { status: "pitch"; text: string; steps: import("@/lib/kinship-agent").AgentStep[] }
+  | { status: "fallback"; steps: import("@/lib/kinship-agent").AgentStep[] }
+  | null;
+
+export const runAgenticPitch = createServerFn({ method: "POST" })
+  .validator((input: unknown) => input)
+  .handler(async ({ data }): Promise<AgentPassResult> => {
+    try {
+      const { env } = await import("@/lib/env.server");
+      const geminiKey = env("GEMINI_API_KEY");
+      const qKey = await qlooKey();
+      if (!geminiKey || !qKey) return null;
+      const request = readRequest(data);
+      if (!request.ok) return null;
+      const found = await searchEntity(qlooGet, qKey, request.seed, request.entityId);
+      if (found.status !== "use") return null;
+      const { runKinshipAgent } = await import("@/lib/kinship-agent");
+      const { createGeminiModel, createQlooTools } = await import("@/lib/kinship-agent-adapters.server");
+      const outcome = await runKinshipAgent(found.entity, {
+        model: createGeminiModel(geminiKey, found.entity.name),
+        tools: createQlooTools(qKey, qlooGet, found.tags, seedKindFromLabel(found.entity.typeLabel)),
+      });
+      if (outcome.status === "pitch") return { status: "pitch", text: outcome.text, steps: outcome.steps };
+      return { status: "fallback", steps: outcome.steps };
+    } catch {
+      return null;
+    }
   });
 
 export const compareKinshipSeeds = createServerFn({ method: "POST" })

@@ -662,6 +662,10 @@ export async function loadTasteGraph(
   );
 }
 
+export function graphCategory(id: string): (typeof GRAPH)[number] | undefined {
+  return GRAPH.find((category) => category.id === id);
+}
+
 export async function searchCandidates(
   get: QlooGetter,
   key: string,
