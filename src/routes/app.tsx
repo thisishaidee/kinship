@@ -408,17 +408,13 @@ function HowItWorks() {
       <p className="text-sm leading-snug text-muted">
         Every name and score comes straight from Qloo.
       </p>
-      <ol className="flex flex-col">
-        {steps.map((step, index) => (
-          <li key={step} className="flex flex-col">
-            <div className="flex items-center gap-3">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-line text-xs font-medium text-accent">{index + 1}</span>
-              <span className="text-sm text-fg">{step}</span>
-            </div>
-            {index < steps.length - 1 ? <span className="ml-3.5 h-3 w-px bg-line" aria-hidden="true" /> : null}
-          </li>
+      <div className="flex flex-col">
+        {steps.map((step) => (
+          <p key={step} className="border-t border-white/10 py-4 text-sm text-fg first:border-t-0 first:pt-0">
+            {step}
+          </p>
         ))}
-      </ol>
+      </div>
     </section>
   );
 }
