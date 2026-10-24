@@ -123,6 +123,20 @@ export function searchParams(seed: string): URLSearchParams {
   return params;
 }
 
+// Top-N raw search hits (any name) for the chooser when no exact match exists.
+export function topCandidates(results: unknown[], limit: number): Candidate[] {
+  const seen = new Set<string>();
+  const out: Candidate[] = [];
+  for (const item of results) {
+    const candidate = asCandidate(item);
+    if (!candidate || seen.has(candidate.entityId)) continue;
+    seen.add(candidate.entityId);
+    out.push(candidate);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
 export function exactCandidates(results: unknown[], seed: string): Candidate[] {
   const needle = normalizeName(seed);
   const seen = new Set<string>();
@@ -609,8 +623,15 @@ export async function searchEntity(
     return { status: "unavailable" };
   }
   const results = searchResults(searched.body);
-  const plan = resolutionPlan(exactCandidates(results, seed), entityId);
-  if (plan.action === "none") return { status: "none" };
+  const exact = exactCandidates(results, seed);
+  const plan = resolutionPlan(exact, entityId);
+  if (plan.action === "none") {
+    // No exact name match: offer the top 5 Qloo hits as a chooser instead of a dead end.
+    // The user picks one. Nothing is used automatically.
+    if (entityId) return { status: "none" };
+    const top = topCandidates(results, 5);
+    return top.length > 0 ? { status: "choose", candidates: top } : { status: "none" };
+  }
   if (plan.action === "choose") return { status: "choose", candidates: plan.candidates };
   return { status: "use", entity: plan.entity, tags: tagsFor(results, plan.entity.entityId) };
 }
