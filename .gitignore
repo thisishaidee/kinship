@@ -9,3 +9,5 @@ attachments/
 artifacts/
 dist/
 *.log
+.project_id
+.node_modules.lock
