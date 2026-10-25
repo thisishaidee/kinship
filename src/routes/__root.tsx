@@ -28,10 +28,11 @@ export const Route = createRootRoute({
       { name: "twitter:image", content: "https://kinshipp.vercel.app/social-card.png" },
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", type: "image/svg+xml", href: "https://kinshipp.vercel.app/favicon.svg" },
+      { rel: "icon", type: "image/x-icon", href: "https://kinshipp.vercel.app/favicon.ico", sizes: "16x16 32x32 48x48" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
-      { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "https://kinshipp.vercel.app/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Instrument+Serif&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@400;500;700&display=swap" },
