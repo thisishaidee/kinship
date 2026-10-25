@@ -45,7 +45,7 @@ export async function groqChat(input: {
     max_tokens: input.maxTokens,
   };
   if (input.tools && input.tools.length > 0) body.tools = input.tools;
-  if (input.reasoningEffort) body.reasoning_effort = input.reasoningEffort;
+  body.reasoning_effort = input.reasoningEffort ?? "low";
   let response: Response;
   try {
     response = await fetch(GROQ_URL, {

@@ -79,7 +79,7 @@ async function pitchForCard(seedName: string, partnerType: string, hits: { name:
       apiKey: key,
       system: CARD_PITCH_PROMPT,
       user: JSON.stringify({ seed: seedName, partnerType, hits: top }),
-      maxTokens: 120,
+      maxTokens: 512,
       timeoutMs: 15000,
     });
     if (!text) return null;
@@ -176,7 +176,7 @@ async function explainWithGroq(evidence: CompareEvidence): Promise<string | null
       apiKey: key,
       system: EXPLAIN_PROMPT,
       user: JSON.stringify(evidence),
-      maxTokens: 256,
+      maxTokens: 512,
       timeoutMs: 20000,
     });
   } catch {
