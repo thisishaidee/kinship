@@ -264,7 +264,7 @@ function SampleSection({ rows }: { rows: HeroResult[] }) {
   const pitch = `${SAMPLE_SEED} could explore an artist partnership with ${rows[0].name} (${rows[0].score}) and ${rows[1].name} (${rows[1].score}).`;
   return (
     <section className="px-5 md:px-16">
-      <div className="mx-auto max-w-[1152px] rounded-3xl border border-[#2a2a30] bg-[#101014] p-4 md:grid md:grid-cols-3 md:gap-4 md:p-5">
+      <div className="mx-auto max-w-[1152px] rounded-3xl border border-[#2a2a30] bg-[#101014] p-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:p-5">
         {rows.slice(0, 3).map((r, i) => (
           <div
             key={r.name}
@@ -318,7 +318,7 @@ function HowItWorks() {
         >
           Three steps, no guessing.
         </h2>
-        <div className="grid gap-5 md:grid-cols-3 md:gap-6">
+        <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
           {STEPS.map((s) => (
             <div
               key={s.tag}
@@ -346,7 +346,7 @@ function CompareSection({ rows }: { rows: HeroResult[] | null }) {
   return (
     <section
       id="compare"
-      className="mx-auto flex max-w-[1152px] flex-col gap-8 px-5 py-12 md:flex-row md:items-center md:gap-16 md:px-16 md:py-24"
+      className="mx-auto flex max-w-[1152px] flex-col gap-8 px-5 py-12 lg:flex-row lg:items-center lg:gap-16 lg:px-16 lg:py-24"
     >
       <div className="flex flex-col gap-4 md:flex-1">
         <span className="text-xs tracking-[0.8px] text-[#FFB548]">FROM AFFINITY TO PITCH</span>
@@ -369,7 +369,7 @@ function CompareSection({ rows }: { rows: HeroResult[] | null }) {
       </div>
 
       {top ? (
-        <div className="rounded-[22px] border border-[#2a2a30] bg-[#101014] p-6 md:w-[440px] md:flex-none md:p-7">
+        <div className="rounded-[22px] border border-[#2a2a30] bg-[#101014] p-6 lg:w-[440px] lg:flex-none md:p-7">
           <div
             className="text-[24px] text-[#f4f1ea]"
             style={{ fontFamily: SERIF }}
@@ -393,7 +393,7 @@ function CompareSection({ rows }: { rows: HeroResult[] | null }) {
           </div>
         </div>
       ) : (
-        <div className="rounded-[22px] border border-[#2a2a30] bg-[#101014] p-6 md:w-[440px] md:flex-none md:p-7">
+        <div className="rounded-[22px] border border-[#2a2a30] bg-[#101014] p-6 lg:w-[440px] lg:flex-none md:p-7">
           <div className="flex justify-between pb-2.5 text-xs tracking-[0.8px] text-[#a3a09a]">
             <span>
               {COMPARE_SEEDS[0].toUpperCase()} × {COMPARE_SEEDS[1].toUpperCase()}
@@ -418,7 +418,7 @@ function TrustSection() {
   return (
     <section className="mx-auto max-w-[1152px] px-5 pb-12 md:px-16 md:pb-20">
       <span className="text-xs tracking-[0.8px] text-[#a3a09a]">BUILT TO BE CHECKED</span>
-      <div className="mt-4 grid gap-4 md:grid-cols-3 md:gap-12">
+      <div className="mt-4 grid gap-4 lg:grid-cols-3 lg:gap-12">
         {CHECKS.map((c) => (
           <div key={c.title} className="flex gap-3">
             <span className="mt-2 h-2 w-2 flex-none rounded-full bg-[#FFB548]" />
@@ -436,7 +436,7 @@ function TrustSection() {
 function CtaBand() {
   return (
     <section className="border-t border-[#2a2a30] px-5 py-11 text-[#f4f1ea] md:px-16 md:py-[72px]">
-      <div className="mx-auto flex max-w-[1152px] flex-col gap-5 md:flex-row md:items-center md:justify-between">
+      <div className="mx-auto flex max-w-[1152px] flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <span
           className="text-[46px] leading-[1.02] md:max-w-[640px] md:text-[64px]"
           style={{ fontFamily: SERIF }}
@@ -457,12 +457,12 @@ function CtaBand() {
 function Footer() {
   return (
     <footer className="mx-auto flex max-w-[1152px] flex-col gap-6 px-5 pb-8 pt-10 md:px-16 md:pt-14">
-      <div className="flex flex-col gap-6 md:flex-row md:justify-between">
+      <div className="flex flex-col gap-6 lg:flex-row lg:justify-between">
         <div>
           <KinshipLogo size={26} />
           <div className="mt-1 text-sm text-[#a3a09a]">Partner discovery from shared fans.</div>
         </div>
-        <div className="grid grid-cols-2 gap-x-4 text-[15px] md:grid-cols-3 md:gap-x-16">
+        <div className="grid grid-cols-2 gap-x-4 text-[15px] lg:grid-cols-3 lg:gap-x-16">
           {FOOTER_LINKS.map(([label, href]) => (
             <a key={label} href={href} className="flex h-11 items-center text-[#cfcbc3] hover:text-white">
               {label}
