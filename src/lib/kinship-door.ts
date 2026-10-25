@@ -162,7 +162,7 @@ export const compareKinshipSeeds = createServerFn({ method: "POST" })
   .handler(async ({ data }) => compareKinship(data, { key: qlooKey, get: qlooGet, explain: explainWithGroq }));
 
 const EXPLAIN_PROMPT =
-  "You explain a pairing using only the JSON in the user message. Write exactly two sentences. First sentence: name the top one or two shared entities with their two scores from the JSON, in the shape Both pull toward NAME (LEFT / RIGHT). Second sentence: one plain-words line about what the two audiences share, still using only entity names and scores present in the JSON. Never use the words 'entity' or 'taste graph'. Do not claim a partnership exists, is available, or will succeed. Do not add causes, history, genres, or locations that are not fields in the JSON. If overlaps is empty, say nothing.";
+  "You explain a pairing using only the JSON in the user message. Write exactly two sentences. First sentence: name the top one or two shared entities with their two scores from the JSON, in the shape Both pull toward NAME (LEFT / RIGHT). Second sentence: one plain-words line about what the two audiences share, written differently from the first sentence and never starting with 'Both pull toward', still using only entity names and scores present in the JSON. Never use the words 'entity' or 'taste graph'. Do not claim a partnership exists, is available, or will succeed. Do not add causes, history, genres, or locations that are not fields in the JSON. If overlaps is empty, say nothing.";
 
 async function explainWithGroq(evidence: CompareEvidence): Promise<string | null> {
   const { env } = await import("@/lib/env.server");
