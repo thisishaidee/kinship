@@ -17,7 +17,7 @@ import {
   type ResolvedEntity,
   type UncheckedCategory,
 } from "@/lib/kinship-door";
-import { KinshipWordmark } from "@/components/kinship-wordmark";
+import { KinshipLogo } from "@/components/KinshipLogo";
 import { PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/kinship-pdf";
 import type { AgentStep } from "@/lib/kinship-agent";
 
@@ -217,7 +217,7 @@ function Home() {
       <header className="sticky top-0 z-20 border-b border-line bg-bg/90 backdrop-blur">
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-3 px-5">
           <a href="/" aria-label="Kinship home" className="shrink-0">
-            <KinshipWordmark />
+            <KinshipLogo size={26} />
           </a>
         </div>
       </header>
