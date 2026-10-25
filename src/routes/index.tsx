@@ -403,7 +403,7 @@ function CompareSection({ rows }: { rows: HeroResult[] | null }) {
             Pick two names. Kinship lists what their fans share and writes the explanation.
           </p>
           <a
-            href="/app"
+            href="/app?mode=compare"
             className="mt-3.5 inline-flex h-[52px] w-full items-center justify-center rounded-full bg-[#FFB548] text-[15px] font-bold text-[#1a1200]"
           >
             Try Compare

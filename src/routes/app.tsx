@@ -22,11 +22,12 @@ import { PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/
 import type { AgentStep } from "@/lib/kinship-agent";
 
 export const Route = createFileRoute("/app")({
-  validateSearch: (search: Record<string, unknown>): { try?: string } => {
-    if (typeof search.try === "string") return { try: search.try };
+  validateSearch: (search: Record<string, unknown>): { try?: string; mode?: "compare" } => {
+    const mode = search.mode === "compare" ? ("compare" as const) : undefined;
+    if (typeof search.try === "string") return { try: search.try, mode };
     // landing form and chips submit ?q=
-    if (typeof search.q === "string") return { try: search.q };
-    return {};
+    if (typeof search.q === "string") return { try: search.q, mode };
+    return { mode };
   },
   component: Home,
 });
@@ -44,7 +45,7 @@ function problemCopy(reason: "empty" | "too-long" | "invalid"): string {
 }
 
 function Home() {
-  const { try: tryName } = Route.useSearch();
+  const { try: tryName, mode: modeParam } = Route.useSearch();
   const resolveSeed = useServerFn(resolveKinshipSeed);
   const compareSeeds = useServerFn(compareKinshipSeeds);
   const requestSeq = useRef(0);
@@ -202,6 +203,10 @@ function Home() {
   }
 
   const busy = mode === "single" ? phase === "loading" : comparePhase === "loading";
+
+  useEffect(() => {
+    if (modeParam === "compare") setMode("compare");
+  }, [modeParam]);
 
   const tryRan = useRef(false);
   useEffect(() => {
@@ -369,7 +374,10 @@ function Home() {
                 <section key={pitch.id} className="flex flex-col gap-5">
                   <ul className="grid grid-cols-1 gap-5 md:grid-cols-2">
                     {pitch.hits.map((hit, hitIndex) => (
-                      <li key={hit.entityId}>
+                      <li
+                        key={hit.entityId}
+                        className={hitIndex === pitch.hits.length - 1 && pitch.hits.length % 2 === 1 ? "md:col-span-2" : undefined}
+                      >
                         <ResultCard
                           name={hit.name}
                           href={partnerSearchHref(match?.name ?? heldSeed, hit.name)}
