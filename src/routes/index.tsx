@@ -1,246 +1,470 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Sparkles } from "lucide-react";
-import { KinshipWordmark } from "@/components/kinship-wordmark";
+// src/routes/index.tsx  (replaces the current landing page at "/")
+//
+// BEFORE PASTING: open the current src/routes/index.tsx and copy over anything this
+// file does not have, especially a `head()` / meta block and any route options.
+// This file only uses Tailwind arbitrary values, so it needs no theme changes.
 
-export const Route = createFileRoute("/")({ component: Landing });
+import { useEffect, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { compareKinshipSeeds, formatAffinity, resolveKinshipSeed } from "@/lib/kinship-door";
+import { KinshipLogo } from "../components/KinshipLogo";
 
-const DISCLAIMER =
-  "A shared-fans score shows a connection in Qloo’s data. It does not confirm an existing partnership, prove that a new partnership is available, or guarantee business compatibility. The numbers are shared-fans scores, not the chance a partnership succeeds.";
+export const Route = createFileRoute("/")({
+  component: Landing,
+});
 
-const STEPS = ["type a name", "qloo finds shared fans", "get your partners, compare, export"];
+const SERIF = "'Instrument Serif', Georgia, serif";
+const MONO = "'JetBrains Mono', ui-monospace, monospace";
+const SANS = "'Space Grotesk', system-ui, sans-serif";
 
-const SEEDS = ["Nike", "Burna Boy", "Dune (2021)"];
-const RESULTS = [
-  { name: "Wiz Khalifa", score: "0.979" },
-  { name: "Air Jordan", score: "0.970" },
-  { name: "Real Madrid CF", score: "0.969" },
+const GITHUB = "https://github.com/thisishaidee/kinship";
+
+// Names and scores are loaded at request time through the same server functions
+// /app uses. Nothing from a Qloo response is stored in this file.
+const SAMPLE_SEED = "Nike";
+const COMPARE_SEEDS = ["Nike", "Adidas"] as const;
+
+type Row = { name: string; kind: string; score: string; color: string };
+type CompareRow = { name: string; a: string; b: string };
+
+const CHIPS = ["Radiohead", "Nike", "Davido"];
+
+const STEPS = [
+  {
+    tag: "01 · ONE NAME",
+    bg: "bg-[#ffb547]",
+    fg: "text-[#1a1200]",
+    text: "Type one name. Kinship looks it up on Qloo and lists the artists, brands and films its fans already love.",
+  },
+  {
+    tag: "02 · REAL DATA",
+    bg: "bg-[#8ff0c4]",
+    fg: "text-[#06241a]",
+    text: "Every name and score comes from Qloo’s data on what people listen to, watch and wear. Nothing is invented.",
+  },
+  {
+    tag: "03 · READ WHY",
+    bg: "bg-[#c9c4ff]",
+    fg: "text-[#1a1647]",
+    text: "Compare two names and Kinship explains the match in plain sentences you can repeat out loud.",
+  },
 ];
-const TRUST = ["Artists", "Film", "Brands", "Places"];
-const REPO = "https://github.com/thisishaidee/kinship";
 
-const pillBase = "inline-flex items-center justify-center rounded-full text-sm font-medium transition-colors";
+const CHECKS = [
+  {
+    title: "Only Qloo’s names",
+    text: "A partner appears only if Qloo returned it, with its score.",
+  },
+  {
+    title: "No match means no match",
+    text: "If Qloo has no exact name, Kinship says so. It never swaps in a lookalike.",
+  },
+  {
+    title: "Explanations are checked",
+    text: "A sentence is shown only if it uses names and scores from the response.",
+  },
+];
+
+const FOOTER_LINKS: [string, string][] = [
+  ["Open app", "/app"],
+  ["How it works", "#how"],
+  ["Compare", "#compare"],
+  ["Qloo attribution", "https://www.qloo.com"],
+  ["GitHub repository", GITHUB],
+  ["MIT license", `${GITHUB}/blob/main/LICENSE`],
+];
 
 function Landing() {
   return (
-    <div data-landing="v2" className="flex w-full flex-col overflow-x-hidden bg-bg text-fg">
-      <header className="sticky top-0 z-20 border-b border-line/60 bg-bg/90 backdrop-blur">
-        <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-2 px-5">
-          <Link to="/" aria-label="Kinship home" className="shrink-0">
-            <KinshipWordmark />
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link
-              to="/app"
-              className={`${pillBase} h-9 gap-2 bg-crimson-grad pl-4 pr-1.5 text-sm text-white shadow-[0_6px_18px_-10px_rgba(224,32,44,0.9)]`}
-            >
-              Launch app
-              <span className="flex size-6 items-center justify-center rounded-full bg-white">
-                <ArrowRight className="size-3.5 text-accent" aria-hidden="true" strokeWidth={2.5} />
-              </span>
-            </Link>
-          </div>
+    <div
+      className="min-h-screen overflow-x-hidden bg-[#07070a] text-[#f4f1ea]"
+      style={{ fontFamily: SANS }}
+    >
+      <Hero />
+      <SampleSection />
+      <HowItWorks />
+      <CompareSection />
+      <TrustSection />
+      <CtaBand />
+      <Footer />
+    </div>
+  );
+}
+
+function Hero() {
+  return (
+    <section className="relative overflow-hidden px-5 pb-10 md:px-16 md:pb-24">
+      {/* glow arc, decorative */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-[84px] h-[900px] w-[900px] -translate-x-1/2 rounded-full border-t-2 border-[#ffd696] bg-[#07070a] shadow-[0_-18px_80px_6px_rgba(255,120,60,0.5),inset_0_40px_100px_rgba(255,150,70,0.26)] md:top-[110px] md:h-[1500px] md:w-[1500px] md:shadow-[0_-24px_110px_8px_rgba(255,120,60,0.5),inset_0_50px_140px_rgba(255,150,70,0.28)]"
+      />
+
+      <header className="relative mx-auto flex h-[72px] max-w-[1152px] items-center justify-between">
+        <a href="/" aria-label="Kinship home">
+          <KinshipLogo size={28} />
+        </a>
+        <nav className="hidden gap-9 text-[15px] md:flex" aria-label="Main">
+          <a className="text-[#cfcbc3] hover:text-white" href="#how">
+            How it works
+          </a>
+          <a className="text-[#cfcbc3] hover:text-white" href="#compare">
+            Compare
+          </a>
+          <a className="text-[#cfcbc3] hover:text-white" href={GITHUB}>
+            GitHub
+          </a>
         </nav>
+        <a
+          href="/app"
+          className="inline-flex h-11 items-center rounded-full bg-[#f4f1ea] px-5 text-sm font-bold text-[#111]"
+        >
+          Launch app
+        </a>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-5 pb-28 pt-8 sm:gap-24 sm:pb-16 sm:pt-24">
-        <section className="flex flex-col items-center gap-7 text-center">
-          <span className="inline-flex items-center rounded-full border border-accent/70 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.24em] text-accent">
-            Powered by Qloo
-          </span>
-          <h1 className="flex max-w-3xl flex-col items-center font-sans text-[40px] font-semibold leading-[1.05] tracking-tight text-white break-words sm:text-[56px]">
-            <span>A partnership,</span>
-            <span className="font-display text-accent italic">not a playlist.</span>
-          </h1>
-          <p className="max-w-xl text-base leading-relaxed text-muted sm:text-lg">
-            Type an artist, film, or brand. Kinship finds its real partners on Qloo’s data and never invents a name.
-          </p>
-          <p className="max-w-xl text-base font-medium leading-relaxed text-white sm:text-lg">
-            Kinship shows who your fans already love, then helps you pitch them.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <Link to="/app" className={`${pillBase} h-12 bg-crimson-grad px-7 text-base text-white shadow-[0_10px_28px_-14px_rgba(224,32,44,0.9)]`}>
-              Launch app
-            </Link>
-            <Link to="/app" search={{ try: "Nike" }} className={`${pillBase} h-12 bg-surface px-7 text-base text-fg ring-1 ring-line hover:bg-line/40`}>
-              Try Nike
-            </Link>
-            <a href="#how-it-works" className={`${pillBase} h-12 bg-surface px-7 text-base text-fg ring-1 ring-line hover:bg-line/40`}>
-              How it works
-            </a>
-          </div>
-        </section>
+      <div className="relative mx-auto mt-10 flex max-w-[1152px] flex-col items-center gap-[18px] text-center md:mt-16 md:gap-[22px]">
+        <span className="inline-flex h-8 items-center gap-2 rounded-full border border-[#3a2f22] bg-[#14100b] px-3.5 text-xs text-[#ffcf8a] md:h-[34px] md:text-[13px]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#ffb547]" />
+          Powered by Qloo
+        </span>
 
-        <section aria-label="Trust" className="flex flex-col items-center gap-4">
-          <p className="text-sm text-muted">Powered by Qloo</p>
-          <ul className="flex flex-wrap items-center justify-center gap-2">
-            {TRUST.map((chip) => (
-              <li key={chip} className="rounded-full border border-line bg-surface px-3.5 py-1.5 text-xs font-medium text-muted">
-                {chip}
-              </li>
-            ))}
-          </ul>
-        </section>
+        <h1
+          className="m-0 text-[54px] font-normal leading-none tracking-[-0.5px] md:text-[88px] md:tracking-[-1px]"
+          style={{ fontFamily: SERIF }}
+        >
+          A partnership, not a <span className="text-[#ffb547]">playlist.</span>
+        </h1>
 
-        <section aria-label="How Kinship connects a name to partners" className="flex flex-col items-center gap-10">
-          <DesktopDiagram />
-          <MobileDiagram />
-        </section>
+        <p className="m-0 max-w-[560px] text-base leading-normal text-[#b9b5ac] md:text-lg">
+          Type an artist, film or brand. Kinship finds the partners its fans already
+          love on Qloo, then drafts the pitch.
+        </p>
 
-        <section className="flex flex-col gap-8" aria-labelledby="how-it-works">
-          <div className="flex max-w-2xl flex-col gap-3">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">The flow</p>
-            <h2 id="how-it-works" className="scroll-mt-24 font-sans text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-              How it works
-            </h2>
-            <p className="text-base leading-relaxed text-muted">
-              Every name and score comes straight from Qloo.
-            </p>
-          </div>
-          <ol className="grid gap-2 sm:grid-cols-3">
-            {STEPS.map((step, index) => (
-              <li key={step} className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3.5">
-                <span className="shrink-0 font-mono text-[12px] leading-none tabular-nums text-accent">{String(index + 1).padStart(2, "0")}</span>
-                <span className="text-sm leading-snug text-fg">{step}</span>
-              </li>
-            ))}
-          </ol>
-        </section>
+        {/* Plain GET form: opens /app?q=Nike. /app should read `q` (see HANDOFF.md). */}
+        <form
+          action="/app"
+          method="get"
+          className="flex w-full max-w-[680px] flex-col gap-2.5 md:h-16 md:flex-row md:items-center md:gap-2 md:rounded-full md:bg-[#f4f1ea] md:p-2 md:pl-6"
+        >
+          <label htmlFor="seed" className="sr-only">
+            Artist, film or brand
+          </label>
+          <input
+            id="seed"
+            name="q"
+            defaultValue={SAMPLE_SEED}
+            autoComplete="off"
+            className="h-14 w-full min-w-0 rounded-full bg-[#f4f1ea] px-6 text-[17px] text-[#111] outline-none md:h-12 md:flex-1 md:bg-transparent md:px-0 md:text-lg"
+          />
+          <button
+            type="submit"
+            className="h-14 rounded-full bg-[#ffb547] px-7 text-base font-bold text-[#1a1200] md:h-12"
+          >
+            Find partners
+          </button>
+        </form>
 
-        <section aria-label="Compare example" className="flex w-full min-w-0 justify-center py-2 sm:py-4">
-          <figure className="w-full max-w-3xl overflow-hidden rounded-2xl border border-[#27272A] bg-[#0A0A0A] shadow-[0_28px_50px_-28px_rgba(0,0,0,0.9)]">
-            <div className="grid h-11 grid-cols-[3.25rem_minmax(0,1fr)_3.25rem] items-center border-b border-[#27272A] px-2.5 sm:h-12 sm:grid-cols-[4.5rem_minmax(0,1fr)_4.5rem] sm:px-3">
-              <div className="flex items-center gap-1 text-[#9CA3AF]" aria-hidden="true">
-                <svg viewBox="0 0 16 16" className="size-4" fill="none">
-                  <path d="M9.5 3.5 L5 8 l4.5 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <svg viewBox="0 0 16 16" className="size-4" fill="none">
-                  <path d="M6.5 3.5 L11 8 l-4.5 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <p className="mx-auto max-w-full truncate rounded-full border border-[#27272A] px-3 py-1 text-center text-[11px] leading-none text-[#9CA3AF] sm:text-xs">
-                kinshipp.vercel.app
-              </p>
-              <span className="sr-only">Browser preview of the Kinship compare</span>
-            </div>
-            <img
-              src="/compare-view.png"
-              alt="Desktop Kinship compare of Nike and Adidas, with shared Qloo fans and a one-line explanation."
-              className="block h-auto w-full"
-            />
-          </figure>
-        </section>
-
-      </main>
-
-      <footer className="border-t border-line bg-bg pb-6 sm:pb-0">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-8 text-sm text-muted">
-        <p className="max-w-3xl text-sm leading-relaxed text-muted">{DISCLAIMER}</p>
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-          <KinshipWordmark />
-          <div className="flex flex-wrap gap-x-5 gap-y-2">
-            <a href={REPO} target="_blank" rel="noopener noreferrer" className="text-fg underline decoration-1 underline-offset-4 hover:text-white">
-              GitHub repository
-            </a>
+        <div className="flex flex-wrap justify-center gap-2 md:gap-2.5">
+          {CHIPS.map((name) => (
             <a
-              href="https://github.com/thisishaidee/kinship/blob/main/LICENSE"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-fg underline decoration-1 underline-offset-4 hover:text-white"
+              key={name}
+              href={`/app?q=${encodeURIComponent(name)}`}
+              className={
+                name === SAMPLE_SEED
+                  ? "inline-flex h-11 items-center rounded-full border border-[#ffb547] bg-[#1d1507] px-4 text-sm text-[#ffb547] md:px-[18px]"
+                  : "inline-flex h-11 items-center rounded-full border border-[#2e2e34] px-4 text-sm text-[#f4f1ea] md:px-[18px]"
+              }
             >
-              MIT license
+              {name}
             </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CopyPitch({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } catch {
+          /* clipboard blocked: do nothing */
+        }
+      }}
+      className="h-12 flex-1 rounded-full bg-[#f4f1ea] text-[15px] font-bold text-[#111]"
+    >
+      {copied ? "Copied" : "Copy pitch"}
+    </button>
+  );
+}
+
+function scoreColor(kind: string): string {
+  const value = kind.toLowerCase();
+  if (value.includes("artist")) return "#ffb547";
+  if (value.includes("brand")) return "#8ff0c4";
+  return "#c9c4ff";
+}
+
+function kindLabel(partnerType: string): string {
+  return partnerType.replace(/ partner$/i, "").toUpperCase();
+}
+
+function SampleSection() {
+  const resolveSeed = useServerFn(resolveKinshipSeed);
+  const [rows, setRows] = useState<Row[] | null>(null);
+  const [pitch, setPitch] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    resolveSeed({ data: { seed: SAMPLE_SEED } })
+      .then((result) => {
+        if (cancelled || result.status !== "matched") return;
+        const next = result.pitches
+          .flatMap((item) =>
+            item.hits.map((hit) => ({
+              name: hit.name,
+              kind: kindLabel(item.partnerType),
+              score: formatAffinity(hit.score),
+              color: scoreColor(item.partnerType),
+              value: hit.score,
+            })),
+          )
+          .sort((left, right) => right.value - left.value)
+          .slice(0, 3)
+          .map(({ name, kind, score, color }) => ({ name, kind, score, color }));
+        if (next.length === 0) return;
+        setRows(next);
+        setPitch(
+          `${SAMPLE_SEED}'s audience also leans toward ${next.map((row) => `${row.name} (${row.score})`).join(", ")}.`,
+        );
+      })
+      .catch(() => {
+        /* hide the card when Qloo does not answer */
+      });
+    return () => {
+      cancelled = true;
+    };
+    // The server function identity is not stable. Run this sample once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!rows || !pitch) return null;
+
+  return (
+    <section className="px-5 md:px-16">
+      <div className="mx-auto max-w-[560px] rounded-3xl border border-[#2a2a30] bg-[#101014] p-5 md:p-7">
+        <div className="flex items-baseline justify-between pb-3">
+          <span className="text-[13px] tracking-[0.8px] text-[#ffcf8a]">
+            {SAMPLE_SEED.toUpperCase()} · STRONGEST MATCHES
+          </span>
+          <span className="text-xs text-[#a3a09a]">Sample</span>
+        </div>
+
+        {rows.map((row) => (
+          <div key={row.name} className="flex items-center gap-3 border-t border-[#26262c] py-3.5">
+            <div className="min-w-0 flex-1">
+              <div className="break-words text-[26px] leading-[1.1]" style={{ fontFamily: SERIF }}>
+                {row.name}
+              </div>
+              <div className="mt-1 text-xs tracking-[0.8px] text-[#a3a09a]">{row.kind}</div>
+            </div>
+            <span className="flex-none text-[30px] font-semibold" style={{ fontFamily: MONO, color: row.color }}>
+              {row.score}
+            </span>
           </div>
+        ))}
+
+        <p className="m-0 border-t border-[#26262c] pt-3.5 text-sm leading-normal text-[#cfcbc3]">{pitch}</p>
+        <div className="mt-3.5 flex gap-2.5">
+          <CopyPitch text={pitch} />
+          <a
+            href="/app"
+            className="inline-flex h-12 flex-1 items-center justify-center rounded-full border border-[#2e2e34] text-[15px] text-[#f4f1ea]"
+          >
+            Try your own
+          </a>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function HowItWorks() {
+  return (
+    <section
+      id="how"
+      className="mt-14 rounded-t-[28px] bg-[#efeee9] px-5 py-12 text-[#141413] md:mt-24 md:rounded-t-[32px] md:px-16 md:py-20"
+    >
+      <div className="mx-auto max-w-[1152px]">
+        <span className="text-xs tracking-[0.8px] text-[#5f5d57]">HOW IT WORKS</span>
+        <h2
+          className="mb-5 mt-2 text-[40px] font-normal leading-[1.05] md:mb-10 md:text-[52px]"
+          style={{ fontFamily: SERIF }}
+        >
+          Three steps, no guessing.
+        </h2>
+        <div className="grid gap-5 md:grid-cols-3 md:gap-6">
+          {STEPS.map((s) => (
+            <div key={s.tag} className="overflow-hidden rounded-[20px] bg-white md:rounded-[22px]">
+              <div className={`px-5 py-3 text-xs font-bold tracking-[0.6px] ${s.bg} ${s.fg}`}>
+                {s.tag}
+              </div>
+              <p className="m-0 p-5 text-[15px] leading-[1.55] text-[#4a4944] md:p-6">{s.text}</p>
+            </div>
+          ))}
         </div>
-      </footer>
-    </div>
+      </div>
+    </section>
   );
 }
 
-function SeedPill({ label, className = "" }: { label: string; className?: string }) {
+function CompareSection() {
+  const compareSeeds = useServerFn(compareKinshipSeeds);
+  const [rows, setRows] = useState<CompareRow[] | null>(null);
+  const [line, setLine] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    compareSeeds({ data: { left: COMPARE_SEEDS[0], right: COMPARE_SEEDS[1] } })
+      .then((result) => {
+        if (cancelled || result.status !== "matched") return;
+        setRows(
+          result.overlaps.slice(0, 3).map((overlap) => ({
+            name: overlap.name,
+            a: formatAffinity(overlap.leftScore),
+            b: formatAffinity(overlap.rightScore),
+          })),
+        );
+        setLine(result.explanation);
+      })
+      .catch(() => {
+        /* hide the card when the compare does not answer */
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <span className={`inline-flex w-fit items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-fg ${className}`}>
-      <Sparkles className="size-3.5 text-accent" aria-hidden="true" />
-      {label}
-    </span>
+    <section
+      id="compare"
+      className="mx-auto flex max-w-[1152px] flex-col gap-5 px-5 py-12 md:flex-row md:items-center md:gap-16 md:px-16 md:py-24"
+    >
+      <div className="flex flex-col gap-4 md:flex-1">
+        <span className="text-xs tracking-[0.8px] text-[#ffcf8a]">COMPARE</span>
+        <h2 className="m-0 text-[40px] font-normal leading-[1.05] md:text-[56px]" style={{ fontFamily: SERIF }}>
+          Hand a partner the proof, not a hunch.
+        </h2>
+        <p className="m-0 hidden max-w-[480px] text-[17px] leading-[1.55] text-[#b9b5ac] md:block">
+          Compare two names and Kinship lists what their fans share, then explains it in two sentences you can repeat out
+          loud. Export it as a one-page PDF.
+        </p>
+      </div>
+
+      {line ? (
+        <div className="rounded-[22px] border border-[#2a2a30] bg-gradient-to-br from-[#17171b] from-55% to-[#3a2a12] p-5 md:w-[500px] md:flex-none md:p-7">
+          <div className="flex justify-between pb-2.5 text-xs tracking-[0.8px] text-[#a3a09a]">
+            <span>
+              {COMPARE_SEEDS[0].toUpperCase()} × {COMPARE_SEEDS[1].toUpperCase()}
+            </span>
+            <span className="flex gap-[18px]">
+              <span>{COMPARE_SEEDS[0].toUpperCase()}</span>
+              <span>{COMPARE_SEEDS[1].toUpperCase()}</span>
+            </span>
+          </div>
+          {(rows ?? []).map((row) => (
+            <div key={row.name} className="flex items-center justify-between gap-3 border-t border-[#2a2a30] py-3">
+              <span className="min-w-0 break-words text-2xl" style={{ fontFamily: SERIF }}>
+                {row.name}
+              </span>
+              <span className="flex-none text-base font-semibold" style={{ fontFamily: MONO }}>
+                {row.a} · {row.b}
+              </span>
+            </div>
+          ))}
+          <p className="m-0 border-t border-[#2a2a30] pt-3 text-sm leading-normal text-[#cfcbc3]">{line}</p>
+          <a
+            href="/app"
+            className="mt-3.5 inline-flex h-[52px] w-full items-center justify-center rounded-full bg-[#ffb547] text-[15px] font-bold text-[#1a1200]"
+          >
+            Try Compare
+          </a>
+        </div>
+      ) : null}
+    </section>
   );
 }
 
-function ResultCard({ name, score, top = false, className = "" }: { name: string; score: string; top?: boolean; className?: string }) {
+function TrustSection() {
   return (
-    <div className={`flex w-full items-baseline justify-between gap-4 rounded-xl border border-line bg-surface px-4 py-3.5 ${className}`}>
-      <span className="min-w-0 break-words text-sm font-semibold text-white">{name}</span>
-      <span className="flex shrink-0 items-baseline gap-2">
-        <span className={`text-[22px] font-medium leading-none tabular-nums ${top ? "text-accent" : "text-[#9CA3AF]"}`}>{score}</span>
-        <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-[#9CA3AF]/80">shared-fans score</span>
-      </span>
-    </div>
-  );
-}
-
-function HubCircle() {
-  return (
-    <div className="flex size-28 flex-col items-center justify-center gap-1 rounded-full border border-accent/60 bg-surface text-center shadow-[0_0_0_8px_rgba(224,32,44,0.06)] sm:size-36">
-      <span className="text-[10px] uppercase tracking-[0.2em] text-muted">Qloo</span>
-      <span className="px-3 text-sm font-semibold leading-tight text-white">Qloo’s data</span>
-    </div>
-  );
-}
-
-function DesktopDiagram() {
-  return (
-    <div className="relative hidden h-[380px] w-full max-w-4xl md:block" role="img" aria-label="Names Nike, Burna Boy, and Dune connect through Qloo’s data to Wiz Khalifa, Air Jordan, and Real Madrid CF.">
-      <svg className="absolute inset-0 size-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        {[16, 50, 84].map((y) => (
-          <line key={`l${y}`} x1="19" y1={y} x2="42" y2="50" stroke="#3f3f46" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+    <section className="mx-auto max-w-[1152px] px-5 pb-12 md:px-16 md:pb-20">
+      <span className="text-xs tracking-[0.8px] text-[#a3a09a]">BUILT TO BE CHECKED</span>
+      <div className="mt-4 grid gap-4 md:grid-cols-3 md:gap-12">
+        {CHECKS.map((c) => (
+          <div key={c.title} className="flex gap-3">
+            <span className="mt-2 h-2 w-2 flex-none rounded-full bg-[#7fe3b3]" />
+            <div>
+              <div className="text-lg font-medium">{c.title}</div>
+              <div className="mt-0.5 text-sm leading-normal text-[#a3a09a]">{c.text}</div>
+            </div>
+          </div>
         ))}
-        {[16, 50, 84].map((y) => (
-          <line key={`r${y}`} x1="58" y1="50" x2="76" y2={y} stroke="#3f3f46" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-        ))}
-      </svg>
-      <div className="absolute left-0 top-[16%] -translate-y-1/2">
-        <SeedPill label={SEEDS[0]} />
       </div>
-      <div className="absolute left-0 top-1/2 -translate-y-1/2">
-        <SeedPill label={SEEDS[1]} />
-      </div>
-      <div className="absolute left-0 top-[84%] -translate-y-1/2">
-        <SeedPill label={SEEDS[2]} />
-      </div>
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-        <HubCircle />
-      </div>
-      <div className="absolute right-0 top-[16%] w-[210px] -translate-y-1/2">
-        <ResultCard name={RESULTS[0].name} score={RESULTS[0].score} top />
-      </div>
-      <div className="absolute right-0 top-1/2 w-[210px] -translate-y-1/2">
-        <ResultCard name={RESULTS[1].name} score={RESULTS[1].score} />
-      </div>
-      <div className="absolute right-0 top-[84%] w-[210px] -translate-y-1/2">
-        <ResultCard name={RESULTS[2].name} score={RESULTS[2].score} />
-      </div>
-    </div>
+    </section>
   );
 }
 
-function MobileDiagram() {
+function CtaBand() {
   return (
-    <div className="flex w-full max-w-sm flex-col items-stretch gap-3 md:hidden">
-      <div className="flex flex-col items-start gap-2">
-        {SEEDS.map((seed) => (
-          <SeedPill key={seed} label={seed} />
-        ))}
+    <section className="bg-[#ffb547] px-5 py-11 text-[#1a1200] md:px-16 md:py-[72px]">
+      <div className="mx-auto flex max-w-[1152px] flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <span
+          className="text-[46px] leading-[1.02] md:max-w-[640px] md:text-[64px]"
+          style={{ fontFamily: SERIF }}
+        >
+          Try it on a name you know.
+        </span>
+        <a
+          href="/app"
+          className="inline-flex h-14 items-center justify-center rounded-full bg-[#0b0b12] px-8 text-base font-bold text-white"
+        >
+          Launch app
+        </a>
       </div>
-      <div className="flex flex-col items-center gap-1 py-1" aria-hidden="true">
-        <span className="h-6 w-px bg-line" />
-        <HubCircle />
-        <span className="h-6 w-px bg-line" />
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="mx-auto flex max-w-[1152px] flex-col gap-6 px-5 pb-8 pt-10 md:px-16 md:pt-14">
+      <div className="flex flex-col gap-6 md:flex-row md:justify-between">
+        <div>
+          <KinshipLogo size={26} />
+          <div className="mt-1 text-sm text-[#a3a09a]">Partner discovery from shared fans.</div>
+        </div>
+        <div className="grid grid-cols-2 gap-x-4 text-[15px] md:grid-cols-3 md:gap-x-16">
+          {FOOTER_LINKS.map(([label, href]) => (
+            <a key={label} href={href} className="flex h-11 items-center text-[#cfcbc3] hover:text-white">
+              {label}
+            </a>
+          ))}
+        </div>
       </div>
-      <div className="flex flex-col gap-3">
-        {RESULTS.map((result) => (
-          <ResultCard key={result.name} name={result.name} score={result.score} top={result === RESULTS[0]} />
-        ))}
-      </div>
-    </div>
+      <p className="m-0 border-t border-[#26262c] pt-4 text-xs leading-normal text-[#a3a09a]">
+        Scores come from Qloo’s taste graph and show a connection in the data, not
+        partnership availability. Beta: scores are estimates. © 2026 Kinship
+      </p>
+    </footer>
   );
 }

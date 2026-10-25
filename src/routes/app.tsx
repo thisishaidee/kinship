@@ -16,11 +16,12 @@ import {
   type ResolvedEntity,
   type UncheckedCategory,
 } from "@/lib/kinship-door";
-import { KinshipWordmark } from "@/components/kinship-wordmark";
+import { KinshipLogo } from "@/components/KinshipLogo";
 import { PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/kinship-pdf";
 
 export const Route = createFileRoute("/app")({
-  validateSearch: (search: Record<string, unknown>): { try?: string } => (typeof search.try === "string" ? { try: search.try } : {}),
+  validateSearch: (search: Record<string, unknown>): { q?: string } =>
+    typeof search.q === "string" && search.q.trim() ? { q: search.q } : {},
   component: Home,
 });
 
@@ -37,7 +38,7 @@ function problemCopy(reason: "empty" | "too-long" | "invalid"): string {
 }
 
 function Home() {
-  const { try: tryName } = Route.useSearch();
+  const { q } = Route.useSearch();
   const resolveSeed = useServerFn(resolveKinshipSeed);
   const compareSeeds = useServerFn(compareKinshipSeeds);
   const requestSeq = useRef(0);
@@ -180,36 +181,36 @@ function Home() {
 
   const tryRan = useRef(false);
   useEffect(() => {
-    if (!tryName || tryRan.current) return;
+    if (tryRan.current) return;
     tryRan.current = true;
-    setSeed(tryName);
-    void run(tryName.trim());
+    const next = (q ?? "Nike").trim() || "Nike";
+    setSeed(next);
+    void run(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tryName]);
+  }, [q]);
 
   return (
-    <div className="flex w-full flex-col overflow-x-hidden bg-bg">
+    <div
+      className="flex w-full flex-col overflow-x-hidden bg-bg text-fg"
+      style={{
+        fontFamily: "'Space Grotesk', system-ui, sans-serif",
+        ["--color-bg" as string]: "#07070a",
+        ["--color-surface" as string]: "#101014",
+        ["--color-fg" as string]: "#f4f1ea",
+        ["--color-muted" as string]: "#a3a09a",
+        ["--color-line" as string]: "#2a2a30",
+        ["--color-accent" as string]: "#ffb547",
+        ["--color-accent-fg" as string]: "#1a1200",
+      }}
+    >
       <header className="sticky top-0 z-20 border-b border-line bg-bg/90 backdrop-blur">
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-3 px-5">
-          <a href="/" aria-label="Kinship home" className="shrink-0">
-            <KinshipWordmark />
+          <a href="/" aria-label="Kinship home" className="shrink-0 text-[#f4f1ea]">
+            <KinshipLogo size={26} />
           </a>
         </div>
       </header>
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 pb-8 pt-6 sm:pt-8">
-      <header className="flex flex-col gap-3">
-        <h1 className="font-display text-4xl leading-none text-white sm:text-[44px]">
-          A partnership, <span className="italic text-accent">not a playlist.</span>
-        </h1>
-        <p className="text-base text-muted">
-          {mode === "single"
-            ? "Type an artist, film, or brand. Names and scores come from Qloo."
-            : "Compare two exact Qloo entities. A shared name appears only when both results use the same entity."}
-        </p>
-      </header>
-
-      <HowItWorks />
-
       <div className="grid grid-cols-2 gap-2">
         <button type="button" aria-pressed={mode === "single"} onClick={() => setMode("single")} className={modeButton(mode === "single")}>
           one name
@@ -311,7 +312,7 @@ function Home() {
         <section className="flex flex-col gap-3" aria-busy={busy} aria-live="polite">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-sm font-medium text-fg">Pitch cards</h2>
-            <p className="text-sm text-muted">{phase === "matched" ? `${pitches.length} from the strongest shared-fans scores` : "No pitch"}</p>
+            <p className="text-sm text-muted">{phase === "matched" ? `${pitches.length} from the strongest Qloo affinities` : "No pitch"}</p>
           </div>
           {phase === "matched" && pitches.length === 0 ? (
             <p className="text-base text-muted">
@@ -398,31 +399,6 @@ function Home() {
   );
 }
 
-function HowItWorks() {
-  const steps = ["type a name", "qloo finds shared fans", "get your partners, compare, export"];
-  return (
-    <section className="flex flex-col gap-3" aria-labelledby="how-it-works">
-      <h2 id="how-it-works" className="text-sm font-medium text-fg">
-        How it works
-      </h2>
-      <p className="text-sm leading-snug text-muted">
-        Every name and score comes straight from Qloo.
-      </p>
-      <ol className="flex flex-col">
-        {steps.map((step, index) => (
-          <li key={step} className="flex flex-col">
-            <div className="flex items-center gap-3">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-line text-xs font-medium text-accent">{index + 1}</span>
-              <span className="text-sm text-fg">{step}</span>
-            </div>
-            {index < steps.length - 1 ? <span className="ml-3.5 h-3 w-px bg-line" aria-hidden="true" /> : null}
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
 function LoadingSteps({ mode }: { mode: Mode }) {
   const steps =
     mode === "compare"
@@ -437,7 +413,7 @@ function LoadingSteps({ mode }: { mode: Mode }) {
     <div className="border-l-[3px] border-l-accent flex flex-col gap-3 rounded-xl border border-line bg-surface px-4 py-3 shadow-card" role="status" aria-live="polite">
       <ol className="flex flex-col gap-1">
         {steps.map((label, index) => (
-          <li key={label} className={index === step ? "text-sm text-white" : "text-sm text-muted"}>
+          <li key={label} className={index === step ? "text-[15px] text-white" : "text-[15px] text-muted"}>
             {label}
             {index === step ? "…" : ""}
           </li>
@@ -465,13 +441,13 @@ function shownPhase(mode: Mode, phase: Phase, comparePhase: Phase): Phase {
 
 function modeButton(active: boolean): string {
   return active
-    ? "inline-flex h-10 items-center justify-center rounded-full bg-accent px-4 text-sm font-medium text-white"
-    : "inline-flex h-10 items-center justify-center rounded-full border border-line bg-surface px-4 text-sm font-medium text-muted hover:text-white";
+    ? "inline-flex h-11 items-center justify-center rounded-full bg-[#ffb547] px-4 text-[15px] font-medium text-[#1a1200]"
+    : "inline-flex h-11 items-center justify-center rounded-full border border-line bg-surface px-4 text-[15px] font-medium text-muted hover:text-white";
 }
 
 function Alert({ children }: { children: ReactNode }) {
   return (
-    <p className="border-l-[3px] border-l-accent rounded-xl border border-line bg-surface px-4 py-3 text-sm leading-snug text-fg shadow-card" role="alert">
+    <p className="rounded-xl border border-line border-l-[3px] border-l-[#ffb547] bg-surface px-4 py-3 text-[15px] leading-snug text-fg" role="alert">
       {children}
     </p>
   );
@@ -484,8 +460,8 @@ function SubmitButton({ busy, label, inline = false }: { busy: boolean; label: s
       disabled={busy}
       className={
         inline
-          ? "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-crimson-grad px-4 text-sm font-medium text-white disabled:opacity-60 sm:px-5"
-          : "inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-crimson-grad px-4 text-base font-medium text-white disabled:opacity-60"
+          ? "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-[#ffb547] px-4 text-[15px] font-medium text-[#1a1200] disabled:opacity-60 sm:px-5"
+          : "inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#ffb547] px-4 text-base font-medium text-[#1a1200] disabled:opacity-60"
       }
     >
       {busy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : inline ? <ArrowRight className="size-4" aria-hidden="true" /> : <Search className="size-5" aria-hidden="true" />}
@@ -531,7 +507,7 @@ function Chooser({ title, candidates, busy, onPick }: { title: string; candidate
               className="flex w-full flex-col items-start gap-1 rounded-2xl border border-line bg-surface p-4 text-left shadow-card transition-colors hover:border-accent disabled:opacity-60"
             >
               <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted">{choiceLine(candidate)}</span>
-              <span className="font-display text-2xl leading-none text-fg">{candidate.name}</span>
+              <span className="min-w-0 break-words text-2xl leading-none text-fg" style={{ fontFamily: "'Instrument Serif', Georgia, serif" }}>{candidate.name}</span>
               {candidate.blurb ? <span className="text-sm leading-snug text-muted">{candidate.blurb}</span> : null}
             </button>
           </li>
@@ -599,7 +575,7 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
         <SeedTicket entity={pairing.right} />
       </div>
       <div className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium text-fg">Shared-fans scores</h2>
+        <h2 className="text-sm font-medium text-fg">Qloo affinity</h2>
         <p className="text-sm leading-snug text-muted">{RESULT_NOTE}</p>
         {pairing.overlaps.length === 0 ? (
           <p className="text-base text-muted">No entity appeared in both Qloo results.</p>
@@ -608,10 +584,10 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
             {pairing.overlaps.map((overlap, index) => (
               <li key={overlap.entityId} className="flex items-center justify-between gap-4 border-t border-line px-4 py-3 first:border-t-0">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-fg">{overlap.name}</p>
+                  <p className="break-words text-[15px] font-medium text-fg">{overlap.name}</p>
                   <p className="text-xs text-muted">{overlap.category}</p>
                 </div>
-                <div className="flex shrink-0 items-center gap-3">
+                <div className="flex flex-none items-center gap-3">
                   {index === highMatchIndex(pairing.overlaps) ? (
                     <span className="rounded-full border border-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent">High match</span>
                   ) : null}
@@ -659,36 +635,50 @@ function scoreTone(score: number): string {
   return score >= 0.95 ? "font-semibold text-accent" : "font-medium text-muted";
 }
 
+function stripTone(category: string): { bg: string; fg: string } {
+  const value = category.toLowerCase();
+  if (value.startsWith("artist")) return { bg: "#ffb547", fg: "#1a1200" };
+  if (value.startsWith("brand")) return { bg: "#8ff0c4", fg: "#06241a" };
+  return { bg: "#c9c4ff", fg: "#1a1647" };
+}
+
 function SeedTicket({ entity }: { entity: ResolvedEntity }) {
+  const tone = stripTone(entity.typeLabel);
   return (
     <article className="min-w-0 overflow-hidden rounded-2xl border border-line bg-surface">
-      <div className="bg-accent/10 px-4 py-2">
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-accent">{entity.typeLabel}</p>
+      <div className="px-4 py-2" style={{ background: tone.bg, color: tone.fg }}>
+        <p className="text-[11px] font-medium uppercase tracking-[0.16em]">{entity.typeLabel}</p>
       </div>
       <div className="px-4 py-4">
-        <p className="break-words text-lg font-semibold text-fg">{entity.name}</p>
-        <p className="mt-1 text-xs text-muted">Resolved on Qloo</p>
+        <p className="min-w-0 break-words text-lg font-semibold text-fg">{entity.name}</p>
+        <p className="mt-1 text-[15px] text-muted">Resolved on Qloo</p>
       </div>
     </article>
   );
 }
 
-function ResultCard({ name, href, category, score, top = false }: { name: string; href: string; category: string; score: number; top?: boolean }) {
+function ResultCard({ name, href, category, score }: { name: string; href: string; category: string; score: number; top?: boolean }) {
+  const tone = stripTone(category);
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface">
-      <div className="bg-accent/10 px-4 py-2">
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-accent">{category.split(" ")[0]}</p>
+      <div className="px-4 py-2" style={{ background: tone.bg, color: tone.fg }}>
+        <p className="text-[11px] font-medium uppercase tracking-[0.16em]">{category.split(" ")[0]}</p>
       </div>
-      <div className="flex flex-1 items-baseline justify-between gap-4 px-4 py-3.5">
+      <div className="flex flex-1 items-end justify-between gap-3 px-4 py-4">
         <div className="min-w-0">
-          <a href={href} target="_blank" rel="noopener noreferrer" className="block break-words text-sm font-semibold text-white underline decoration-white/25 underline-offset-4">
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block break-words text-[22px] leading-[1.15] text-white underline decoration-white/25 underline-offset-4"
+            style={{ fontFamily: "'Instrument Serif', Georgia, serif" }}
+          >
             {name}
           </a>
-          <p className="mt-0.5 text-[10px] uppercase tracking-[0.18em] text-[#9CA3AF]/80">shared-fans score</p>
+          <p className="mt-1 text-[15px] text-[#a3a09a]">Qloo affinity</p>
         </div>
-        <p className="flex shrink-0 items-baseline gap-2">
-          <span className={`text-[22px] leading-none tabular-nums ${top ? "font-semibold text-accent" : "font-medium text-[#9CA3AF]"}`}>{formatAffinity(score)}</span>
-          <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-[#9CA3AF]/80">shared-fans score</span>
+        <p className="flex-none text-[32px] font-semibold leading-none" style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: tone.bg }}>
+          {formatAffinity(score)}
         </p>
       </div>
     </article>
