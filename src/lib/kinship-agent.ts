@@ -2,7 +2,7 @@ import { groundedExplanation, type CompareEvidence } from "./kinship-compare.ts"
 import type { Candidate, GraphHit, ResolvedEntity } from "./kinship-resolve.ts";
 
 // Agentic pitch loop. The model decides which Qloo reads to make (as tools), within a
-// hard budget. The loop itself never reaches Qloo or Gemini: both are injected, so the
+// hard budget. The loop itself never reaches Qloo or the model: both are injected, so the
 // caps and the validator can be tested without the network. Any failure returns a
 // fallback outcome, and the caller keeps the fixed pipeline.
 
