@@ -64,6 +64,7 @@ function Home() {
   const [pairing, setPairing] = useState<CompareMatch | null>(null);
   const [agentSteps, setAgentSteps] = useState<AgentStep[]>([]);
   const [agentPitched, setAgentPitched] = useState(false);
+  const [agentReason, setAgentReason] = useState<string | null>(null);
   const runAgent = useServerFn(runAgenticPitch);
 
   async function run(next: string, entityId?: string) {
@@ -80,6 +81,7 @@ function Home() {
     setGraphStatus("empty");
     setAgentSteps([]);
     setAgentPitched(false);
+    setAgentReason(null);
     setPhase("loading");
     try {
       const result = await resolveSeed({ data: { seed: next, entityId } });
@@ -104,9 +106,10 @@ function Home() {
         setPhase("matched");
         void runAgent({ data: { seed: next, entityId } }).then((agent) => {
           if (!isLatestRequest(requestId, requestSeq.current)) return;
-          if (agent && agent.steps.length > 0) {
+          if (agent) {
             setAgentSteps(agent.steps);
             setAgentPitched(agent.status === "pitch");
+            setAgentReason(agent.status === "fallback" ? agentReasonCopy(agent.reason) : null);
           }
         }).catch(() => undefined);
         return;
@@ -344,7 +347,7 @@ function Home() {
           {phase === "unavailable" && match ? (
             <p className="text-base text-muted">Qloo resolved {match.name}, but the categories could not be checked.</p>
           ) : null}
-          {phase === "matched" && agentSteps.length > 0 ? <AgentTrace steps={agentSteps} pitched={agentPitched} /> : null}
+          {phase === "matched" && (agentSteps.length > 0 || agentReason) ? <AgentTrace steps={agentSteps} pitched={agentPitched} reason={agentReason} /> : null}
           {phase === "matched" && pitches.length > 0 ? (
             <div className="flex flex-col gap-8">
               {pitches.map((pitch) => (
@@ -442,11 +445,20 @@ function HowItWorks() {
   );
 }
 
-function AgentTrace({ steps, pitched }: { steps: AgentStep[]; pitched: boolean }) {
+function agentReasonCopy(reason: string): string {
+  if (reason === "not-configured") return "the ai writer is not turned on here, so the cards use the standard read.";
+  if (reason === "model-error" || reason === "agent-error") return "the ai writer could not be reached right now, so the cards use the standard read.";
+  if (reason === "invalid-output") return "the ai writer's answer did not pass the check, so the cards use the standard read.";
+  if (reason === "no-evidence") return "the ai writer found no shared partners to write from, so the cards use the standard read.";
+  if (reason === "budget" || reason === "still-calling") return "the ai writer ran out of lookups before it finished, so the cards use the standard read.";
+  return "the ai writer did not finish, so the cards use the standard read.";
+}
+
+function AgentTrace({ steps, pitched, reason }: { steps: AgentStep[]; pitched: boolean; reason: string | null }) {
   return (
     <details className="flex flex-col gap-2 border-t border-line pt-3 text-sm text-muted">
       <summary className="cursor-pointer text-muted">how the agent worked</summary>
-      {pitched ? null : <p className="mt-2 text-muted">the agent did not finish a checked pitch, so the cards below use the standard read.</p>}
+      {pitched ? null : <p className="mt-2 text-muted">{reason ?? "the agent did not finish a checked pitch, so the cards below use the standard read."}</p>}
       <ol className="mt-2 flex flex-col gap-1">
         {steps.map((step, index) => (
           <li key={index} className={step.ok ? "text-muted" : "text-muted line-through"}>
