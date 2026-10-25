@@ -28,7 +28,7 @@ const SAMPLE_SEED = "Nike";
 const COMPARE_SEEDS = ["Nike", "Adidas"];
 const ROW_COLORS = ["#FFB548", "#8EF2C8", "#C8C3FA"];
 
-const CHIPS = ["Radiohead", "Nike", "Davido"];
+const CHIPS = ["Radiohead", "Nike", "Drake"];
 
 const STEPS = [
   {

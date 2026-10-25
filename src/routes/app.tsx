@@ -26,7 +26,7 @@ export const Route = createFileRoute("/app")({
   component: Home,
 });
 
-const EXAMPLES = ["Radiohead", "Nike", "Davido"] as const;
+const EXAMPLES = ["Radiohead", "Nike", "Drake"] as const;
 const RESULT_NOTE = "Shared-fans scores show a connection in Qloo’s data, not partnership availability.";
 
 type Phase = "idle" | "loading" | "matched" | "ambiguous" | "no-match" | "missing-key" | "refused" | "unavailable";

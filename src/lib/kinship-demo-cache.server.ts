@@ -1,11 +1,11 @@
-// Private fallback for the three demo seeds (Radiohead, Nike, Davido).
+// Private fallback for the three demo seeds (Radiohead, Nike, Drake).
 // If the Qloo key dies or quota runs out, the demo keeps working from the last
 // successful lookup. The cache lives in a gitignored .secrets/ file and is never
 // committed: Qloo's developer terms forbid storing its response data in a public repo.
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
-export const DEMO_SEEDS = ["Radiohead", "Nike", "Davido"] as const;
+export const DEMO_SEEDS = ["Radiohead", "Nike", "Drake"] as const;
 
 const CACHE_REL = ".secrets/qloo-demo-cache.json";
 
