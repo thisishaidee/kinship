@@ -151,37 +151,6 @@ function QlooDiagram() {
 function Hero() {
   return (
     <section className="relative overflow-hidden px-5 pb-10 md:px-16 md:pb-24">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 hidden md:block"
-        style={{
-          maskImage: "linear-gradient(to bottom, black 55%, transparent 97%)",
-          WebkitMaskImage: "linear-gradient(to bottom, black 55%, transparent 97%)",
-        }}
-      >
-        <div
-          className="absolute left-1/2 top-0 h-full w-full -translate-x-1/2"
-          style={{
-            background:
-              "radial-gradient(ellipse 62% 78% at 50% 70%, rgba(165,85,40,0.9), rgba(110,55,25,0.5) 50%, rgba(55,26,11,0.25) 70%, transparent 85%)",
-          }}
-        />
-        <div
-          aria-hidden="true"
-          className="absolute left-1/2 top-[210px] h-[1400px] w-[1400px] -translate-x-1/2 rounded-full"
-          style={{
-            background:
-              "radial-gradient(closest-side, rgba(192,88,42,0.95), rgba(150,72,32,0.6) 45%, rgba(90,44,18,0.35) 68%, transparent 82%)",
-            boxShadow:
-              "0 0 8px rgba(255,224,150,1), 0 -3px 14px rgba(255,195,105,0.95), 0 -12px 44px rgba(235,135,58,0.75), 0 -40px 110px rgba(180,90,40,0.45)",
-            borderTop: "3px solid rgba(255,224,150,1)",
-            maskImage:
-              "linear-gradient(to bottom, black 0%, black 22%, transparent 33%)",
-            WebkitMaskImage:
-              "linear-gradient(to bottom, black 0%, black 22%, transparent 33%)",
-          }}
-        />
-      </div>
       <header className="relative mx-auto flex h-[72px] max-w-[1152px] items-center justify-between">
         <a href="/" aria-label="Kinship home">
           <KinshipLogo size={28} />
