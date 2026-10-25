@@ -1,4 +1,4 @@
-export const PAIRING_DISCLAIMER = "Shared-fans scores show a connection in Qloo’s data, not partnership availability.";
+export const PAIRING_DISCLAIMER = "Shared-fans scores show a connection in Qloo's data, not partnership availability.";
 export const PDF_FILENAME = "kinship-pairing.pdf";
 
 export type PairingPdfInput = {
