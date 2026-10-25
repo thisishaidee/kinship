@@ -89,7 +89,7 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
     return { text: fallback, source: "scores" };
   }
   const sentences = cleaned.split(/(?<=[.!?])\s+/).filter(Boolean);
-  if (sentences.length !== 1) return { text: fallback, source: "scores" };
+  if (sentences.length < 1 || sentences.length > 2) return { text: fallback, source: "scores" };
   if (/confirmed partnership|partnership is available|guarantee|probability|percent chance/i.test(cleaned)) {
     return { text: fallback, source: "scores" };
   }
