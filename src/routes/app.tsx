@@ -21,12 +21,15 @@ import { KinshipLogo } from "@/components/KinshipLogo";
 import { PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/kinship-pdf";
 import type { AgentStep } from "@/lib/kinship-agent";
 
+// Set once per page load; a module-level flag survives client-side navigations back to /app.
+let nikeAutoRanThisLoad = false;
+
 export const Route = createFileRoute("/app")({
-  validateSearch: (search: Record<string, unknown>): { try?: string; mode?: "compare" } => {
+  validateSearch: (search: Record<string, unknown>): { q?: string; mode?: "compare" } => {
     const mode = search.mode === "compare" ? ("compare" as const) : undefined;
-    if (typeof search.try === "string") return { try: search.try, mode };
-    // landing form and chips submit ?q=
-    if (typeof search.q === "string") return { try: search.q, mode };
+    // ?q= is canonical (landing form and chips). ?try= is a legacy alias, read only, never written.
+    if (typeof search.q === "string") return { q: search.q, mode };
+    if (typeof search.try === "string") return { q: search.try, mode };
     return { mode };
   },
   component: Home,
@@ -45,7 +48,7 @@ function problemCopy(reason: "empty" | "too-long" | "invalid"): string {
 }
 
 function Home() {
-  const { try: tryName, mode: modeParam } = Route.useSearch();
+  const { q: queryName, mode: modeParam } = Route.useSearch();
   const resolveSeed = useServerFn(resolveKinshipSeed);
   const compareSeeds = useServerFn(compareKinshipSeeds);
   const requestSeq = useRef(0);
@@ -208,14 +211,24 @@ function Home() {
     if (modeParam === "compare") setMode("compare");
   }, [modeParam]);
 
-  const tryRan = useRef(false);
+  const queryRan = useRef(false);
   useEffect(() => {
-    if (!tryName || tryRan.current) return;
-    tryRan.current = true;
-    setSeed(tryName);
-    void run(tryName.trim());
+    if (!queryName || queryRan.current) return;
+    queryRan.current = true;
+    setSeed(queryName);
+    void run(queryName.trim());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tryName]);
+  }, [queryName]);
+
+  // /app with no query runs the Nike seed once per page load, so the page is never empty.
+  // The module-level flag stops it from re-running on later navigations back to /app.
+  useEffect(() => {
+    if (queryName || modeParam === "compare" || nikeAutoRanThisLoad) return;
+    nikeAutoRanThisLoad = true;
+    setSeed("Nike");
+    void run("Nike");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="flex w-full flex-col overflow-x-hidden bg-bg">

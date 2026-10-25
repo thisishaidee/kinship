@@ -38,10 +38,10 @@ const STEPS = [
     text: "Type one name. Kinship looks it up on Qloo’s taste graph and shows the artists, brands and films its fans already love. You never have to invent a partner.",
   },
   {
-    tag: "02 · REAL FANS",
+    tag: "02 · REAL DATA",
     band: "bg-[#8EF2C8] text-[#0c231a]",
-    title: "Real fans, not surveys.",
-    text: "Every score comes from Qloo’s data on what real people listen to, watch and wear. Nobody ticked a box, so the numbers hold up in a pitch.",
+    title: "Real data.",
+    text: "Every score comes from Qloo’s data on what people listen to, watch and wear. Nothing is invented.",
   },
   {
     tag: "03 · READ WHY",
