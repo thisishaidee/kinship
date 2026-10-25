@@ -32,21 +32,15 @@ const CHIPS = ["Radiohead", "Nike", "Davido"];
 
 const STEPS = [
   {
-    tag: "01 · ONE NAME",
-    bg: "bg-[#E0202C]",
-    fg: "text-[#f4f1ea]",
+    tag: "ONE NAME",
     text: "Type one name. Kinship looks it up on Qloo and lists the artists, brands and films its fans already love.",
   },
   {
-    tag: "02 · REAL DATA",
-    bg: "bg-[#101014] border border-[#2a2a30]",
-    fg: "text-[#f4f1ea]",
+    tag: "REAL DATA",
     text: "Every name and score comes from Qloo’s data on what people listen to, watch and wear. Nothing is invented.",
   },
   {
-    tag: "03 · READ WHY",
-    bg: "bg-[#101014] border border-[#2a2a30]",
-    fg: "text-[#f4f1ea]",
+    tag: "READ WHY",
     text: "Compare two names and Kinship explains the match in plain sentences you can repeat out loud.",
   },
 ];
@@ -93,6 +87,61 @@ function Landing() {
   );
 }
 
+
+function QlooDiagram() {
+  return (
+    <div
+      className="mx-auto mt-4 flex w-full max-w-[680px] items-center justify-between gap-2 rounded-2xl border border-[#2a2a30] bg-[#101014] px-4 py-4 md:mt-6 md:px-6"
+      aria-hidden="true"
+    >
+      <div className="flex min-w-0 flex-col items-center gap-1.5">
+        <span className="text-[10px] tracking-[0.8px] text-[#a3a09a] md:text-[11px]">ONE NAME</span>
+        <span
+          className="max-w-[110px] truncate text-lg md:text-xl"
+          style={{ fontFamily: SERIF }}
+        >
+          Nike
+        </span>
+      </div>
+      <span className="h-px min-w-4 flex-1 bg-[#2a2a30]" />
+      <div className="flex flex-none flex-col items-center gap-1.5">
+        <span className="text-[10px] tracking-[0.8px] text-[#a3a09a] md:text-[11px]">QLOO</span>
+        <span
+          className="inline-flex h-9 items-center rounded-full border border-[#E0202C] px-3 text-[13px] text-[#E0202C] md:h-10 md:text-sm"
+        >
+          taste graph
+        </span>
+      </div>
+      <span className="h-px min-w-4 flex-1 bg-[#2a2a30]" />
+      <div className="flex min-w-0 flex-col items-center gap-1.5">
+        <span className="text-[10px] tracking-[0.8px] text-[#a3a09a] md:text-[11px]">PARTNERS</span>
+        <div className="flex items-center gap-1.5">
+          <span
+            className="text-lg text-[#f4f1ea] md:text-xl"
+            style={{ fontFamily: SERIF }}
+          >
+            Radiohead
+          </span>
+          <span className="text-sm font-semibold text-[#E0202C]" style={{ fontFamily: MONO }}>
+            87
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span
+            className="text-lg text-[#f4f1ea] md:text-xl"
+            style={{ fontFamily: SERIF }}
+          >
+            Adidas
+          </span>
+          <span className="text-sm font-semibold text-[#a3a09a]" style={{ fontFamily: MONO }}>
+            74
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Hero() {
   return (
     <section className="relative overflow-hidden px-5 pb-10 md:px-16 md:pb-24">
@@ -127,9 +176,14 @@ function Hero() {
 
         <h1
           className="m-0 text-[54px] font-normal leading-none tracking-[-0.5px] md:text-[88px] md:tracking-[-1px]"
-          style={{ fontFamily: SERIF }}
         >
-          A partnership, not a <span className="text-[#E0202C]">playlist.</span>
+          A partnership,{" "}
+          <span
+            className="text-[#E0202C]"
+            style={{ fontFamily: SERIF, fontStyle: "italic" }}
+          >
+            not a playlist.
+          </span>
         </h1>
 
         <p className="m-0 max-w-[560px] text-base leading-normal text-[#b9b5ac] md:text-lg">
@@ -176,6 +230,8 @@ function Hero() {
             </a>
           ))}
         </div>
+
+        <QlooDiagram />
       </div>
     </section>
   );
@@ -254,23 +310,26 @@ function HowItWorks() {
   return (
     <section
       id="how"
-      className="mt-14 rounded-t-[28px] bg-[#efeee9] px-5 py-12 text-[#141413] md:mt-24 md:rounded-t-[32px] md:px-16 md:py-20"
+      className="mt-14 border-t border-[#2a2a30] px-5 py-12 md:mt-24 md:px-16 md:py-20"
     >
       <div className="mx-auto max-w-[1152px]">
-        <span className="text-xs tracking-[0.8px] text-[#5f5d57]">HOW IT WORKS</span>
+        <span className="text-xs tracking-[0.8px] text-[#a3a09a]">HOW IT WORKS</span>
         <h2
           className="mb-5 mt-2 text-[40px] font-normal leading-[1.05] md:mb-10 md:text-[52px]"
           style={{ fontFamily: SERIF }}
         >
-          Three steps, no guessing.
+          How Kinship decides.
         </h2>
         <div className="grid gap-5 md:grid-cols-3 md:gap-6">
           {STEPS.map((s) => (
-            <div key={s.tag} className="overflow-hidden rounded-[20px] bg-white md:rounded-[22px]">
-              <div className={`px-5 py-3 text-xs font-bold tracking-[0.6px] ${s.bg} ${s.fg}`}>
+            <div
+              key={s.tag}
+              className="overflow-hidden rounded-[20px] border border-[#2a2a30] bg-[#101014] md:rounded-[22px]"
+            >
+              <div className="border-b border-[#2a2a30] px-5 py-3 text-xs font-bold tracking-[0.6px] text-[#cfcbc3]">
                 {s.tag}
               </div>
-              <p className="m-0 p-5 text-[15px] leading-[1.55] text-[#4a4944] md:p-6">{s.text}</p>
+              <p className="m-0 p-5 text-[15px] leading-[1.55] text-[#b9b5ac] md:p-6">{s.text}</p>
             </div>
           ))}
         </div>
@@ -291,7 +350,7 @@ function CompareSection() {
           className="m-0 text-[40px] font-normal leading-[1.05] md:text-[56px]"
           style={{ fontFamily: SERIF }}
         >
-          Hand a partner the proof, not a hunch.
+          Show a partner the proof.
         </h2>
         <p className="m-0 hidden max-w-[480px] text-[17px] leading-[1.55] text-[#b9b5ac] md:block">
           Compare two names and Kinship lists what their fans share, then explains it in
@@ -344,7 +403,7 @@ function TrustSection() {
 
 function CtaBand() {
   return (
-    <section className="bg-[#E0202C] px-5 py-11 text-[#f4f1ea] md:px-16 md:py-[72px]">
+    <section className="border-t border-[#2a2a30] px-5 py-11 text-[#f4f1ea] md:px-16 md:py-[72px]">
       <div className="mx-auto flex max-w-[1152px] flex-col gap-5 md:flex-row md:items-center md:justify-between">
         <span
           className="text-[46px] leading-[1.02] md:max-w-[640px] md:text-[64px]"
@@ -354,7 +413,7 @@ function CtaBand() {
         </span>
         <a
           href="/app"
-          className="inline-flex h-14 items-center justify-center rounded-full bg-[#0b0b12] px-8 text-base font-bold text-white"
+          className="inline-flex h-14 items-center justify-center rounded-full bg-[#E0202C] px-8 text-base font-bold text-[#f4f1ea]"
         >
           Launch app
         </a>
@@ -380,8 +439,8 @@ function Footer() {
         </div>
       </div>
       <p className="m-0 border-t border-[#26262c] pt-4 text-xs leading-normal text-[#a3a09a]">
-        Scores come from Qloo’s taste graph and show a connection in the data, not
-        partnership availability. Beta: scores are estimates. © 2026 Kinship
+        Scores come from Qloo’s taste graph and reflect the strength of a connection
+        in the data. Beta: scores are estimates. © 2026 Kinship
       </p>
     </footer>
   );
