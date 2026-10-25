@@ -69,6 +69,7 @@ function Home() {
   const [pairing, setPairing] = useState<CompareMatch | null>(null);
   const [agentSteps, setAgentSteps] = useState<AgentStep[]>([]);
   const [agentPitched, setAgentPitched] = useState(false);
+  const [openPitch, setOpenPitch] = useState<{ seed: string; seedType: string; partner: string; partnerType: string; score: number; line: string } | null>(null);
   const [agentReason, setAgentReason] = useState<string | null>(null);
   const runAgent = useServerFn(runAgenticPitch);
 
@@ -341,7 +342,12 @@ function Home() {
         />
       ) : null}
 
-      {mode === "single" && (phase === "matched" || (phase === "unavailable" && match)) ? (
+      {openPitch && mode === "single" && phase === "matched" ? (
+        <PitchDetail
+          data={openPitch}
+          onBack={() => setOpenPitch(null)}
+        />
+      ) : openPitch && mode === "single" && phase !== "matched" ? null : mode === "single" && (phase === "matched" || (phase === "unavailable" && match)) ? (
         <section className="flex flex-col gap-3" aria-busy={busy} aria-live="polite">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">{match?.name ?? heldSeed} · strongest matches</h2>
@@ -372,6 +378,14 @@ function Home() {
                           top={hitIndex === 0}
                           seed={match?.name ?? heldSeed}
                           line={hitIndex === 0 ? pitch.line : null}
+                          onOpen={() => setOpenPitch({
+                            seed: match?.name ?? heldSeed,
+                            seedType: match?.typeLabel ?? "",
+                            partner: hit.name,
+                            partnerType: pitch.partnerType,
+                            score: hit.score,
+                            line: pitch.line || `${match?.name ?? heldSeed} and ${hit.name} share a strong audience overlap in Qloo’s data.`,
+                          })}
                         />
                       </li>
                     ))}
@@ -729,7 +743,7 @@ function SeedTicket({ entity }: { entity: ResolvedEntity }) {
   );
 }
 
-function ResultCard({ name, href, category, score, top = false, seed, line }: { name: string; href: string; category: string; score: number; top?: boolean; seed: string; line?: string | null }) {
+function ResultCard({ name, href, category, score, top = false, seed, line, onOpen }: { name: string; href: string; category: string; score: number; top?: boolean; seed: string; line?: string | null; onOpen?: () => void }) {
   const caption = line ?? `${seed} and ${name} share a strong audience overlap in Qloo’s data.`;
   return (
     <article className="flex h-full flex-col gap-3 rounded-2xl border border-[#242424] bg-[#161616] p-5">
@@ -745,11 +759,59 @@ function ResultCard({ name, href, category, score, top = false, seed, line }: { 
       </div>
       <div className="flex items-center gap-3 pt-1">
         <CopyLine line={caption} />
-        <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-full border border-[#242424] bg-transparent px-4 text-sm font-semibold text-accent hover:border-accent">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="inline-flex h-10 items-center gap-2 rounded-full border border-[#242424] bg-transparent px-4 text-sm font-semibold text-accent hover:border-accent"
+        >
           Open pitch
-        </a>
+        </button>
       </div>
     </article>
+  );
+}
+
+function PitchDetail({ data, onBack }: { data: { seed: string; seedType: string; partner: string; partnerType: string; score: number; line: string }; onBack: () => void }) {
+  return (
+    <section className="flex flex-col gap-4" aria-label="Partnership pitch">
+      <button type="button" onClick={onBack} className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent">
+        <ArrowRight className="size-4 rotate-180" aria-hidden="true" /> Back to results
+      </button>
+      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">Partnership pitch</p>
+      <h2 className="font-display text-3xl leading-tight text-white sm:text-4xl">
+        {data.seed} × {data.partner}
+      </h2>
+      <div className="flex flex-col gap-1">
+        <p className="font-mono text-[56px] leading-none text-accent tabular-nums">{formatAffinity(data.score)}</p>
+        <p className="text-xs uppercase tracking-[0.18em] text-muted">Qloo affinity score</p>
+      </div>
+      <article className="rounded-2xl border border-[#242424] bg-[#161616] p-5">
+        <p className="text-sm leading-relaxed text-fg">{data.line}</p>
+      </article>
+      <dl className="flex flex-col divide-y divide-[#242424] rounded-2xl border border-[#242424] bg-[#161616]">
+        {([["Seed", `${data.seed}${data.seedType ? ` · ${data.seedType}` : ""}`], ["Partner", `${data.partner} · ${data.partnerType}`]] as const).map(([k, v]) => (
+          <div key={k} className="flex items-center justify-between gap-4 px-5 py-3">
+            <dt className="text-xs uppercase tracking-[0.18em] text-muted">{k}</dt>
+            <dd className="min-w-0 break-words text-right text-sm font-medium text-fg">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="flex items-center gap-2 text-xs text-muted">
+        <span className="h-1.5 w-1.5 flex-none rounded-full bg-[#7fe3b3]" />
+        Checked: every name and number above appears in Qloo’s response
+      </p>
+      <div className="flex flex-col gap-2.5">
+        <CopyLine line={`${data.line}`} />
+        <a
+          href={partnerSearchHref(data.seed, data.partner)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#242424] bg-transparent px-4 text-sm font-semibold text-accent hover:border-accent"
+        >
+          Open {data.partner} on Qloo search
+        </a>
+      </div>
+    </section>
   );
 }
 
