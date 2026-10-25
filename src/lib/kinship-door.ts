@@ -134,11 +134,20 @@ export const runAgenticPitch = createServerFn({ method: "POST" })
       const { env } = await import("@/lib/env.server");
       const geminiKey = env("GEMINI_API_KEY");
       const qKey = await qlooKey();
-      if (!geminiKey || !qKey) return { status: "fallback", reason: "not-configured", steps: [] };
+      if (!geminiKey || !qKey) {
+        console.error(`agentic: not-configured (gemini=${geminiKey ? "set" : "missing"}, qloo=${qKey ? "set" : "missing"})`);
+        return { status: "fallback", reason: "not-configured", steps: [] };
+      }
       const request = readRequest(data);
-      if (!request.ok) return { status: "fallback", reason: "bad-request", steps: [] };
+      if (!request.ok) {
+        console.error("agentic: bad-request");
+        return { status: "fallback", reason: "bad-request", steps: [] };
+      }
       const found = await searchEntity(qlooGet, qKey, request.seed, request.entityId);
-      if (found.status !== "use") return { status: "fallback", reason: "no-entity", steps: [] };
+      if (found.status !== "use") {
+        console.error("agentic: no-entity");
+        return { status: "fallback", reason: "no-entity", steps: [] };
+      }
       const { runKinshipAgent } = await import("@/lib/kinship-agent");
       const { createGeminiModel, createQlooTools } = await import("@/lib/kinship-agent-adapters.server");
       const outcome = await runKinshipAgent(found.entity, {
@@ -146,8 +155,10 @@ export const runAgenticPitch = createServerFn({ method: "POST" })
         tools: createQlooTools(qKey, qlooGet, found.tags, seedKindFromLabel(found.entity.typeLabel)),
       });
       if (outcome.status === "pitch") return { status: "pitch", text: outcome.text, steps: outcome.steps };
+      console.error(`agentic: ${outcome.reason}`);
       return { status: "fallback", reason: outcome.reason, steps: outcome.steps };
-    } catch {
+    } catch (error) {
+      console.error(`agentic: agent-error (${error instanceof Error ? error.name : "unknown"})`);
       return { status: "fallback", reason: "agent-error", steps: [] };
     }
   });
