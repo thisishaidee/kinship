@@ -311,7 +311,7 @@ function HowItWorks() {
       className="mt-14 rounded-t-[28px] bg-[#F3F0EA] px-5 py-12 text-[#141413] md:mt-24 md:rounded-t-[32px] md:px-16 md:py-20"
     >
       <div className="mx-auto max-w-[1152px]">
-        <span className="text-xs tracking-[0.8px] text-[#6b6963]">HOW IT WORKS</span>
+        <span className="text-xs font-semibold tracking-[0.8px] text-[#3f3d38]">HOW IT WORKS</span>
         <h2
           className="mb-5 mt-2 text-[40px] font-normal leading-[1.05] md:mb-10 md:text-[52px]"
           style={{ fontFamily: SERIF }}
