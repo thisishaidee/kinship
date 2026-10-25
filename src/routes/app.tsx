@@ -364,7 +364,7 @@ function Home() {
           ) : null}
           {phase === "matched" && (agentSteps.length > 0 || agentReason) ? <AgentTrace steps={agentSteps} pitched={agentPitched} reason={agentReason} /> : null}
           {phase === "matched" && pitches.length > 0 ? (
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-12">
               {pitches.map((pitch) => (
                 <section key={pitch.id} className="flex flex-col gap-5">
                   <ul className="grid grid-cols-1 gap-5 md:grid-cols-2">
