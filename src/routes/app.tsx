@@ -63,6 +63,7 @@ function Home() {
   const [rightCandidates, setRightCandidates] = useState<Candidate[]>([]);
   const [pairing, setPairing] = useState<CompareMatch | null>(null);
   const [agentSteps, setAgentSteps] = useState<AgentStep[]>([]);
+  const [agentPitched, setAgentPitched] = useState(false);
   const runAgent = useServerFn(runAgenticPitch);
 
   async function run(next: string, entityId?: string) {
@@ -78,6 +79,7 @@ function Home() {
     setUnchecked([]);
     setGraphStatus("empty");
     setAgentSteps([]);
+    setAgentPitched(false);
     setPhase("loading");
     try {
       const result = await resolveSeed({ data: { seed: next, entityId } });
@@ -102,7 +104,10 @@ function Home() {
         setPhase("matched");
         void runAgent({ data: { seed: next, entityId } }).then((agent) => {
           if (!isLatestRequest(requestId, requestSeq.current)) return;
-          if (agent && agent.status === "pitch") setAgentSteps(agent.steps);
+          if (agent && agent.steps.length > 0) {
+            setAgentSteps(agent.steps);
+            setAgentPitched(agent.status === "pitch");
+          }
         }).catch(() => undefined);
         return;
       }
@@ -339,7 +344,7 @@ function Home() {
           {phase === "unavailable" && match ? (
             <p className="text-base text-muted">Qloo resolved {match.name}, but the categories could not be checked.</p>
           ) : null}
-          {phase === "matched" && agentSteps.length > 0 ? <AgentTrace steps={agentSteps} /> : null}
+          {phase === "matched" && agentSteps.length > 0 ? <AgentTrace steps={agentSteps} pitched={agentPitched} /> : null}
           {phase === "matched" && pitches.length > 0 ? (
             <div className="flex flex-col gap-8">
               {pitches.map((pitch) => (
@@ -437,10 +442,11 @@ function HowItWorks() {
   );
 }
 
-function AgentTrace({ steps }: { steps: AgentStep[] }) {
+function AgentTrace({ steps, pitched }: { steps: AgentStep[]; pitched: boolean }) {
   return (
     <details className="flex flex-col gap-2 border-t border-line pt-3 text-sm text-muted">
       <summary className="cursor-pointer text-muted">how the agent worked</summary>
+      {pitched ? null : <p className="mt-2 text-muted">the agent did not finish a checked pitch, so the cards below use the standard read.</p>}
       <ol className="mt-2 flex flex-col gap-1">
         {steps.map((step, index) => (
           <li key={index} className={step.ok ? "text-muted" : "text-muted line-through"}>

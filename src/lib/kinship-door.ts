@@ -116,10 +116,16 @@ export const resolveKinshipSeed = createServerFn({ method: "POST" })
 // Agentic pass: Gemini chooses which Qloo reads to make (capped), then writes one
 // grounded sentence. Any failure returns null and the caller keeps the fixed pipeline.
 // The step trace is returned so the UI can show what the agent asked.
+export type AgentPassReason =
+  | "not-configured"
+  | "bad-request"
+  | "no-entity"
+  | "agent-error"
+  | import("@/lib/kinship-agent").AgentFallback;
+
 export type AgentPassResult =
   | { status: "pitch"; text: string; steps: import("@/lib/kinship-agent").AgentStep[] }
-  | { status: "fallback"; steps: import("@/lib/kinship-agent").AgentStep[] }
-  | null;
+  | { status: "fallback"; reason: AgentPassReason; steps: import("@/lib/kinship-agent").AgentStep[] };
 
 export const runAgenticPitch = createServerFn({ method: "POST" })
   .validator((input: unknown) => input)
@@ -128,11 +134,11 @@ export const runAgenticPitch = createServerFn({ method: "POST" })
       const { env } = await import("@/lib/env.server");
       const geminiKey = env("GEMINI_API_KEY");
       const qKey = await qlooKey();
-      if (!geminiKey || !qKey) return null;
+      if (!geminiKey || !qKey) return { status: "fallback", reason: "not-configured", steps: [] };
       const request = readRequest(data);
-      if (!request.ok) return null;
+      if (!request.ok) return { status: "fallback", reason: "bad-request", steps: [] };
       const found = await searchEntity(qlooGet, qKey, request.seed, request.entityId);
-      if (found.status !== "use") return null;
+      if (found.status !== "use") return { status: "fallback", reason: "no-entity", steps: [] };
       const { runKinshipAgent } = await import("@/lib/kinship-agent");
       const { createGeminiModel, createQlooTools } = await import("@/lib/kinship-agent-adapters.server");
       const outcome = await runKinshipAgent(found.entity, {
@@ -140,9 +146,9 @@ export const runAgenticPitch = createServerFn({ method: "POST" })
         tools: createQlooTools(qKey, qlooGet, found.tags, seedKindFromLabel(found.entity.typeLabel)),
       });
       if (outcome.status === "pitch") return { status: "pitch", text: outcome.text, steps: outcome.steps };
-      return { status: "fallback", steps: outcome.steps };
+      return { status: "fallback", reason: outcome.reason, steps: outcome.steps };
     } catch {
-      return null;
+      return { status: "fallback", reason: "agent-error", steps: [] };
     }
   });
 
