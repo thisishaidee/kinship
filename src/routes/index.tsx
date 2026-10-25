@@ -39,14 +39,14 @@ const STEPS = [
   },
   {
     tag: "02 · REAL DATA",
-    bg: "bg-[#8ff0c4]",
-    fg: "text-[#06241a]",
+    bg: "bg-[#101014] border border-[#2a2a30]",
+    fg: "text-[#f4f1ea]",
     text: "Every name and score comes from Qloo’s data on what people listen to, watch and wear. Nothing is invented.",
   },
   {
     tag: "03 · READ WHY",
-    bg: "bg-[#c9c4ff]",
-    fg: "text-[#1a1647]",
+    bg: "bg-[#101014] border border-[#2a2a30]",
+    fg: "text-[#f4f1ea]",
     text: "Compare two names and Kinship explains the match in plain sentences you can repeat out loud.",
   },
 ];
@@ -120,7 +120,7 @@ function Hero() {
       </header>
 
       <div className="relative mx-auto mt-10 flex max-w-[1152px] flex-col items-center gap-[18px] text-center md:mt-16 md:gap-[22px]">
-        <span className="inline-flex h-8 items-center gap-2 rounded-full border border-[#3a2f22] bg-[#14100b] px-3.5 text-xs text-[#ffcf8a] md:h-[34px] md:text-[13px]">
+        <span className="inline-flex h-8 items-center gap-2 rounded-full border border-[#2a2a30] bg-[#101014] px-3.5 text-xs text-[#f4f1ea] md:h-[34px] md:text-[13px]">
           <span className="h-1.5 w-1.5 rounded-full bg-[#E0202C]" />
           Powered by Qloo
         </span>
@@ -208,7 +208,7 @@ function SampleSection({ rows }: { rows: HeroResult[] }) {
     <section className="px-5 md:px-16">
       <div className="mx-auto max-w-[560px] rounded-3xl border border-[#2a2a30] bg-[#101014] p-5 md:p-7">
         <div className="flex items-baseline justify-between pb-3">
-          <span className="text-[13px] tracking-[0.8px] text-[#ffcf8a]">
+          <span className="text-[13px] tracking-[0.8px] text-[#E0202C]">
             {SAMPLE_SEED.toUpperCase()} · STRONGEST MATCHES
           </span>
           <span className="text-xs text-[#a3a09a]">Sample</span>
@@ -286,7 +286,7 @@ function CompareSection() {
       className="mx-auto flex max-w-[1152px] flex-col gap-5 px-5 py-12 md:flex-row md:items-center md:gap-16 md:px-16 md:py-24"
     >
       <div className="flex flex-col gap-4 md:flex-1">
-        <span className="text-xs tracking-[0.8px] text-[#ffcf8a]">COMPARE</span>
+        <span className="text-xs tracking-[0.8px] text-[#E0202C]">COMPARE</span>
         <h2
           className="m-0 text-[40px] font-normal leading-[1.05] md:text-[56px]"
           style={{ fontFamily: SERIF }}
@@ -330,7 +330,7 @@ function TrustSection() {
       <div className="mt-4 grid gap-4 md:grid-cols-3 md:gap-12">
         {CHECKS.map((c) => (
           <div key={c.title} className="flex gap-3">
-            <span className="mt-2 h-2 w-2 flex-none rounded-full bg-[#7fe3b3]" />
+            <span className="mt-2 h-2 w-2 flex-none rounded-full bg-[#E0202C]" />
             <div>
               <div className="text-lg font-medium">{c.title}</div>
               <div className="mt-0.5 text-sm leading-normal text-[#a3a09a]">{c.text}</div>
