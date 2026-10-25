@@ -32,15 +32,18 @@ const CHIPS = ["Radiohead", "Nike", "Davido"];
 
 const STEPS = [
   {
-    tag: "ONE NAME",
+    tag: "01 · ONE NAME",
+    band: "bg-[#FFB548] text-[#1a1200]",
     text: "Type one name. Kinship looks it up on Qloo and lists the artists, brands and films its fans already love.",
   },
   {
-    tag: "REAL DATA",
+    tag: "02 · REAL DATA",
+    band: "bg-[#8EF2C8] text-[#0c231a]",
     text: "Every name and score comes from Qloo’s data on what people listen to, watch and wear. Nothing is invented.",
   },
   {
-    tag: "READ WHY",
+    tag: "03 · READ WHY",
+    band: "bg-[#C8C3FA] text-[#1b1830]",
     text: "Compare two names and Kinship explains the match in plain sentences you can repeat out loud.",
   },
 ];
@@ -145,6 +148,14 @@ function QlooDiagram() {
 function Hero() {
   return (
     <section className="relative overflow-hidden px-5 pb-10 md:px-16 md:pb-24">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-[-320px] h-[640px] w-[880px] -translate-x-1/2 rounded-full opacity-60 md:top-[-420px] md:h-[840px] md:w-[1180px]"
+        style={{
+          background:
+            "radial-gradient(closest-side, rgba(200,100,46,0.55), rgba(120,50,20,0.25) 55%, transparent 75%)",
+        }}
+      />
       <header className="relative mx-auto flex h-[72px] max-w-[1152px] items-center justify-between">
         <a href="/" aria-label="Kinship home">
           <KinshipLogo size={28} />
@@ -310,26 +321,26 @@ function HowItWorks() {
   return (
     <section
       id="how"
-      className="mt-14 border-t border-[#2a2a30] px-5 py-12 md:mt-24 md:px-16 md:py-20"
+      className="mt-14 rounded-t-[28px] bg-[#F3F0EA] px-5 py-12 text-[#141413] md:mt-24 md:rounded-t-[32px] md:px-16 md:py-20"
     >
       <div className="mx-auto max-w-[1152px]">
-        <span className="text-xs tracking-[0.8px] text-[#a3a09a]">HOW IT WORKS</span>
+        <span className="text-xs tracking-[0.8px] text-[#6b6963]">HOW IT WORKS</span>
         <h2
           className="mb-5 mt-2 text-[40px] font-normal leading-[1.05] md:mb-10 md:text-[52px]"
           style={{ fontFamily: SERIF }}
         >
-          How Kinship decides.
+          Three steps, no guessing.
         </h2>
         <div className="grid gap-5 md:grid-cols-3 md:gap-6">
           {STEPS.map((s) => (
             <div
               key={s.tag}
-              className="overflow-hidden rounded-[20px] border border-[#2a2a30] bg-[#101014] md:rounded-[22px]"
+              className="overflow-hidden rounded-[20px] bg-white md:rounded-[22px]"
             >
-              <div className="border-b border-[#2a2a30] px-5 py-3 text-xs font-bold tracking-[0.6px] text-[#cfcbc3]">
+              <div className={`px-5 py-3 text-xs font-bold tracking-[0.6px] ${s.band}`}>
                 {s.tag}
               </div>
-              <p className="m-0 p-5 text-[15px] leading-[1.55] text-[#b9b5ac] md:p-6">{s.text}</p>
+              <p className="m-0 p-5 text-[15px] leading-[1.55] text-[#4a4944] md:p-6">{s.text}</p>
             </div>
           ))}
         </div>
@@ -350,7 +361,7 @@ function CompareSection() {
           className="m-0 text-[40px] font-normal leading-[1.05] md:text-[56px]"
           style={{ fontFamily: SERIF }}
         >
-          Show a partner the proof.
+          Hand a partner the proof, not a hunch.
         </h2>
         <p className="m-0 hidden max-w-[480px] text-[17px] leading-[1.55] text-[#b9b5ac] md:block">
           Compare two names and Kinship lists what their fans share, then explains it in
@@ -439,8 +450,8 @@ function Footer() {
         </div>
       </div>
       <p className="m-0 border-t border-[#26262c] pt-4 text-xs leading-normal text-[#a3a09a]">
-        Scores come from Qloo’s taste graph and reflect the strength of a connection
-        in the data. Beta: scores are estimates. © 2026 Kinship
+        Scores come from Qloo’s taste graph and show a connection in the data, not
+        partnership availability. Beta: scores are estimates. © 2026 Kinship
       </p>
     </footer>
   );
