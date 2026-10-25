@@ -36,6 +36,7 @@ export async function groqChat(input: {
   maxTokens: number;
   timeoutMs: number;
   tools?: GroqTool[];
+  reasoningEffort?: "low" | "medium" | "high";
 }): Promise<GroqReply> {
   const body: Record<string, unknown> = {
     model: GROQ_MODEL,
@@ -44,6 +45,7 @@ export async function groqChat(input: {
     max_tokens: input.maxTokens,
   };
   if (input.tools && input.tools.length > 0) body.tools = input.tools;
+  if (input.reasoningEffort) body.reasoning_effort = input.reasoningEffort;
   let response: Response;
   try {
     response = await fetch(GROQ_URL, {

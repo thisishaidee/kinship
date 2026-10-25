@@ -48,12 +48,14 @@ export async function groqStatus(): Promise<GroqStatus> {
   if (!key) return { ok: false, reason: "missing-key", detail: "GROQ_API_KEY is not set" };
   const { groqChatRetry } = await import("@/lib/groq.server");
   try {
-    // Minimal 1-token ping. Any non-empty reply means the key and model work.
+    // Small ping. gpt-oss is a reasoning model, so allow enough tokens for
+    // thinking plus the visible one-word reply.
     const reply = await groqChatRetry({
       apiKey: key,
-      messages: [{ role: "user", content: "Reply with the single word ok." }],
-      maxTokens: 1,
-      timeoutMs: 15000,
+      messages: [{ role: "user", content: "Reply with the single word ok. Do not explain." }],
+      maxTokens: 256,
+      timeoutMs: 20000,
+      reasoningEffort: "low",
     });
     if (typeof reply.content === "string" && reply.content.trim()) return { ok: true, reason: "ok" };
     return { ok: false, reason: "bad-response", detail: "empty reply" };
