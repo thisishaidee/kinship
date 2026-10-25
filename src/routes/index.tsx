@@ -26,7 +26,7 @@ const GITHUB = "https://github.com/thisishaidee/kinship";
 // If Qloo does not answer, the card is hidden. Nothing is hardcoded.
 const SAMPLE_SEED = "Nike";
 const COMPARE_SEEDS = ["Nike", "Adidas"];
-const ROW_COLORS = ["#E0202C", "#f4f1ea", "#a3a09a"];
+const ROW_COLORS = ["#FFB548", "#8EF2C8", "#C8C3FA"];
 
 const CHIPS = ["Radiohead", "Nike", "Davido"];
 
@@ -107,7 +107,7 @@ function QlooDiagram() {
       <div className="flex flex-none flex-col items-center gap-1.5">
         <span className="text-[10px] tracking-[0.8px] text-[#a3a09a] md:text-[11px]">QLOO</span>
         <span
-          className="inline-flex h-9 items-center rounded-full border border-[#E0202C] px-3 text-[13px] text-[#E0202C] md:h-10 md:text-sm"
+          className="inline-flex h-9 items-center rounded-full border border-[#FFB548] px-3 text-[13px] text-[#FFB548] md:h-10 md:text-sm"
         >
           taste graph
         </span>
@@ -122,7 +122,7 @@ function QlooDiagram() {
           >
             Radiohead
           </span>
-          <span className="text-sm font-semibold text-[#E0202C]" style={{ fontFamily: MONO }}>
+          <span className="text-sm font-semibold text-[#FFB548]" style={{ fontFamily: MONO }}>
             87
           </span>
         </div>
@@ -170,7 +170,7 @@ function Hero() {
 
       <div className="relative mx-auto mt-10 flex max-w-[1152px] flex-col items-center gap-[18px] text-center md:mt-16 md:gap-[22px]">
         <span className="inline-flex h-8 items-center gap-2 rounded-full border border-[#2a2a30] bg-[#101014] px-3.5 text-xs text-[#f4f1ea] md:h-[34px] md:text-[13px]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#E0202C]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#FFB548]" />
           Powered by Qloo
         </span>
 
@@ -179,7 +179,7 @@ function Hero() {
         >
           A partnership,{" "}
           <span
-            className="text-[#E0202C]"
+            className="text-[#FFB548]"
             style={{ fontFamily: SERIF, fontStyle: "italic" }}
           >
             not a playlist.
@@ -209,7 +209,7 @@ function Hero() {
           />
           <button
             type="submit"
-            className="h-14 rounded-full bg-[#E0202C] px-7 text-base font-bold text-[#f4f1ea] md:h-12"
+            className="h-14 rounded-full bg-[#FFB548] px-7 text-base font-bold text-[#1a1200] md:h-12"
           >
             Find partners
           </button>
@@ -222,7 +222,7 @@ function Hero() {
               href={`/app?q=${encodeURIComponent(name)}`}
               className={
                 name === SAMPLE_SEED
-                  ? "inline-flex h-11 items-center rounded-full border border-[#E0202C] bg-[#101014] px-4 text-sm text-[#E0202C] md:px-[18px]"
+                  ? "inline-flex h-11 items-center rounded-full border border-[#FFB548] bg-[#101014] px-4 text-sm text-[#FFB548] md:px-[18px]"
                   : "inline-flex h-11 items-center rounded-full border border-[#2e2e34] px-4 text-sm text-[#f4f1ea] md:px-[18px]"
               }
             >
@@ -264,7 +264,7 @@ function SampleSection({ rows }: { rows: HeroResult[] }) {
     <section className="px-5 md:px-16">
       <div className="mx-auto max-w-[560px] rounded-3xl border border-[#2a2a30] bg-[#101014] p-5 md:p-7">
         <div className="flex items-baseline justify-between pb-3">
-          <span className="text-[13px] tracking-[0.8px] text-[#E0202C]">
+          <span className="text-[13px] tracking-[0.8px] text-[#FFB548]">
             {SAMPLE_SEED.toUpperCase()} · STRONGEST MATCHES
           </span>
           <span className="text-xs text-[#a3a09a]">Sample</span>
@@ -345,7 +345,7 @@ function CompareSection() {
       className="mx-auto flex max-w-[1152px] flex-col gap-5 px-5 py-12 md:flex-row md:items-center md:gap-16 md:px-16 md:py-24"
     >
       <div className="flex flex-col gap-4 md:flex-1">
-        <span className="text-xs tracking-[0.8px] text-[#E0202C]">COMPARE</span>
+        <span className="text-xs tracking-[0.8px] text-[#FFB548]">COMPARE</span>
         <h2
           className="m-0 text-[40px] font-normal leading-[1.05] md:text-[56px]"
           style={{ fontFamily: SERIF }}
@@ -373,7 +373,7 @@ function CompareSection() {
         </p>
         <a
           href="/app"
-          className="mt-3.5 inline-flex h-[52px] w-full items-center justify-center rounded-full bg-[#E0202C] text-[15px] font-bold text-[#f4f1ea]"
+          className="mt-3.5 inline-flex h-[52px] w-full items-center justify-center rounded-full bg-[#FFB548] text-[15px] font-bold text-[#1a1200]"
         >
           Try Compare
         </a>
@@ -389,7 +389,7 @@ function TrustSection() {
       <div className="mt-4 grid gap-4 md:grid-cols-3 md:gap-12">
         {CHECKS.map((c) => (
           <div key={c.title} className="flex gap-3">
-            <span className="mt-2 h-2 w-2 flex-none rounded-full bg-[#E0202C]" />
+            <span className="mt-2 h-2 w-2 flex-none rounded-full bg-[#FFB548]" />
             <div>
               <div className="text-lg font-medium">{c.title}</div>
               <div className="mt-0.5 text-sm leading-normal text-[#a3a09a]">{c.text}</div>
@@ -413,7 +413,7 @@ function CtaBand() {
         </span>
         <a
           href="/app"
-          className="inline-flex h-14 items-center justify-center rounded-full bg-[#E0202C] px-8 text-base font-bold text-[#f4f1ea]"
+          className="inline-flex h-14 items-center justify-center rounded-full bg-[#FFB548] px-8 text-base font-bold text-[#1a1200]"
         >
           Launch app
         </a>
