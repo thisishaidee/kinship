@@ -2,7 +2,7 @@ import { type GroqMessage, type GroqTool, type GroqToolCall, groqChatRetry } fro
 import type { AgentCall, AgentModel, AgentTools, PartnerCategory, ToolResult } from "@/lib/kinship-agent";
 import { categoryInsights, graphCategory, searchCandidates, type QlooGetter, type SeedKind } from "@/lib/kinship-resolve";
 
-// Server-only adapters. Groq (llama-3.3-70b) is the agent's brain (it sees tool results and
+// Server-only adapters. Groq (gpt-oss-20b) is the agent's brain (it sees tool results and
 // decides the next call or the final sentence). Qloo is reached only through the injected
 // getter, which is the single hackathon.api.qloo.com proxy in kinship-door. Keys never leave here.
 

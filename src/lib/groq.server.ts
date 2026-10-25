@@ -1,7 +1,7 @@
 // Server-only Groq client (OpenAI-compatible chat completions). Used for compare
 // explanations, card pitch lines, and the agentic pitch pass. Keys never leave the server.
 
-export const GROQ_MODEL = "llama-3.3-70b-versatile";
+export const GROQ_MODEL = "openai/gpt-oss-20b";
 export const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const RETRY_DELAY_MS = 5000;
 
