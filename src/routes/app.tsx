@@ -245,6 +245,10 @@ function Home() {
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         {mode === "single" ? (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="seed" className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
+              Artist, film or brand
+            </label>
           <div className="flex min-w-0 items-center gap-2 rounded-full border border-line bg-surface py-1.5 pl-5 pr-1.5 focus-within:border-accent">
             <label htmlFor="seed" className="sr-only">
               Name
@@ -269,6 +273,7 @@ function Home() {
               className="h-10 min-w-0 flex-1 bg-transparent text-base text-fg outline-none placeholder:text-muted"
             />
             <SubmitButton busy={busy} label={busy ? "Asking Qloo" : "Find partners"} inline />
+          </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -339,8 +344,7 @@ function Home() {
       {mode === "single" && (phase === "matched" || (phase === "unavailable" && match)) ? (
         <section className="flex flex-col gap-3" aria-busy={busy} aria-live="polite">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-sm font-medium text-fg">Pitch cards</h2>
-            <p className="text-sm text-muted">{phase === "matched" ? `${pitches.length} from the strongest shared-fans scores` : "No pitch"}</p>
+            <h2 className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">{match?.name ?? heldSeed} · strongest matches</h2>
           </div>
           {phase === "matched" && pitches.length === 0 ? (
             <p className="text-base text-muted">
@@ -366,12 +370,12 @@ function Home() {
                           category={pitch.partnerType}
                           score={hit.score}
                           top={hitIndex === 0}
+                          seed={match?.name ?? heldSeed}
+                          line={hitIndex === 0 ? pitch.line : null}
                         />
                       </li>
                     ))}
                   </ul>
-                  {pitch.line ? <p className="text-base leading-snug text-fg">{pitch.line}</p> : null}
-                  <CopyLine line={pitch.line} />
                 </section>
               ))}
             </div>
@@ -541,7 +545,7 @@ function SubmitButton({ busy, label, inline = false }: { busy: boolean; label: s
       }
     >
       {busy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : inline ? <ArrowRight className="size-4" aria-hidden="true" /> : <Search className="size-5" aria-hidden="true" />}
-      <span className={inline ? "sr-only sm:not-sr-only" : undefined}>{label}</span>
+      <span>{label}</span>
     </button>
   );
 }
@@ -725,24 +729,25 @@ function SeedTicket({ entity }: { entity: ResolvedEntity }) {
   );
 }
 
-function ResultCard({ name, href, category, score, top = false }: { name: string; href: string; category: string; score: number; top?: boolean }) {
+function ResultCard({ name, href, category, score, top = false, seed, line }: { name: string; href: string; category: string; score: number; top?: boolean; seed: string; line?: string | null }) {
+  const caption = line ?? `${seed} and ${name} share a strong audience overlap in Qloo’s data.`;
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface">
-      <div className="bg-accent/10 px-4 py-2">
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-accent">{category.split(" ")[0]}</p>
+    <article className="flex h-full flex-col gap-3 rounded-2xl border border-[#242424] bg-[#161616] p-5">
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">{category.split(" ")[0]}</p>
+        <p className={`font-mono text-[28px] leading-none tabular-nums ${top ? "text-accent" : "text-accent/70"}`}>{formatAffinity(score)}</p>
       </div>
-      <div className="flex flex-1 items-baseline justify-between gap-4 px-4 py-3.5">
-        <div className="min-w-0">
-          <a href={href} target="_blank" rel="noopener noreferrer" className="block break-words text-sm font-semibold text-white underline decoration-white/25 underline-offset-4">
-            {name}
-          </a>
-          <p className="mt-0.5 text-[10px] uppercase tracking-[0.18em] text-[#9CA3AF]/80">shared-fans score</p>
-          <p className="mt-2 text-xs font-medium text-accent">Want to pitch them?</p>
-        </div>
-        <p className="flex shrink-0 items-baseline gap-2">
-          <span className={`text-[22px] leading-none tabular-nums ${top ? "font-semibold text-accent" : "font-medium text-[#9CA3AF]"}`}>{formatAffinity(score)}</span>
-          <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-[#9CA3AF]/80">shared-fans score</span>
-        </p>
+      <div className="flex min-w-0 flex-col gap-1">
+        <a href={href} target="_blank" rel="noopener noreferrer" className="block break-words font-display text-[26px] leading-tight text-white">
+          {name}
+        </a>
+        <p className="text-sm leading-snug text-muted">{caption}</p>
+      </div>
+      <div className="flex items-center gap-3 pt-1">
+        <CopyLine line={caption} />
+        <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-full border border-[#242424] bg-transparent px-4 text-sm font-semibold text-accent hover:border-accent">
+          Open pitch
+        </a>
       </div>
     </article>
   );
