@@ -22,7 +22,12 @@ import { PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/
 import type { AgentStep } from "@/lib/kinship-agent";
 
 export const Route = createFileRoute("/app")({
-  validateSearch: (search: Record<string, unknown>): { try?: string } => (typeof search.try === "string" ? { try: search.try } : {}),
+  validateSearch: (search: Record<string, unknown>): { try?: string } => {
+    if (typeof search.try === "string") return { try: search.try };
+    // landing form and chips submit ?q=
+    if (typeof search.q === "string") return { try: search.q };
+    return {};
+  },
   component: Home,
 });
 
