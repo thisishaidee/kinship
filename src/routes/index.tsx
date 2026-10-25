@@ -32,19 +32,22 @@ const CHIPS = ["Radiohead", "Nike", "Davido"];
 
 const STEPS = [
   {
-    tag: "01 · ONE NAME",
+    tag: "01 · ONE SEED",
     band: "bg-[#FFB548] text-[#1a1200]",
-    text: "Type one name. Kinship looks it up on Qloo and lists the artists, brands and films its fans already love.",
+    title: "One seed.",
+    text: "Type one name. Kinship looks it up on Qloo’s taste graph and shows the artists, brands and films its fans already love. You never have to invent a partner.",
   },
   {
-    tag: "02 · REAL DATA",
+    tag: "02 · REAL FANS",
     band: "bg-[#8EF2C8] text-[#0c231a]",
-    text: "Every name and score comes from Qloo’s data on what people listen to, watch and wear. Nothing is invented.",
+    title: "Real fans, not surveys.",
+    text: "Every score comes from Qloo’s data on what real people listen to, watch and wear. Nobody ticked a box, so the numbers hold up in a pitch.",
   },
   {
     tag: "03 · READ WHY",
     band: "bg-[#C8C3FA] text-[#1b1830]",
-    text: "Compare two names and Kinship explains the match in plain sentences you can repeat out loud.",
+    title: "You can read why.",
+    text: "Compare two names and Kinship explains the match in plain sentences. You can repeat the reasoning out loud to anyone, no data science needed.",
   },
 ];
 
@@ -82,7 +85,7 @@ function Landing() {
       <Hero />
       {sample ? <SampleSection rows={sample} /> : null}
       <HowItWorks />
-      <CompareSection />
+      <CompareSection rows={sample} />
       <TrustSection />
       <CtaBand />
       <Footer />
@@ -150,10 +153,17 @@ function Hero() {
     <section className="relative overflow-hidden px-5 pb-10 md:px-16 md:pb-24">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-[-320px] h-[640px] w-[880px] -translate-x-1/2 rounded-full opacity-60 md:top-[-420px] md:h-[840px] md:w-[1180px]"
+        className="pointer-events-none absolute left-1/2 top-[210px] h-[1600px] w-[1600px] -translate-x-1/2 rounded-full md:top-[190px] md:h-[2100px] md:w-[2100px]"
         style={{
           background:
-            "radial-gradient(closest-side, rgba(200,100,46,0.55), rgba(120,50,20,0.25) 55%, transparent 75%)",
+            "radial-gradient(closest-side, rgba(60,28,12,0.55), rgba(40,18,8,0.3) 60%, transparent 72%)",
+          boxShadow:
+            "0 -1px 2px rgba(255,181,72,0.9), 0 -4px 14px rgba(255,150,50,0.55), 0 -18px 60px rgba(200,100,46,0.4)",
+          borderTop: "1px solid rgba(255,181,72,0.85)",
+          maskImage:
+            "linear-gradient(to bottom, black 0%, black 38%, transparent 52%)",
+          WebkitMaskImage:
+            "linear-gradient(to bottom, black 0%, black 38%, transparent 52%)",
         }}
       />
       <header className="relative mx-auto flex h-[72px] max-w-[1152px] items-center justify-between">
@@ -186,20 +196,16 @@ function Hero() {
         </span>
 
         <h1
-          className="m-0 text-[54px] font-normal leading-none tracking-[-0.5px] md:text-[88px] md:tracking-[-1px]"
+          className="m-0 text-[54px] font-normal leading-[1.02] tracking-[-0.5px] md:text-[88px] md:tracking-[-1px]"
+          style={{ fontFamily: SERIF }}
         >
-          A partnership,{" "}
-          <span
-            className="text-[#FFB548]"
-            style={{ fontFamily: SERIF, fontStyle: "italic" }}
-          >
-            not a playlist.
-          </span>
+          A partnership,<br />not a{" "}
+          <span className="text-[#FFB548]">playlist.</span>
         </h1>
 
         <p className="m-0 max-w-[560px] text-base leading-normal text-[#b9b5ac] md:text-lg">
-          Type an artist, film or brand. Kinship finds the partners its fans already
-          love on Qloo, then drafts the pitch.
+          Type an artist, film or brand. Kinship asks Qloo who its fans already love,
+          then drafts the pitch.
         </p>
 
         {/* Plain GET form: opens /app?q=Nike. /app should read `q` (see HANDOFF.md). */}
@@ -273,37 +279,33 @@ function SampleSection({ rows }: { rows: HeroResult[] }) {
   const pitch = `${SAMPLE_SEED} could explore an artist partnership with ${rows[0].name} (${rows[0].score}) and ${rows[1].name} (${rows[1].score}).`;
   return (
     <section className="px-5 md:px-16">
-      <div className="mx-auto max-w-[560px] rounded-3xl border border-[#2a2a30] bg-[#101014] p-5 md:p-7">
-        <div className="flex items-baseline justify-between pb-3">
-          <span className="text-[13px] tracking-[0.8px] text-[#FFB548]">
-            {SAMPLE_SEED.toUpperCase()} · STRONGEST MATCHES
-          </span>
-          <span className="text-xs text-[#a3a09a]">Sample</span>
-        </div>
-
-        {rows.map((r, i) => (
+      <div className="mx-auto max-w-[1152px] rounded-3xl border border-[#2a2a30] bg-[#101014] p-4 md:grid md:grid-cols-3 md:gap-4 md:p-5">
+        {rows.slice(0, 3).map((r, i) => (
           <div
             key={r.name}
-            className="flex items-center gap-3 border-t border-[#26262c] py-3.5"
+            className="mb-4 rounded-[18px] bg-[#0d0d11] p-5 md:mb-0 md:p-6"
           >
-            <div className="min-w-0 flex-1">
-              <div className="break-words text-[26px] leading-[1.1]" style={{ fontFamily: SERIF }}>
-                {r.name}
-              </div>
+            <div className="text-[11px] tracking-[0.8px] text-[#a3a09a]">
+              QLOO AFFINITY
             </div>
-            <span
-              className="flex-none text-[30px] font-semibold"
-              style={{ fontFamily: MONO, color: ROW_COLORS[i] }}
+            <div
+              className="mt-2 min-w-0 break-words text-[22px] leading-[1.1] text-[#f4f1ea]"
+              style={{ fontFamily: SERIF }}
+            >
+              {r.name}
+            </div>
+            <div
+              className="mt-3 text-[34px] font-semibold leading-none"
+              style={{ fontFamily: MONO, color: ROW_COLORS[i % ROW_COLORS.length] }}
             >
               {r.score}
-            </span>
+            </div>
           </div>
         ))}
-
-        <p className="m-0 border-t border-[#26262c] pt-3.5 text-sm leading-normal text-[#cfcbc3]">
-          {pitch}
-        </p>
-        <div className="mt-3.5 flex gap-2.5">
+      </div>
+      <div className="mx-auto mt-4 max-w-[1152px] md:hidden">
+        <p className="m-0 text-sm leading-normal text-[#cfcbc3]">{pitch}</p>
+        <div className="mt-3 flex gap-2.5">
           <CopyPitch text={pitch} />
           <a
             href="/app"
@@ -340,7 +342,12 @@ function HowItWorks() {
               <div className={`px-5 py-3 text-xs font-bold tracking-[0.6px] ${s.band}`}>
                 {s.tag}
               </div>
-              <p className="m-0 p-5 text-[15px] leading-[1.55] text-[#4a4944] md:p-6">{s.text}</p>
+              <div className="p-5 md:p-6">
+                <div className="text-[24px] leading-tight text-[#141413]" style={{ fontFamily: SERIF }}>
+                  {s.title}
+                </div>
+                <p className="m-0 mt-2 text-[15px] leading-[1.55] text-[#4a4944]">{s.text}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -349,46 +356,75 @@ function HowItWorks() {
   );
 }
 
-function CompareSection() {
+function CompareSection({ rows }: { rows: HeroResult[] | null }) {
+  const top = rows && rows.length > 0 ? rows[0] : null;
   return (
     <section
       id="compare"
-      className="mx-auto flex max-w-[1152px] flex-col gap-5 px-5 py-12 md:flex-row md:items-center md:gap-16 md:px-16 md:py-24"
+      className="mx-auto flex max-w-[1152px] flex-col gap-8 px-5 py-12 md:flex-row md:items-center md:gap-16 md:px-16 md:py-24"
     >
       <div className="flex flex-col gap-4 md:flex-1">
-        <span className="text-xs tracking-[0.8px] text-[#FFB548]">COMPARE</span>
+        <span className="text-xs tracking-[0.8px] text-[#FFB548]">FROM AFFINITY TO PITCH</span>
         <h2
-          className="m-0 text-[40px] font-normal leading-[1.05] md:text-[56px]"
+          className="m-0 text-[40px] font-normal leading-[1.05] md:text-[52px]"
           style={{ fontFamily: SERIF }}
         >
           Hand a partner the proof, not a hunch.
         </h2>
-        <p className="m-0 hidden max-w-[480px] text-[17px] leading-[1.55] text-[#b9b5ac] md:block">
+        <p className="m-0 max-w-[480px] text-[16px] leading-[1.55] text-[#b9b5ac]">
           Compare two names and Kinship lists what their fans share, then explains it in
           two sentences you can repeat out loud. Export it as a one-page PDF.
         </p>
-      </div>
-
-      <div className="rounded-[22px] border border-[#2a2a30] bg-[#101014] p-5 md:w-[500px] md:flex-none md:p-7">
-        <div className="flex justify-between pb-2.5 text-xs tracking-[0.8px] text-[#a3a09a]">
-          <span>
-            {COMPARE_SEEDS[0].toUpperCase()} × {COMPARE_SEEDS[1].toUpperCase()}
-          </span>
-          <span className="flex gap-[18px]">
-            <span>{COMPARE_SEEDS[0].toUpperCase()}</span>
-            <span>{COMPARE_SEEDS[1].toUpperCase()}</span>
-          </span>
-        </div>
-        <p className="m-0 border-t border-[#2a2a30] pt-3 text-sm leading-normal text-[#cfcbc3]">
-          Pick two names. Kinship lists what their fans share and writes the explanation.
-        </p>
         <a
           href="/app"
-          className="mt-3.5 inline-flex h-[52px] w-full items-center justify-center rounded-full bg-[#FFB548] text-[15px] font-bold text-[#1a1200]"
+          className="mt-2 inline-flex h-12 items-center justify-center self-start rounded-full bg-[#FFB548] px-6 text-[15px] font-bold text-[#1a1200]"
         >
-          Try Compare
+          Open the app
         </a>
       </div>
+
+      {top ? (
+        <div className="rounded-[22px] border border-[#2a2a30] bg-[#101014] p-6 md:w-[440px] md:flex-none md:p-7">
+          <div
+            className="text-[24px] text-[#f4f1ea]"
+            style={{ fontFamily: SERIF }}
+          >
+            {SAMPLE_SEED} × {top.name}
+          </div>
+          <div
+            className="mt-3 text-[40px] font-semibold leading-none text-[#FFB548]"
+            style={{ fontFamily: MONO }}
+          >
+            {top.score}
+          </div>
+          <p className="m-0 mt-4 text-sm leading-[1.55] text-[#cfcbc3]">
+            {SAMPLE_SEED} and {top.name} share a strong audience overlap in Qloo’s
+            data. The {top.score} affinity suggests the two already reach the same
+            fans.
+          </p>
+          <div className="mt-4 flex items-center gap-2 text-xs text-[#a3a09a]">
+            <span className="h-1.5 w-1.5 flex-none rounded-full bg-[#7fe3b3]" />
+            Checked against Qloo’s response
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-[22px] border border-[#2a2a30] bg-[#101014] p-6 md:w-[440px] md:flex-none md:p-7">
+          <div className="flex justify-between pb-2.5 text-xs tracking-[0.8px] text-[#a3a09a]">
+            <span>
+              {COMPARE_SEEDS[0].toUpperCase()} × {COMPARE_SEEDS[1].toUpperCase()}
+            </span>
+          </div>
+          <p className="m-0 border-t border-[#2a2a30] pt-3 text-sm leading-normal text-[#cfcbc3]">
+            Pick two names. Kinship lists what their fans share and writes the explanation.
+          </p>
+          <a
+            href="/app"
+            className="mt-3.5 inline-flex h-[52px] w-full items-center justify-center rounded-full bg-[#FFB548] text-[15px] font-bold text-[#1a1200]"
+          >
+            Try Compare
+          </a>
+        </div>
+      )}
     </section>
   );
 }
