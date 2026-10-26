@@ -248,14 +248,19 @@ export async function compareKinship(
   };
 }
 
-// One short sentence built from both sides' agent pitches. Each side's text is already grounded
-// against its own evidence; the merged line is re-checked against the compare evidence by the caller.
+// One short sentence built from both sides' agent pitches: the first sentence of each side,
+// joined. The caller re-checks the merged line against the compare evidence.
+function firstSentence(text: string): string {
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  return cleaned.split(/(?<=[.!?])\s+/)[0] ?? "";
+}
+
 function mergeAgentTexts(texts: { left: string; right: string }): string {
-  const first = texts.left.trim().replace(/\s+/g, " ");
-  const second = texts.right.trim().replace(/\s+/g, " ");
-  if (!first || !second) return first || second;
-  if (first.toLowerCase() === second.toLowerCase()) return first;
-  return `${first} ${second}`;
+  const first = firstSentence(texts.left).replace(/[.!?]+$/, "");
+  const second = firstSentence(texts.right).replace(/[.!?]+$/, "");
+  if (!first || !second) return "";
+  if (first.toLowerCase() === second.toLowerCase()) return `${first}.`;
+  return `${first}; ${second.charAt(0).toLowerCase()}${second.slice(1)}.`;
 }
 
 function strongestById(graph: GraphCategory[]): Map<string, { name: string; score: number; category: string }> {
