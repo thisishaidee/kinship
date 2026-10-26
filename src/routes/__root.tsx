@@ -16,7 +16,7 @@ export const Route = createRootRoute({
         name: "description",
         content: "Kinship shows who your fans already love, then helps you pitch them.",
       },
-      { property: "og:title", content: "Kinship — A partnership, not a playlist." },
+      { property: "og:title", content: "Kinship: a partnership, not a playlist." },
       { property: "og:description", content: "Zero-fabrication partnership pitches from Qloo's taste graph." },
       { property: "og:url", content: "https://kinshipp.vercel.app/" },
       { property: "og:type", content: "website" },

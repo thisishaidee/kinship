@@ -36,7 +36,7 @@ export const Route = createFileRoute("/app")({
 });
 
 const EXAMPLES = ["Radiohead", "Nike", "Drake"] as const;
-const RESULT_NOTE = "This shows who their fans overlap with — not whether a deal will happen.";
+const RESULT_NOTE = "This shows who their fans overlap with, not whether a deal will happen.";
 
 type Phase = "idle" | "loading" | "matched" | "ambiguous" | "no-match" | "missing-key" | "refused" | "unavailable";
 type Mode = "single" | "compare";
