@@ -416,7 +416,8 @@ export function buildPitches(seedName: string, graph: GraphCategory[]): Pitch[] 
       id: category.id,
       partnerType: PARTNER_TYPE[category.id],
       hits: category.hits,
-      line: `${seedName}'s audience also leans toward ${cite(category.hits)}. Want to pitch them?`,
+      // Score-free and no question: the score is shown on the card, never in the sentence.
+      line: `${seedName}'s audience also leans toward ${listNames(category.hits)}.`,
     }));
 }
 
@@ -467,11 +468,11 @@ export async function resolveKinship(
   };
 }
 
-function cite(hits: GraphHit[]): string {
-  const parts = hits.map((hit) => `${hit.name} (${formatAffinity(hit.score)})`);
-  if (parts.length <= 1) return parts[0] ?? "";
-  if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
-  return `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}`;
+function listNames(hits: GraphHit[]): string {
+  const names = hits.map((hit) => hit.name);
+  if (names.length <= 1) return names[0] ?? "";
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
 }
 
 function asCandidate(item: unknown): Candidate | null {

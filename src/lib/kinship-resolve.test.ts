@@ -322,8 +322,8 @@ describe("resolveKinship", () => {
     const pitches = buildPitches("Radiohead", graph);
     assert.deepEqual(pitches.map((pitch) => pitch.id), ["brand", "artist", "place"]);
     assert.equal(pitches.length <= 3, true);
-    assert.equal(pitches[0].line.includes("Patagonia (0.990)"), true);
-    assert.equal(pitches[0].line.includes("Arc'teryx (0.500)"), true);
+    assert.equal(pitches[0].line, "Radiohead's audience also leans toward Patagonia and Arc'teryx.");
+    assert.equal(/\d|\?/.test(pitches[0].line), false);
     assert.equal(formatAffinity(pitches[0].hits[0].score), "0.990");
     assert.equal(pitches[0].hits[0].score, 0.99);
   });
@@ -339,8 +339,8 @@ describe("resolveKinship", () => {
     ];
     const pitches = buildPitches("Nike", graph);
     assert.deepEqual(pitches.map((pitch) => pitch.id), ["artist", "brand"]);
-    assert.equal(pitches[0].line, "Nike's audience also leans toward Wiz Khalifa (0.979), Jay-Z (0.977), and DJ Khaled (0.976). Want to pitch them?");
-    assert.equal(pitches[0].line.includes("(0.98)"), false);
+    assert.equal(pitches[0].line, "Nike's audience also leans toward Wiz Khalifa, Jay-Z, and DJ Khaled.");
+    assert.equal(/\d|\?|[\u2010-\u2015]/.test(pitches[0].line), false);
     assert.equal(pitches[0].hits[0].score, 0.9789124253791885);
     assert.equal(formatAffinity(pitches[0].hits[0].score), "0.979");
     assert.equal(formatAffinity(pitches[0].hits[1].score), "0.977");

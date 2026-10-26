@@ -1,4 +1,4 @@
-import { groundedExplanation, type CompareEvidence } from "./kinship-compare.ts";
+import { groundedExplanation, isPlainSentence, type CompareEvidence } from "./kinship-compare.ts";
 import type { Candidate, GraphHit, ResolvedEntity } from "./kinship-resolve.ts";
 
 // Agentic pitch loop. The model decides which Qloo reads to make (as tools), within a
@@ -220,7 +220,9 @@ function pitchSentence(text: string, evidence: CompareEvidence): string | null {
   if (!cleaned) return null;
   if (/model draft|outside the returned|cites those scores|stack trace/i.test(cleaned)) return null;
   const sentences = cleaned.split(PITCH_SPLIT).filter(Boolean);
+  // Same plain-sentence rule as the compare line: a sentence with digits, dashes, or a question is rejected.
   for (let index = sentences.length - 1; index >= 0; index -= 1) {
+    if (!isPlainSentence(sentences[index])) continue;
     const checked = groundedExplanation(sentences[index], evidence);
     if (checked.source === "model") return checked.text;
   }

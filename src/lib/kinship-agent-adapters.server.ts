@@ -13,7 +13,7 @@ const SYSTEM = [
   "When you write the final sentence, write it for a curious friend with no data background: one simple sentence in plain everyday words that says WHY the pairing works, using the fans and brand fit you saw in the tool results.",
   "Do not use these stock phrases: 'Both pull toward', 'most of the same fans', 'huge shared audience', 'reach the same people', 'same crowd'. Build your sentence from your own words and vary its shape: do not open with the same words another side would use.",
   "Name one or two partners only if they appear in the tool results, copied exactly as returned. Never invent a partner or a fact.",
-  "Never write any digits, percentages, or decimals in the sentence. Express overlap in plain words only. Use plain commas, never em dashes or en dashes.",
+  "Never write any digits, percentages, or decimals in the sentence. Express overlap in plain words only. Use plain commas, never em dashes, en dashes, or hyphens used as dashes. Never ask a question: no question marks, no offers like 'want to pitch them?'. Use simple grammar and plain everyday words.",
   "Keep it to one short sentence. Never more than two sentences. Do not claim a partnership exists.",
   "Reply with plain text only, no preamble, when you are finished or when you are told no more calls are allowed.",
 ].join(" ");
@@ -77,7 +77,7 @@ export function createGroqModel(apiKey: string, seedName: string, angle?: string
           });
         });
       }
-      if (final) history.push({ role: "user", content: "No more tool calls. Write one short, warm, plain-language sentence now for a curious friend explaining WHY the pairing works in one simple sentence. Vary your wording and sentence shape, and do not use the phrases 'Both pull toward', 'most of the same fans', 'huge shared audience', 'reach the same people', or 'same crowd'. Name at most two partners, copied exactly from the tool results. Write no digits, percentages, or decimals; express overlap in words only. Use plain commas, no em dashes. Never more than two sentences. No preamble." });
+      if (final) history.push({ role: "user", content: "No more tool calls. Write one short, warm, plain-language sentence now for a curious friend explaining WHY the pairing works in one simple sentence. Vary your wording and sentence shape, and do not use the phrases 'Both pull toward', 'most of the same fans', 'huge shared audience', 'reach the same people', or 'same crowd'. Name at most two partners, copied exactly from the tool results. Write no digits, percentages, or decimals; express overlap in words only. Use plain commas, no em dashes or en dashes, no question marks. Never more than two sentences. Plain grammar. No preamble." });
       const reply = await groqChatRetry({
         apiKey,
         messages: history,

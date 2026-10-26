@@ -95,6 +95,18 @@ export function fallbackExplanation(evidence: CompareEvidence): string {
   return `${lead}${tail}.`;
 }
 
+// Plain-sentence rule shared by every model-written line: no digits, no percentages or decimals,
+// no typographic dashes (em, en, figure, hyphen, minus) and no spaced hyphen, no question marks.
+// A hyphen inside a name (Jay-Z, street-style) is allowed because Qloo returns it that way.
+const TYPOGRAPHIC_DASH = /[\u2010-\u2015\u2212\u2E3A\u2E3B]/;
+const SPACED_HYPHEN = /\s-\s/;
+export function isPlainSentence(text: string): boolean {
+  if (/\d/.test(text)) return false;
+  if (TYPOGRAPHIC_DASH.test(text) || SPACED_HYPHEN.test(text)) return false;
+  if (/\?/.test(text)) return false;
+  return true;
+}
+
 export function groundedExplanation(text: string | null, evidence: CompareEvidence): { text: string; source: "model" | "scores" } {
   const fallback = fallbackExplanation(evidence);
   if (!text) return { text: fallback, source: "scores" };
@@ -107,11 +119,8 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
   if (FORBIDDEN_CLAIM.test(cleaned)) {
     return { text: fallback, source: "scores" };
   }
-  // The explanation carries no numbers of any kind: no digits, percentages, or decimals.
-  // Em and en dashes are also rejected so the sentence stays plain.
-  if (/\d/.test(cleaned) || /[\u2013\u2014]/.test(cleaned)) {
-    return { text: fallback, source: "scores" };
-  }
+  // The explanation carries no numbers of any kind, no dashes, and no questions.
+  if (!isPlainSentence(cleaned)) return { text: fallback, source: "scores" };
   // A name is grounded when Qloo returned it.
   const allowedWords = new Set<string>(SAFE_WORDS);
   for (const name of [
