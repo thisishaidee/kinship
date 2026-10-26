@@ -21,7 +21,7 @@ export type Overlap = {
 export type CompareEvidence = {
   left: { name: string; typeLabel: string };
   right: { name: string; typeLabel: string };
-  overlaps: { name: string; category: string; leftScore: string; rightScore: string }[];
+  overlaps: { entityId?: string; name: string; category: string; leftScore: string; rightScore: string }[];
 };
 
 export type CompareResult =
@@ -107,12 +107,18 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
     return { text: fallback, source: "scores" };
   }
   // If a sentence names an overlap entity, it must cite that entity's own score.
+  // Entities are matched by id upstream; here a shared display name counts as one mention,
+  // so a sentence must cite a real score from at least one overlap carrying that name.
   for (const sentence of sentences) {
     const lower = sentence.toLowerCase();
     const sentenceScores: string[] = sentence.match(/\d+\.\d+/g) ?? [];
-    for (const overlap of evidence.overlaps) {
-      if (!lower.includes(overlap.name.toLowerCase())) continue;
-      if (!sentenceScores.includes(overlap.leftScore) && !sentenceScores.includes(overlap.rightScore)) {
+    const names = new Set(evidence.overlaps.map((overlap) => overlap.name.toLowerCase()));
+    for (const name of names) {
+      if (!lower.includes(name)) continue;
+      const scoresForName = evidence.overlaps
+        .filter((overlap) => overlap.name.toLowerCase() === name)
+        .flatMap((overlap) => [overlap.leftScore, overlap.rightScore]);
+      if (!sentenceScores.some((score) => scoresForName.includes(score))) {
         return { text: fallback, source: "scores" };
       }
     }

@@ -8,6 +8,7 @@ import type { Candidate, GraphHit, ResolvedEntity } from "./kinship-resolve.ts";
 
 export const AGENT_MAX_CALLS = 6;
 export const AGENT_MAX_ROUNDS = 3;
+export const AGENT_WALL_MS = 60_000;
 const MAX_QUERY_LENGTH = 120;
 const MAX_EVIDENCE = 12;
 
@@ -47,17 +48,37 @@ export type AgentOutcome =
   | { status: "pitch"; text: string; steps: AgentStep[]; evidence: CompareEvidence }
   | { status: "fallback"; reason: AgentFallback; steps: AgentStep[] };
 
-export type AgentFallback = "model-error" | "budget" | "invalid-output" | "no-evidence" | "still-calling";
+export type AgentFallback = "model-error" | "budget" | "invalid-output" | "no-evidence" | "still-calling" | "timeout";
 
-type Evidence = Map<string, { name: string; category: string; score: number }>;
+// Evidence is keyed by Qloo entity id, so two entities that share a display name stay separate.
+type EvidenceEntry = { entityId: string; name: string; category: string; score: number; from: string };
+type Evidence = Map<string, EvidenceEntry>;
 
 export async function runKinshipAgent(
   seed: ResolvedEntity,
   deps: { model: AgentModel; tools: AgentTools },
+  options: { wallMs?: number } = {},
 ): Promise<AgentOutcome> {
   const steps: AgentStep[] = [];
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<AgentOutcome>((resolve) => {
+    timer = setTimeout(() => resolve(fallback("timeout", steps)), options.wallMs ?? AGENT_WALL_MS);
+  });
+  try {
+    return await Promise.race([runLoop(seed, deps, steps), deadline]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function runLoop(
+  seed: ResolvedEntity,
+  deps: { model: AgentModel; tools: AgentTools },
+  steps: AgentStep[],
+): Promise<AgentOutcome> {
   const known = new Map<string, string>([[seed.entityId, seed.name]]);
   const evidence: Evidence = new Map();
+  const readCache = new Map<string, ToolResult>();
   let calls = 0;
   let rounds = 0;
   let results: ToolResult[] | null = null;
@@ -73,32 +94,59 @@ export async function runKinshipAgent(
 
     if (turn.kind === "final") {
       if (evidence.size === 0) return fallback("no-evidence", steps);
-      const checked = groundedExplanation(turn.text, toEvidence(seed, evidence));
+      const shown = toEvidence(seed, evidence);
+      const checked = groundedExplanation(turn.text, shown);
       if (checked.source !== "model") return fallback("invalid-output", steps);
-      return { status: "pitch", text: checked.text, steps, evidence: toEvidence(seed, evidence) };
+      return { status: "pitch", text: checked.text, steps, evidence: shown };
     }
 
     if (final) return fallback(calls >= AGENT_MAX_CALLS ? "budget" : "still-calling", steps);
 
+    const calls_ = Array.isArray(turn.calls) ? turn.calls : [];
     results = [];
-    for (const call of turn.calls) {
+    for (const call of calls_) {
       if (calls >= AGENT_MAX_CALLS) {
-        results.push({ name: call.name, ok: false, data: { error: "budget spent" } });
+        results.push({ name: safeName(call), ok: false, data: { error: "budget spent" } });
         continue;
       }
       calls += 1;
-      results.push(await executeCall(call, { tools: deps.tools, known, evidence, steps }));
+      try {
+        results.push(await executeCall(call, { tools: deps.tools, known, evidence, steps, readCache }));
+      } catch {
+        results.push({ name: safeName(call), ok: false, data: { error: "tool failed" } });
+      }
     }
     rounds += 1;
   }
 }
 
+function safeName(call: unknown): AgentCall["name"] {
+  const name = call && typeof call === "object" ? (call as { name?: unknown }).name : undefined;
+  return name === "find_entity" || name === "read_partners" ? name : "find_entity";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
 async function executeCall(
   call: AgentCall,
-  state: { tools: AgentTools; known: Map<string, string>; evidence: Evidence; steps: AgentStep[] },
+  state: {
+    tools: AgentTools;
+    known: Map<string, string>;
+    evidence: Evidence;
+    steps: AgentStep[];
+    readCache: Map<string, ToolResult>;
+  },
 ): Promise<ToolResult> {
+  if (!isRecord(call) || !isRecord(call.args)) {
+    state.steps.push({ kind: "search", label: "sent a malformed tool call", ok: false, count: 0 });
+    return { name: safeName(call), ok: false, data: { error: "malformed call" } };
+  }
+  const args = call.args as Record<string, unknown>;
+
   if (call.name === "find_entity") {
-    const query = typeof call.args?.query === "string" ? call.args.query.trim() : "";
+    const query = typeof args.query === "string" ? args.query.trim() : "";
     if (!query || query.length > MAX_QUERY_LENGTH) {
       state.steps.push({ kind: "search", label: "asked qloo about an invalid name", ok: false, count: 0 });
       return { name: call.name, ok: false, data: { error: "bad query" } };
@@ -118,13 +166,18 @@ async function executeCall(
   }
 
   if (call.name === "read_partners") {
-    const entityId = typeof call.args?.entity_id === "string" ? call.args.entity_id.trim() : "";
-    const category = call.args?.category;
-    const subject = state.known.get(entityId);
-    if (!subject || !(PARTNER_CATEGORIES as readonly string[]).includes(String(category))) {
+    const entityId = typeof args.entity_id === "string" ? args.entity_id.trim() : "";
+    const category = typeof args.category === "string" ? args.category : "";
+    const subject = entityId ? state.known.get(entityId) : undefined;
+    if (!subject || !(PARTNER_CATEGORIES as readonly string[]).includes(category)) {
       state.steps.push({ kind: "read", label: "tried to read an entity it had not seen", ok: false, count: 0 });
       return { name: call.name, ok: false, data: { error: "unknown entity or category" } };
     }
+    // Same entity and category again: answer from what we already have, no new Qloo call.
+    const key = `${entityId}|${category}`;
+    const cached = state.readCache.get(key);
+    if (cached) return cached;
+
     const read = await state.tools.readPartners(entityId, category as PartnerCategory);
     if (!read.ok) {
       state.steps.push({ kind: "read", label: `read ${category} overlap for ${subject}`, ok: false, count: 0 });
@@ -132,25 +185,37 @@ async function executeCall(
     }
     for (const hit of read.hits) {
       state.known.set(hit.entityId, hit.name);
-      const existing = state.evidence.get(hit.name);
-      if (!existing || hit.score > existing.score) state.evidence.set(hit.name, { name: hit.name, category, score: hit.score });
+      const existing = state.evidence.get(hit.entityId);
+      if (!existing || hit.score > existing.score) {
+        state.evidence.set(hit.entityId, { entityId: hit.entityId, name: hit.name, category, score: hit.score, from: subject });
+      }
     }
     state.steps.push({ kind: "read", label: `read ${category} overlap for ${subject}`, ok: true, count: read.hits.length });
-    return {
+    const result: ToolResult = {
       name: call.name,
       ok: true,
       data: { hits: read.hits.map((hit) => ({ entity_id: hit.entityId, name: hit.name, score: hit.score.toFixed(3) })) },
     };
+    state.readCache.set(key, result);
+    return result;
   }
 
-  return { name: (call as { name: string }).name as AgentCall["name"], ok: false, data: { error: "unknown tool" } };
+  return { name: safeName(call), ok: false, data: { error: "unknown tool" } };
 }
 
+// The agent has one Qloo score per partner (the subject's read), so both score fields carry
+// that same real value. Nothing is invented for the second side.
 function toEvidence(seed: ResolvedEntity, evidence: Evidence): CompareEvidence {
   const overlaps = [...evidence.values()]
     .sort((a, b) => b.score - a.score)
     .slice(0, MAX_EVIDENCE)
-    .map((entry) => ({ name: entry.name, category: entry.category, leftScore: entry.score.toFixed(3), rightScore: entry.score.toFixed(3) }));
+    .map((entry) => ({
+      entityId: entry.entityId,
+      name: entry.name,
+      category: entry.category,
+      leftScore: entry.score.toFixed(3),
+      rightScore: entry.score.toFixed(3),
+    }));
   return { left: { name: seed.name, typeLabel: seed.typeLabel }, right: { name: seed.name, typeLabel: seed.typeLabel }, overlaps };
 }
 
