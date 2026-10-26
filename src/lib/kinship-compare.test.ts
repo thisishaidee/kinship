@@ -196,3 +196,40 @@ describe("explanation safety (adversarial)", () => {
     assert.equal(result.source, "model");
   });
 });
+
+describe("pdf layout on long inputs", () => {
+  it("builds a PDF for a 120-character entity name and keeps the disclaimer intact", () => {
+    const long = "A".repeat(120);
+    const bytes = buildPairingPdf({
+      leftName: long,
+      leftType: "Brand",
+      rightName: long,
+      rightType: "Brand",
+      overlaps: [{ name: long, category: "Artist", leftScore: "0.959", rightScore: "0.910" }],
+      explanation: "Both pull toward the same long name at 0.959 and 0.910.",
+    });
+    const text = new TextDecoder().decode(bytes);
+    assert.equal(text.startsWith("%PDF-1.4"), true);
+    assert.equal(text.includes(PAIRING_DISCLAIMER), true);
+    assert.equal(text.includes("%%EOF"), true);
+    // Clipped with an ellipsis, so the raw 120-char run never reaches the page.
+    assert.equal(text.includes("A".repeat(120)), false);
+  });
+
+  it("builds a PDF for an explanation with emoji, curly quotes and CJK, keeping the disclaimer", () => {
+    const bytes = buildPairingPdf({
+      leftName: "Nike \u{1F45F}",
+      leftType: "Brand",
+      rightName: "Adidas 阿迪达斯",
+      rightType: "Brand",
+      overlaps: [{ name: "Rihanna", category: "Artist", leftScore: "0.959", rightScore: "0.910" }],
+      explanation: "“Both” pull toward Rihanna 🎵 at 0.959 and 0.910 — 共享粉丝 ‘shared’.",
+    });
+    const text = new TextDecoder().decode(bytes);
+    assert.equal(text.startsWith("%PDF-1.4"), true);
+    assert.equal(text.includes(PAIRING_DISCLAIMER), true);
+    assert.equal(text.includes("%%EOF"), true);
+    // Unsupported glyphs become ASCII placeholders, never raw non-ASCII bytes in the content stream.
+    assert.equal(/[\u0080-\uFFFF]/.test(text), false);
+  });
+});

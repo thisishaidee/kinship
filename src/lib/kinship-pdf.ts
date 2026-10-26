@@ -61,7 +61,10 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
     const size = Math.floor(max / Math.max(1, value.length * ratio));
     return Math.max(min, Math.min(max, size));
   };
-  const clip = (value: string, max: number) => (value.length > max ? `${value.slice(0, max - 3).trimEnd()}...` : value);
+  const clip = (value: string, max: number) => {
+    const chars = Array.from(value);
+    return chars.length > max ? `${chars.slice(0, max - 3).join("").trimEnd()}...` : value;
+  };
 
   // Header band: amber, with the wordmark in the serif face.
   rect(0, PAGE_H - 104, PAGE_W, 104, AMBER);
@@ -73,11 +76,11 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
 
   // The two entities, each with its type.
   text(MARGIN, 608, 8, F_SANS_BOLD, "FIRST", MUTED, 1.5);
-  text(MARGIN, 578, fitSize(input.leftName, 30, 16, 0.5), F_SERIF, input.leftName, INK);
+  text(MARGIN, 578, fitSize(input.leftName, 30, 16, 0.5), F_SERIF, clip(input.leftName, 60), INK);
   text(MARGIN, 556, 10, F_SANS, input.leftType, MUTED);
 
   text(MARGIN, 516, 8, F_SANS_BOLD, "SECOND", MUTED, 1.5);
-  text(MARGIN, 486, fitSize(input.rightName, 30, 16, 0.5), F_SERIF, input.rightName, INK);
+  text(MARGIN, 486, fitSize(input.rightName, 30, 16, 0.5), F_SERIF, clip(input.rightName, 60), INK);
   text(MARGIN, 464, 10, F_SANS, input.rightType, MUTED);
 
   // Accent rule.
@@ -125,8 +128,13 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
   y -= 14;
   text(MARGIN, y, 8, F_SANS_BOLD, "WHY THIS PAIRING", MUTED, 1.5);
   y -= 18;
-  for (const line of wrap(input.explanation, 92)) {
-    if (y < 124) break;
+  const explanationLines = wrap(input.explanation, 92);
+  for (const line of explanationLines) {
+    if (y < 124) {
+      // Never let the explanation run into the footer: mark the cut instead of overprinting.
+      text(MARGIN, y, 11, F_SANS, "...", MUTED);
+      break;
+    }
     text(MARGIN, y, 11, F_SANS, line, INK);
     y -= 15;
   }
@@ -134,10 +142,10 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
   // Footer.
   hairline(MARGIN, RIGHT, 98, RULE, 0.6);
   const generated = new Date().toISOString().slice(0, 10);
-  for (const [index, line] of wrap(`Scores come from Qloo's taste graph. ${PAIRING_DISCLAIMER}`, 150).entries()) {
-    text(MARGIN, 82 - index * 11, 8, F_SANS, line, MUTED);
-  }
-  text(MARGIN, 60, 8, F_SANS, `Generated ${generated} with Kinship`, MUTED);
+  // Source line and disclaimer each get their own row so the disclaimer stays whole and inside the margins.
+  text(MARGIN, 82, 8, F_SANS, "Scores come from Qloo's taste graph.", MUTED);
+  text(MARGIN, 71, 8, F_SANS, PAIRING_DISCLAIMER, MUTED);
+  text(MARGIN, 52, 8, F_SANS, `Generated ${generated} with Kinship`, MUTED);
 
   const stream = ["q", ...ops, "Q"].join("\n");
   const objects = [
@@ -170,7 +178,7 @@ function pdfText(value: string): string {
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/[\u2013\u2014]/g, "-")
-    .replace(/[^\x20-\x7E]/g, "?")
+    .replace(/[^\x20-\x7E]/gu, "?")
     .replace(/\\/g, "\\\\")
     .replace(/\(/g, "\\(")
     .replace(/\)/g, "\\)");
