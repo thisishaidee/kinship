@@ -4,6 +4,7 @@ import { formatAffinity, readRequest, resolveKinship, searchEntity, seedKindFrom
 import { DEMO_SEEDS, readDemoCache, writeDemoCache } from "@/lib/kinship-demo-cache.server";
 import { groundedExplanation } from "@/lib/kinship-compare";
 import { createQlooCallCache, qlooCallKey } from "@/lib/kinship-qloo-cache";
+import { cardLine, pageCardLines } from "@/lib/kinship-card-line";
 
 export type {
   Candidate,
@@ -15,6 +16,7 @@ export type {
   UncheckedCategory,
 } from "@/lib/kinship-resolve";
 export type { CompareEvidence, CompareResult, Overlap } from "@/lib/kinship-compare";
+export { cardLine } from "@/lib/kinship-card-line";
 export { copyFailureMessage, formatAffinity, isLatestRequest, partnerSearchHref } from "@/lib/kinship-resolve";
 
 async function qlooKey(): Promise<string | undefined> {
@@ -102,12 +104,15 @@ export const resolveKinshipSeed = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const result = await resolveWithDemoFallback(data);
     if (result.status !== "matched") return result;
-    const pitches = await Promise.all(
-      result.pitches.map(async (pitch) => {
-        const line = await pitchForCard(result.entity.name, pitch.partnerType, pitch.hits);
-        return line ? { ...pitch, line } : pitch;
-      }),
+    const agentLines = await Promise.all(
+      result.pitches.map((pitch) => pitchForCard(result.entity.name, pitch.partnerType, pitch.hits)),
     );
+    // One page-wide pass: agent lines that repeat a phrase or name another card's partner are dropped.
+    const lines = pageCardLines(
+      result.entity.name,
+      result.pitches.map((pitch, index) => ({ partnerType: pitch.partnerType, hits: pitch.hits, agentLine: agentLines[index] })),
+    );
+    const pitches = result.pitches.map((pitch, index) => ({ ...pitch, lines: lines[index], line: lines[index][0] ?? "" }));
     return { ...result, pitches };
   });
 

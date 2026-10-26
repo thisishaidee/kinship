@@ -1,3 +1,4 @@
+import { pageCardLines } from "./kinship-card-line.ts";
 /** Trim, collapse internal whitespace, then compare in lowercase. Punctuation and accents stay. */
 export function normalizeName(value: string): string {
   return value.trim().replace(/\s+/g, " ").toLowerCase();
@@ -44,6 +45,8 @@ export type Pitch = {
   id: (typeof GRAPH)[number]["id"];
   partnerType: string;
   hits: GraphHit[];
+  // One line per hit, in hit order. Each names only its own partner.
+  lines: string[];
   line: string;
 };
 
@@ -407,18 +410,21 @@ export function asHit(
 }
 
 export function buildPitches(seedName: string, graph: GraphCategory[]): Pitch[] {
-  return graph
+  const ranked = graph
     .filter((category) => category.status === "ok" && category.hits.length > 0)
     .map((category) => ({ category, top: Math.max(...category.hits.map((hit) => hit.score)) }))
     .sort((left, right) => right.top - left.top)
     .slice(0, 3)
-    .map(({ category }) => ({
-      id: category.id,
-      partnerType: PARTNER_TYPE[category.id],
-      hits: category.hits,
-      // Score-free and no question: the score is shown on the card, never in the sentence.
-      line: `${seedName}'s audience also leans toward ${listNames(category.hits)}.`,
-    }));
+    .map(({ category }) => category);
+  const lines = pageCardLines(seedName, ranked.map((category) => ({ partnerType: PARTNER_TYPE[category.id], hits: category.hits })));
+  return ranked.map((category, index) => ({
+    id: category.id,
+    partnerType: PARTNER_TYPE[category.id],
+    hits: category.hits,
+    // Each card line names only its own partner, never another card's, and carries no score.
+    lines: lines[index],
+    line: lines[index][0] ?? "",
+  }));
 }
 
 export function graphStatus(graph: GraphCategory[]): GraphStatus {

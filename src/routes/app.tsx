@@ -18,6 +18,7 @@ import {
   type UncheckedCategory,
 } from "@/lib/kinship-door";
 import { KinshipLogo } from "@/components/KinshipLogo";
+import { cardLine } from "@/lib/kinship-card-line";
 import { PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/kinship-pdf";
 import type { AgentStep } from "@/lib/kinship-agent";
 
@@ -76,7 +77,7 @@ function Home() {
   const [agentSteps, setAgentSteps] = useState<AgentStep[]>([]);
   const [agentPitched, setAgentPitched] = useState(false);
   const [agentText, setAgentText] = useState<string | null>(null);
-  const [openPitch, setOpenPitch] = useState<{ seed: string; seedType: string; partner: string; partnerType: string; score: number; line: string } | null>(null);
+  const [openPitch, setOpenPitch] = useState<{ seed: string; seedType: string; partner: string; partnerType: string; score: number; line: string; why?: string | null } | null>(null);
   const [agentReason, setAgentReason] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
   const runAgent = useServerFn(runAgenticPitch);
@@ -426,14 +427,15 @@ function Home() {
                           score={hit.score}
                           top={hitIndex === 0}
                           seed={match?.name ?? heldSeed}
-                          line={hitIndex === 0 ? pitch.line : null}
+                          line={pitch.lines[hitIndex] ?? null}
                           onOpen={() => setOpenPitch({
                             seed: match?.name ?? heldSeed,
                             seedType: match?.typeLabel ?? "",
                             partner: hit.name,
                             partnerType: pitch.partnerType,
                             score: hit.score,
-                            line: pitch.line || `${match?.name ?? heldSeed} and ${hit.name} share a strong audience overlap in Qloo’s data.`,
+                            line: pitch.lines[hitIndex] || cardLine(match?.name ?? heldSeed, hit, pitch.partnerType),
+                            why: agentText,
                           })}
                         />
                       </li>
@@ -783,7 +785,7 @@ function SeedTicket({ entity }: { entity: ResolvedEntity }) {
 }
 
 function ResultCard({ name, href, category, score, top = false, seed, line, onOpen }: { name: string; href: string; category: string; score: number; top?: boolean; seed: string; line?: string | null; onOpen?: () => void }) {
-  const caption = line ?? `${seed} and ${name} share a strong audience overlap in Qloo’s data.`;
+  const caption = line ?? cardLine(seed, { name, score }, category);
   return (
     <article className="flex h-full flex-col gap-3 rounded-2xl border border-[#242424] bg-[#161616] p-5">
       <div className="flex items-start justify-between gap-4">
@@ -810,7 +812,7 @@ function ResultCard({ name, href, category, score, top = false, seed, line, onOp
   );
 }
 
-type PitchData = { seed: string; seedType: string; partner: string; partnerType: string; score: number; line: string };
+type PitchData = { seed: string; seedType: string; partner: string; partnerType: string; score: number; line: string; why?: string | null };
 
 function pitchPdfInput(data: PitchData) {
   return {
@@ -819,7 +821,8 @@ function pitchPdfInput(data: PitchData) {
     rightName: data.partner,
     rightType: data.partnerType,
     overlaps: [],
-    explanation: data.line,
+    // The rendered page sentence (the full agent why), not the thin card fallback.
+    explanation: data.why || data.line,
     score: formatAffinity(data.score),
   };
 }

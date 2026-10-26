@@ -322,7 +322,10 @@ describe("resolveKinship", () => {
     const pitches = buildPitches("Radiohead", graph);
     assert.deepEqual(pitches.map((pitch) => pitch.id), ["brand", "artist", "place"]);
     assert.equal(pitches.length <= 3, true);
-    assert.equal(pitches[0].line, "Radiohead's audience also leans toward Patagonia and Arc'teryx.");
+    assert.equal(pitches[0].lines.length, 2);
+    assert.equal(pitches[0].lines[0].includes("Arc'teryx"), false);
+    assert.equal(pitches[0].lines[1].includes("Patagonia"), false);
+    assert.equal(pitches[0].lines[1].includes("Arc'teryx"), true);
     assert.equal(/\d|\?/.test(pitches[0].line), false);
     assert.equal(formatAffinity(pitches[0].hits[0].score), "0.990");
     assert.equal(pitches[0].hits[0].score, 0.99);
@@ -339,7 +342,12 @@ describe("resolveKinship", () => {
     ];
     const pitches = buildPitches("Nike", graph);
     assert.deepEqual(pitches.map((pitch) => pitch.id), ["artist", "brand"]);
-    assert.equal(pitches[0].line, "Nike's audience also leans toward Wiz Khalifa, Jay-Z, and DJ Khaled.");
+    assert.equal(pitches[0].lines.length, 3);
+    assert.equal(pitches[0].lines[0].includes("Wiz Khalifa"), true);
+    assert.equal(pitches[0].lines[0].includes("Jay-Z"), false);
+    assert.equal(pitches[0].lines[1].includes("Wiz Khalifa"), false);
+    assert.equal(pitches[0].lines[2].includes("Jay-Z"), false);
+    assert.equal(pitches[0].lines.every((line) => !/in Qloo|Qloo/.test(line)), true);
     assert.equal(/\d|\?|[\u2010-\u2015]/.test(pitches[0].line), false);
     assert.equal(pitches[0].hits[0].score, 0.9789124253791885);
     assert.equal(formatAffinity(pitches[0].hits[0].score), "0.979");
