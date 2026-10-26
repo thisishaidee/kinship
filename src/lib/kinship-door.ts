@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { compareKinship, type CompareEvidence } from "@/lib/kinship-compare";
+import { compareKinship, type CompareEvidence, type CompareSide } from "@/lib/kinship-compare";
 import { formatAffinity, readRequest, resolveKinship, searchEntity, seedKindFromLabel, type QlooGetter, type ResolveResult } from "@/lib/kinship-resolve";
 import { DEMO_SEEDS, readDemoCache, writeDemoCache } from "@/lib/kinship-demo-cache.server";
 import { groundedExplanation } from "@/lib/kinship-compare";
@@ -157,9 +157,41 @@ export const runAgenticPitch = createServerFn({ method: "POST" })
     }
   });
 
+// Compare agent path: one runKinshipAgent loop per side, in parallel, capped to a short wall
+// clock so the compare request still returns quickly. Any failure or timeout returns null and
+// compare keeps the single-call explanation.
+const COMPARE_AGENT_WALL_MS = 25_000;
+async function compareAgentPitches(sides: { left: CompareSide; right: CompareSide }): Promise<{ left: string; right: string } | null> {
+  const { env } = await import("@/lib/env.server");
+  const groqKey = env("GROQ_API_KEY");
+  const qKey = await qlooKey();
+  if (!groqKey || !qKey) return null;
+  const { runKinshipAgent } = await import("@/lib/kinship-agent");
+  const { createGroqModel, createQlooTools } = await import("@/lib/kinship-agent-adapters.server");
+  const runSide = async (side: CompareSide): Promise<string | null> => {
+    const outcome = await runKinshipAgent(
+      side.entity,
+      {
+        model: createGroqModel(groqKey, side.entity.name),
+        tools: createQlooTools(qKey, qlooGet, side.tags, seedKindFromLabel(side.entity.typeLabel)),
+      },
+      { wallMs: COMPARE_AGENT_WALL_MS },
+    );
+    if (outcome.status !== "pitch") {
+      console.error(`agentic-compare: ${outcome.reason}`);
+      return null;
+    }
+    return outcome.text;
+  };
+  const [left, right] = await Promise.all([runSide(sides.left), runSide(sides.right)]);
+  return left && right ? { left, right } : null;
+}
+
 export const compareKinshipSeeds = createServerFn({ method: "POST" })
   .validator((input: unknown) => input)
-  .handler(async ({ data }) => compareKinship(data, { key: qlooKey, get: qlooGet, explain: explainWithGroq }));
+  .handler(async ({ data }) =>
+    compareKinship(data, { key: qlooKey, get: qlooGet, explain: explainWithGroq, agent: compareAgentPitches }),
+  );
 
 const EXPLAIN_PROMPT =
   "You explain a pairing using only the JSON in the user message. Write exactly two sentences. First sentence: name the top one or two shared entities with their two scores from the JSON, in the shape Both pull toward NAME (LEFT / RIGHT). Second sentence: one plain-words line about what the two audiences share, written differently from the first sentence and never starting with 'Both pull toward', still using only entity names and scores present in the JSON. Never use the words 'entity' or 'taste graph'. Do not claim a partnership exists, is available, or will succeed. Do not add causes, history, genres, or locations that are not fields in the JSON. If overlaps is empty, say nothing.";

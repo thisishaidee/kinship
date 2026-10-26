@@ -24,6 +24,8 @@ export type CompareEvidence = {
   overlaps: { entityId?: string; name: string; category: string; leftScore: string; rightScore: string }[];
 };
 
+export type CompareSide = { entity: ResolvedEntity; tags: string[] };
+
 export type CompareResult =
   | {
       status: "matched";
@@ -31,7 +33,7 @@ export type CompareResult =
       right: ResolvedEntity;
       overlaps: Overlap[];
       explanation: string;
-      explanationSource: "model" | "scores";
+      explanationSource: "agent" | "model" | "scores";
       evidence: CompareEvidence;
     }
   | {
@@ -171,7 +173,13 @@ export function readCompare(
 
 export async function compareKinship(
   input: unknown,
-  deps: { key: () => Promise<string | undefined>; get: QlooGetter; explain: (evidence: CompareEvidence) => Promise<string | null> },
+  deps: {
+    key: () => Promise<string | undefined>;
+    get: QlooGetter;
+    explain: (evidence: CompareEvidence) => Promise<string | null>;
+    // Optional agent path: one agent run per side. Null when either side fails or times out.
+    agent?: (sides: { left: CompareSide; right: CompareSide }) => Promise<{ left: string; right: string } | null>;
+  },
 ): Promise<CompareResult> {
   const parsed = readCompare(input);
   if (!parsed.ok) return { status: "bad-seed", reason: parsed.reason, side: parsed.side };
@@ -216,7 +224,19 @@ export async function compareKinship(
       rightScore: formatAffinity(overlap.rightScore),
     })),
   };
-  const explanation = groundedExplanation(await deps.explain(evidence), evidence);
+  // Agent path: each side's final validated text, merged into one sentence, checked against the compare evidence.
+  // Any failure or grounding miss falls through to the single-call explanation.
+  const agentTexts = deps.agent
+    ? await deps.agent({
+        left: { entity: left.entity, tags: left.tags },
+        right: { entity: right.entity, tags: right.tags },
+      }).catch(() => null)
+    : null;
+  const agentChecked = agentTexts ? groundedExplanation(mergeAgentTexts(agentTexts), evidence) : null;
+  const explanation =
+    agentChecked && agentChecked.source === "model"
+      ? { text: agentChecked.text, source: "agent" as const }
+      : groundedExplanation(await deps.explain(evidence), evidence);
   return {
     status: "matched",
     left: publicEntity(left.entity),
@@ -226,6 +246,16 @@ export async function compareKinship(
     explanationSource: explanation.source,
     evidence,
   };
+}
+
+// One short sentence built from both sides' agent pitches. Each side's text is already grounded
+// against its own evidence; the merged line is re-checked against the compare evidence by the caller.
+function mergeAgentTexts(texts: { left: string; right: string }): string {
+  const first = texts.left.trim().replace(/\s+/g, " ");
+  const second = texts.right.trim().replace(/\s+/g, " ");
+  if (!first || !second) return first || second;
+  if (first.toLowerCase() === second.toLowerCase()) return first;
+  return `${first} ${second}`;
 }
 
 function strongestById(graph: GraphCategory[]): Map<string, { name: string; score: number; category: string }> {
