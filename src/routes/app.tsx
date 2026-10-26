@@ -547,8 +547,8 @@ function AgentTrace({ steps, pitched, reason }: { steps: AgentStep[]; pitched: b
 function LoadingSteps({ mode }: { mode: Mode }) {
   const steps =
     mode === "compare"
-      ? ["resolving both names", "reading Qloo’s data", "building the compare"]
-      : ["resolving the name", "reading Qloo’s data", "building your pitch"];
+      ? ["resolving both names", "reading the fan data", "building the compare"]
+      : ["resolving the name", "reading the fan data", "building your pitch"];
   const [step, setStep] = useState(0);
   useEffect(() => {
     const id = window.setInterval(() => setStep((current) => (current + 1 >= steps.length ? current : current + 1)), 1600);
@@ -912,7 +912,7 @@ export function PitchDetail({ data, onBack }: { data: PitchData; onBack: () => v
             </dl>
             <p className="flex items-center gap-2 text-xs text-[#2e5c40]">
               <span className="h-1.5 w-1.5 flex-none rounded-full bg-[#2e9e5b]" />
-              Every name and score here comes straight from Qloo’s fan data
+              Every name and score here comes straight from the fan data
             </p>
             <div className="flex flex-col gap-2.5">
               <div className="flex flex-wrap items-center gap-2.5">

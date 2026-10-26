@@ -1,4 +1,4 @@
-export const PAIRING_DISCLAIMER = "Shared-fans scores show a connection in Qloo's data, not partnership availability.";
+export const PAIRING_DISCLAIMER = "Scores show how much two audiences overlap, not whether a partnership is available.";
 export const PDF_FILENAME = "kinship-pairing.pdf";
 
 export type PairingPdfInput = {
@@ -181,7 +181,7 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
   hairline(MARGIN, RIGHT, 98, RULE, 0.6);
   const generated = new Date().toISOString().slice(0, 10);
   // Source line and disclaimer each get their own row so the disclaimer stays whole and inside the margins.
-  text(MARGIN, 82, 8, F_SANS, "Scores come from Qloo's taste graph.", MUTED);
+  text(MARGIN, 82, 8, F_SANS, "Scores show how much two audiences overlap.", MUTED);
   text(MARGIN, 71, 8, F_SANS, PAIRING_DISCLAIMER, MUTED);
   text(MARGIN, 52, 8, F_SANS, `Generated ${generated} with Kinship`, MUTED);
 

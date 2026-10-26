@@ -35,13 +35,13 @@ const STEPS = [
     tag: "01 · ONE SEED",
     band: "bg-[#FFB548] text-[#1a1200]",
     title: "One seed.",
-    text: "Type one name. Kinship looks it up on Qloo’s taste graph and shows the artists, brands and films its fans already love. You never have to invent a partner.",
+    text: "Type one name. Kinship looks it up in its fan data and shows the artists, brands and films its fans already love. You never have to invent a partner.",
   },
   {
     tag: "02 · REAL DATA",
     band: "bg-[#8EF2C8] text-[#0c231a]",
     title: "Real data.",
-    text: "Every score comes from Qloo’s data on what people listen to, watch and wear. Nothing is invented.",
+    text: "Every score shows how much two audiences overlap on what people listen to, watch and wear. Nothing is invented.",
   },
   {
     tag: "03 · READ WHY",
@@ -53,7 +53,7 @@ const STEPS = [
 
 const CHECKS = [
   {
-    title: "Only Qloo’s names",
+    title: "Only real names",
     text: "A partner appears only if Qloo returned it, with its score.",
   },
   {
@@ -70,7 +70,7 @@ const FOOTER_LINKS: [string, string][] = [
   ["Open app", "/app"],
   ["How it works", "#how"],
   ["Compare", "#compare"],
-  ["Qloo attribution", "https://www.qloo.com"],
+  ["Data source", "https://www.qloo.com"],
   ["GitHub repository", GITHUB],
   ["MIT license", `${GITHUB}/blob/main/LICENSE`],
 ];
@@ -124,7 +124,7 @@ function QlooDiagram({ rows }: { rows: HeroResult[] | null }) {
         <span
           className="inline-flex h-9 items-center rounded-full border border-[#FFB548] px-3 text-[13px] text-[#FFB548] md:h-10 md:text-sm"
         >
-          taste graph
+          fan data
         </span>
       </div>
       <span className="h-px min-w-4 flex-1 bg-[#2a2a30]" />
@@ -452,8 +452,8 @@ function Footer() {
         </div>
       </div>
       <p className="m-0 border-t border-[#26262c] pt-4 text-xs leading-normal text-[#a3a09a]">
-        Scores come from Qloo’s taste graph and show a connection in the data, not
-        partnership availability. Beta: scores are estimates. © 2026 Kinship
+        Scores show how much two audiences overlap, not whether a partnership is
+        available. Beta: scores are estimates. © 2026 Kinship
       </p>
     </footer>
   );
