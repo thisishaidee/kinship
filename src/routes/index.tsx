@@ -4,7 +4,6 @@
 // file does not have, especially a `head()` / meta block and any route options.
 // This file only uses Tailwind arbitrary values, so it needs no theme changes.
 
-import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { KinshipLogo } from "@/components/KinshipLogo";
 import { getHeroResults, type HeroResult } from "@/lib/kinship-door";
@@ -21,9 +20,10 @@ const SANS = "'Space Grotesk', system-ui, sans-serif";
 const GITHUB = "https://github.com/thisishaidee/kinship";
 
 // ---------------------------------------------------------------------------
-// Qloo rule: no Qloo response data in the public repo. The sample row and pitch are
+// Qloo rule: no Qloo response data in the public repo. Sample names and scores are
 // fetched at request time by getHeroResults (seed "Nike", same server proxy /app uses).
-// If Qloo does not answer, the card is hidden. Nothing is hardcoded.
+// If Qloo does not answer, the card is hidden. Nothing is hardcoded. A partnership
+// is not a field Qloo returns, so the page never writes one from these hits.
 const SAMPLE_SEED = "Nike";
 const COMPARE_SEEDS = ["Nike", "Adidas"];
 const ROW_COLORS = ["#FFB548", "#8EF2C8", "#C8C3FA"];
@@ -249,29 +249,7 @@ function Hero({ rows }: { rows: HeroResult[] | null }) {
   );
 }
 
-function CopyPitch({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      type="button"
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(text);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
-        } catch {
-          /* clipboard blocked: do nothing */
-        }
-      }}
-      className="h-12 flex-1 rounded-full bg-[#f4f1ea] text-[15px] font-bold text-[#111]"
-    >
-      {copied ? "Copied" : "Copy pitch"}
-    </button>
-  );
-}
-
 function SampleSection({ rows }: { rows: HeroResult[] }) {
-  const pitch = `${SAMPLE_SEED} could explore a partnership with ${rows[0].name} (${rows[0].score}) and ${rows[1].name} (${rows[1].score}).`;
   return (
     <section className="px-5 md:px-16">
       <div className="mx-auto max-w-[1152px] rounded-3xl border border-[#2a2a30] bg-[#101014] p-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:p-5">
@@ -297,18 +275,6 @@ function SampleSection({ rows }: { rows: HeroResult[] }) {
             </div>
           </div>
         ))}
-      </div>
-      <div className="mx-auto mt-4 max-w-[1152px] md:hidden">
-        <p className="m-0 text-sm leading-normal text-[#cfcbc3]">{pitch}</p>
-        <div className="mt-3 flex gap-2.5">
-          <CopyPitch text={pitch} />
-          <a
-            href="/app"
-            className="inline-flex h-12 flex-1 items-center justify-center rounded-full border border-[#2e2e34] text-[15px] text-[#f4f1ea]"
-          >
-            Try your own
-          </a>
-        </div>
       </div>
     </section>
   );
@@ -392,11 +358,6 @@ function CompareSection({ rows }: { rows: HeroResult[] | null }) {
           >
             {top.score}
           </div>
-          <p className="m-0 mt-4 text-sm leading-[1.55] text-[#cfcbc3]">
-            {SAMPLE_SEED} and {top.name} share a measurable audience overlap in Qloo’s
-            data. The {top.score} affinity suggests the two already reach the same
-            fans.
-          </p>
         </div>
       ) : (
         <div className="rounded-[22px] border border-[#2a2a30] bg-[#101014] p-6 lg:w-[440px] lg:flex-none md:p-7">
