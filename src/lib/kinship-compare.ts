@@ -250,11 +250,19 @@ function firstSentence(text: string): string {
   return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
 }
 
+// Two sides that open with the same run of words read as an echo. Keep the page's fallback
+// line in that case instead of showing the same pattern twice.
+function opensAlike(a: string, b: string): boolean {
+  const head = (s: string) => s.toLowerCase().replace(/[^a-z0-9' ]/g, "").split(/\s+/).slice(0, 3).join(" ");
+  return head(a) === head(b);
+}
+
 function mergeAgentTexts(texts: { left: string; right: string }): string {
   const left = firstSentence(texts.left);
   const right = firstSentence(texts.right);
   if (!left || !right) return "";
   if (left.toLowerCase() === right.toLowerCase()) return left;
+  if (opensAlike(left, right)) return "";
   return `${left} ${right}`;
 }
 

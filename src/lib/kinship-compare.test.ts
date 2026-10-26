@@ -143,6 +143,32 @@ describe("compareKinship", () => {
     assert.equal(JSON.stringify(result).includes("test-key"), false);
   });
 
+  it("does not show two agent sentences that open with the same words", async () => {
+    const get: QlooGetter = async (_key, path, params) => {
+      if (path === "/search") {
+        const id = params.get("query") === "Nike" ? LEFT : RIGHT;
+        return { ok: true, body: { results: [{ name: params.get("query"), entity_id: id, types: ["urn:entity:brand"], disambiguation: "" }] } };
+      }
+      return { ok: true, body: { results: { entities: [] } } };
+    };
+    const result = await compareKinship(
+      { left: "Nike", right: "Adidas" },
+      {
+        key: async () => "test-key",
+        get,
+        explain: async () => "Both pull toward Wiz Khalifa, and the same crowd follows both.",
+        agent: async () => ({
+          left: "Wiz Khalifa fans also follow Nike, so the two reach the same people.",
+          right: "Wiz Khalifa fans also follow Adidas, so the two reach the same people.",
+        }),
+      },
+    );
+    assert.equal(result.status, "matched");
+    if (result.status !== "matched") return;
+    assert.notEqual(result.explanationSource, "agent");
+    assert.equal(/\d/.test(result.explanation), false);
+  });
+
   it("shows one agent sentence per side even when those partners are not in the shared overlap", async () => {
     let explained = false;
     const get: QlooGetter = async (_key, path, params) => {
@@ -162,8 +188,8 @@ describe("compareKinship", () => {
           return "Both pull toward nobody (0.100 / 0.100).";
         },
         agent: async () => ({
-          left: "Both pull toward Wiz Khalifa (0.979 / 0.979).",
-          right: "Both pull toward Rihanna (0.959 / 0.959).",
+          left: "Wiz Khalifa's listeners also follow Nike, so the two reach a similar crowd.",
+          right: "Rihanna fans tend to follow Adidas too, which makes them a natural match.",
         }),
       },
     );
@@ -173,7 +199,7 @@ describe("compareKinship", () => {
     assert.equal(result.explanationSource, "agent");
     assert.equal(
       result.explanation,
-      "Both pull toward Wiz Khalifa (0.979 / 0.979). Both pull toward Rihanna (0.959 / 0.959).",
+      "Wiz Khalifa's listeners also follow Nike, so the two reach a similar crowd. Rihanna fans tend to follow Adidas too, which makes them a natural match.",
     );
   });
 });
