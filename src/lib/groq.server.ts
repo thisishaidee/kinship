@@ -23,10 +23,12 @@ export type GroqReply = { content: string | null; toolCalls: GroqToolCall[] };
 // Carries only the HTTP status (or null for network/shape errors). Never the key or the body.
 export class GroqError extends Error {
   readonly status: number | null;
+  readonly reason: string;
   constructor(status: number | null, message: string) {
     super(message);
     this.name = "GroqError";
     this.status = status;
+    this.reason = message;
   }
 }
 
@@ -91,11 +93,15 @@ function readContent(content: unknown): string | null {
 
 // One retry after 5 seconds when Groq answers HTTP 429 (free-tier per-minute limit).
 // Any other failure, or a second 429, is thrown to the caller, which falls back quietly.
+// Transient failures (HTTP 429, a network blip, a malformed body) get one retry. A timeout is not
+// retried here, because the caller's wall clock is already the limit.
 export async function groqChatRetry(input: Parameters<typeof groqChat>[0]): Promise<GroqReply> {
   try {
     return await groqChat(input);
   } catch (error) {
-    if (!(error instanceof GroqError) || error.status !== 429) throw error;
+    if (!(error instanceof GroqError)) throw error;
+    if (error.reason === "timeout") throw error;
+    if (error.status !== 429 && error.reason !== "network" && error.reason !== "bad-response") throw error;
     await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
     return groqChat(input);
   }
