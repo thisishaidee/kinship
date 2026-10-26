@@ -167,8 +167,8 @@ export const runAgenticPitch = createServerFn({ method: "POST" })
 const COMPARE_AGENT_WALL_MS = 45_000;
 // Each side gets a different opening angle so the two sentences do not echo each other.
 const COMPARE_ANGLES = {
-  left: "For this side, lead with the idea that the partner's fans already follow this name.",
-  right: "For this side, lead with the idea that this name's fans already follow the partner.",
+  left: "For this side, open with the partner's name, then say its fans already follow this name, in a sentence shaped differently from the other side.",
+  right: "For this side, open with this name's own audience, then say why the partner suits it, in a sentence shaped differently from the other side.",
 } as const;
 async function compareAgentPitches(
   sides: { left: CompareSide; right: CompareSide },

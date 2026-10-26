@@ -250,11 +250,18 @@ function firstSentence(text: string): string {
   return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
 }
 
-// Two sides that open with the same run of words read as an echo. Keep the page's fallback
+// Two sides that share any run of three words read as an echo. Keep the page's fallback
 // line in that case instead of showing the same pattern twice.
-function opensAlike(a: string, b: string): boolean {
-  const head = (s: string) => s.toLowerCase().replace(/[^a-z0-9' ]/g, "").split(/\s+/).slice(0, 3).join(" ");
-  return head(a) === head(b);
+function sharesThreeWordPhrase(a: string, b: string): boolean {
+  const words = (s: string) => s.toLowerCase().replace(/[^a-z0-9' ]/g, " ").split(/\s+/).filter(Boolean);
+  const grams = (w: string[]) => {
+    const out = new Set<string>();
+    for (let i = 0; i + 3 <= w.length; i++) out.add(w.slice(i, i + 3).join(" "));
+    return out;
+  };
+  const left = grams(words(a));
+  for (const g of grams(words(b))) if (left.has(g)) return true;
+  return false;
 }
 
 function mergeAgentTexts(texts: { left: string; right: string }): string {
@@ -262,7 +269,7 @@ function mergeAgentTexts(texts: { left: string; right: string }): string {
   const right = firstSentence(texts.right);
   if (!left || !right) return "";
   if (left.toLowerCase() === right.toLowerCase()) return left;
-  if (opensAlike(left, right)) return "";
+  if (sharesThreeWordPhrase(left, right)) return "";
   return `${left} ${right}`;
 }
 

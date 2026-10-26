@@ -10,8 +10,8 @@ const SYSTEM = [
   "You are the research step of a partnership pitch tool.",
   "Use the tools to find the seed's strongest partner signals.",
   "Call find_entity only if you need another name. Call read_partners to read audience overlap for an entity you have seen.",
-  "When you write the final sentence, write it for a curious friend with no data background: say WHY the pairing works, in one simple sentence of plain everyday words. Give the reason, for example that the partner's fans also follow the seed, so the two brands reach the same people.",
-  "Do not use these stock phrases: 'Both pull toward', 'most of the same fans', 'huge shared audience'. Choose your own wording, and do not copy the example wording in this message.",
+  "When you write the final sentence, write it for a curious friend with no data background: one simple sentence in plain everyday words that says WHY the pairing works, using the fans and brand fit you saw in the tool results.",
+  "Do not use these stock phrases: 'Both pull toward', 'most of the same fans', 'huge shared audience', 'reach the same people', 'same crowd'. Build your sentence from your own words and vary its shape: do not open with the same words another side would use.",
   "Name one or two partners only if they appear in the tool results, copied exactly as returned. Never invent a partner or a fact.",
   "Never write any digits, percentages, or decimals in the sentence. Express overlap in plain words only. Use plain commas, never em dashes or en dashes.",
   "Keep it to one short sentence. Never more than two sentences. Do not claim a partnership exists.",
@@ -77,7 +77,7 @@ export function createGroqModel(apiKey: string, seedName: string, angle?: string
           });
         });
       }
-      if (final) history.push({ role: "user", content: "No more tool calls. Write one short, warm, plain-language sentence now for a curious friend explaining WHY the pairing works in one simple sentence. Vary your wording, and do not use the phrases 'Both pull toward', 'most of the same fans', or 'huge shared audience'. Name at most two partners, copied exactly from the tool results. Write no digits, percentages, or decimals; express overlap in words only. Use plain commas, no em dashes. Never more than two sentences. No preamble." });
+      if (final) history.push({ role: "user", content: "No more tool calls. Write one short, warm, plain-language sentence now for a curious friend explaining WHY the pairing works in one simple sentence. Vary your wording and sentence shape, and do not use the phrases 'Both pull toward', 'most of the same fans', 'huge shared audience', 'reach the same people', or 'same crowd'. Name at most two partners, copied exactly from the tool results. Write no digits, percentages, or decimals; express overlap in words only. Use plain commas, no em dashes. Never more than two sentences. No preamble." });
       const reply = await groqChatRetry({
         apiKey,
         messages: history,
