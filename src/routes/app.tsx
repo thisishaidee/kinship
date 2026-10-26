@@ -871,65 +871,67 @@ export function PitchDetail({ data, onBack }: { data: PitchData; onBack: () => v
       <button type="button" onClick={onBack} className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent">
         <ArrowRight className="size-4 rotate-180" aria-hidden="true" /> Back to results
       </button>
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start lg:gap-10">
-        <div className="flex min-w-0 flex-col gap-4">
-          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">Partnership pitch</p>
-          <h2 className="font-display text-3xl leading-tight text-white sm:text-4xl">
-            {data.seed} × {data.partner}
-          </h2>
-          <div className="flex flex-col gap-1">
-            <p className="font-mono text-[56px] leading-none text-accent tabular-nums">{formatAffinity(data.score)}</p>
-            <p className="text-xs uppercase tracking-[0.18em] text-muted">Qloo affinity score</p>
-          </div>
-          <article className="rounded-2xl border border-[#242424] bg-[#161616] p-5">
-            <p className="text-sm leading-relaxed text-fg">{data.line}</p>
-          </article>
-          <dl className="flex flex-col divide-y divide-[#242424] rounded-2xl border border-[#242424] bg-[#161616]">
-            {([["Seed", `${data.seed}${data.seedType ? ` · ${data.seedType}` : ""}`], ["Partner", `${data.partner} · ${data.partnerType}`]] as const).map(([k, v]) => (
-              <div key={k} className="flex items-center justify-between gap-4 px-5 py-3">
-                <dt className="text-xs uppercase tracking-[0.18em] text-muted">{k}</dt>
-                <dd className="min-w-0 break-words text-right text-sm font-medium text-fg">{v}</dd>
+      <div className="rounded-3xl bg-[#f5f1e8] p-6 sm:p-10 lg:p-12">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start lg:gap-10">
+          <div className="flex min-w-0 flex-col gap-4">
+            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#6b6963]">Partnership pitch</p>
+            <h2 className="font-display text-3xl leading-tight text-[#141310] sm:text-4xl">
+              {data.seed} × {data.partner}
+            </h2>
+            <div className="flex flex-col gap-1">
+              <p className="font-mono text-[56px] leading-none text-[#141310] tabular-nums">{formatAffinity(data.score)}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-[#6b6963]">Qloo affinity score</p>
+            </div>
+            <article className="rounded-2xl border border-[#e3ddd0] bg-white p-5">
+              <p className="text-sm leading-relaxed text-[#141310]">{data.line}</p>
+            </article>
+            <dl className="flex flex-col divide-y divide-[#e3ddd0] rounded-2xl border border-[#e3ddd0] bg-white">
+              {([[''+'Seed', `${data.seed}${data.seedType ? ` · ${data.seedType}` : ""}`], ['Partner', `${data.partner} · ${data.partnerType}`]] as const).map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between gap-4 px-5 py-3">
+                  <dt className="text-xs uppercase tracking-[0.18em] text-[#6b6963]">{k}</dt>
+                  <dd className="min-w-0 break-words text-right text-sm font-medium text-[#141310]">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            <p className="flex items-center gap-2 text-xs text-[#2e5c40]">
+              <span className="h-1.5 w-1.5 flex-none rounded-full bg-[#2e9e5b]" />
+              Checked: every name and number above appears in Qloo’s response
+            </p>
+            <div className="flex flex-col gap-2.5">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <CopyLine line={data.line} label="Copy pitch" primary />
+                <a
+                  href={pdfUrl.current ?? "#"}
+                  download={PDF_FILENAME}
+                  onPointerDown={onPointerDown}
+                  onClick={onClick}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#141310] bg-transparent px-4 text-sm font-semibold text-[#141310] hover:border-accent hover:text-accent"
+                >
+                  <Download className="size-4" aria-hidden="true" />
+                  Export one-page PDF
+                </a>
               </div>
-            ))}
-          </dl>
-          <p className="flex items-center gap-2 text-xs text-muted">
-            <span className="h-1.5 w-1.5 flex-none rounded-full bg-[#7fe3b3]" />
-            Checked: every name and number above appears in Qloo’s response
-          </p>
-          <div className="flex flex-col gap-2.5">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <CopyLine line={data.line} label="Copy pitch" primary />
+              {note ? <p className="text-xs text-[#6b6963]" aria-live="polite">{note}</p> : null}
               <a
-                href={pdfUrl.current ?? "#"}
-                download={PDF_FILENAME}
-                onPointerDown={onPointerDown}
-                onClick={onClick}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#242424] bg-transparent px-4 text-sm font-semibold text-accent hover:border-accent"
+                href={partnerSearchHref(data.seed, data.partner)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-full px-1 text-sm font-medium text-[#6b6963] hover:text-accent"
               >
-                <Download className="size-4" aria-hidden="true" />
-                Export one-page PDF
+                Open {data.partner} on Qloo search
               </a>
             </div>
-            {note ? <p className="text-xs text-muted" aria-live="polite">{note}</p> : null}
-            <a
-              href={partnerSearchHref(data.seed, data.partner)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-full px-1 text-sm font-medium text-muted hover:text-accent"
-            >
-              Open {data.partner} on Qloo search
-            </a>
           </div>
-        </div>
-        <div className="hidden min-w-0 flex-col gap-3 lg:flex">
-          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">PDF preview</p>
-          {previewUrl ? (
-            <iframe
-              title="One-page PDF preview"
-              src={`${previewUrl}#toolbar=0&navpanes=0&view=FitH`}
-              className="aspect-[612/792] w-full rounded-2xl border border-[#242424] bg-white"
-            />
-          ) : null}
+          <div className="hidden min-w-0 flex-col gap-3 lg:flex">
+            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#6b6963]">PDF preview</p>
+            {previewUrl ? (
+              <iframe
+                title="One-page PDF preview"
+                src={`${previewUrl}#toolbar=0&navpanes=0&view=FitH`}
+                className="aspect-[612/792] w-full rounded-2xl border border-[#e3ddd0] bg-white shadow-sm"
+              />
+            ) : null}
+          </div>
         </div>
       </div>
     </section>
