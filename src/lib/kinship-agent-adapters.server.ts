@@ -112,7 +112,21 @@ export function createGroqModel(apiKey: string, seedName: string, angle?: string
         return { kind: "calls", calls: parsed };
       }
       const text = reply.content;
-      if (typeof text !== "string" || !text.trim()) throw new Error("no text");
+      if (typeof text !== "string" || !text.trim()) {
+        // Reasoning can use up the whole budget on the final turn, leaving no visible text. One
+        // tool-free nudge on the same history gives the model room to write the sentence.
+        if (final) {
+          const nudged = await groqChatRetry({
+            apiKey,
+            messages: [...history, { role: "user", content: "Write the one sentence now. Output only the sentence." }],
+            maxTokens: 2048,
+            timeoutMs: 20000,
+            reasoningEffort: "low",
+          });
+          if (typeof nudged.content === "string" && nudged.content.trim()) return { kind: "final", text: nudged.content };
+        }
+        throw new Error("no text");
+      }
       return { kind: "final", text };
     },
   };
