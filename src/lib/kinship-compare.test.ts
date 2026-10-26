@@ -141,6 +141,40 @@ describe("compareKinship", () => {
     assert.equal(result.explanation.includes("Puma"), false);
     assert.equal(JSON.stringify(result).includes("test-key"), false);
   });
+
+  it("shows one agent sentence per side even when those partners are not in the shared overlap", async () => {
+    let explained = false;
+    const get: QlooGetter = async (_key, path, params) => {
+      if (path === "/search") {
+        const id = params.get("query") === "Nike" ? LEFT : RIGHT;
+        return { ok: true, body: { results: [{ name: params.get("query"), entity_id: id, types: ["urn:entity:brand"], disambiguation: "" }] } };
+      }
+      return { ok: true, body: { results: { entities: [] } } };
+    };
+    const result = await compareKinship(
+      { left: "Nike", right: "Adidas" },
+      {
+        key: async () => "test-key",
+        get,
+        explain: async () => {
+          explained = true;
+          return "Both pull toward nobody (0.100 / 0.100).";
+        },
+        agent: async () => ({
+          left: "Both pull toward Wiz Khalifa (0.979 / 0.979).",
+          right: "Both pull toward Rihanna (0.959 / 0.959).",
+        }),
+      },
+    );
+    assert.equal(result.status, "matched");
+    if (result.status !== "matched") return;
+    assert.equal(explained, false);
+    assert.equal(result.explanationSource, "agent");
+    assert.equal(
+      result.explanation,
+      "Both pull toward Wiz Khalifa (0.979 / 0.979). Both pull toward Rihanna (0.959 / 0.959).",
+    );
+  });
 });
 
 describe("pairing pdf", () => {

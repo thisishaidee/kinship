@@ -58,6 +58,17 @@ describe("runKinshipAgent", () => {
     assert.equal(model.seen[1]?.[0]?.ok, true);
   });
 
+  it("keeps the last grounded sentence when the model adds a preamble", async () => {
+    const model = scriptedModel([
+      { kind: "calls", calls: [{ name: "read_partners", args: { entity_id: "seed-1", category: "brand" } }] },
+      { kind: "final", text: "The model considered several names before answering. Both pull toward Adidas (0.953 / 0.953)." },
+    ]);
+    const out = await runKinshipAgent(SEED, { model, tools: tools() });
+    assert.equal(out.status, "pitch");
+    if (out.status !== "pitch") return;
+    assert.equal(out.text, "Both pull toward Adidas (0.953 / 0.953).");
+  });
+
   it("rejects a final sentence that names something Qloo did not return", async () => {
     const model = scriptedModel([
       { kind: "calls", calls: [{ name: "read_partners", args: { entity_id: "seed-1", category: "brand" } }] },

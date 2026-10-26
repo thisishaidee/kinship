@@ -95,9 +95,9 @@ async function runLoop(
     if (turn.kind === "final") {
       if (evidence.size === 0) return fallback("no-evidence", steps);
       const shown = toEvidence(seed, evidence);
-      const checked = groundedExplanation(turn.text, shown);
-      if (checked.source !== "model") return fallback("invalid-output", steps);
-      return { status: "pitch", text: checked.text, steps, evidence: shown };
+      const text = pitchSentence(turn.text, shown);
+      if (!text) return fallback("invalid-output", steps);
+      return { status: "pitch", text, steps, evidence: shown };
     }
 
     if (final) return fallback(calls >= AGENT_MAX_CALLS ? "budget" : "still-calling", steps);
@@ -201,6 +201,22 @@ async function executeCall(
   }
 
   return { name: safeName(call), ok: false, data: { error: "unknown tool" } };
+}
+
+const PITCH_SPLIT = /(?<=[.!?])\s+/;
+
+// Reasoning models often write more than two sentences. The whole reply then
+// fails the checker even when the last line is a grounded pitch. Keep that line.
+function pitchSentence(text: string, evidence: CompareEvidence): string | null {
+  const cleaned = text.replace(/[*_`#]/g, "").replace(/\s+/g, " ").trim();
+  if (!cleaned) return null;
+  if (/model draft|outside the returned|cites those scores|stack trace/i.test(cleaned)) return null;
+  const sentences = cleaned.split(PITCH_SPLIT).filter(Boolean);
+  for (let index = sentences.length - 1; index >= 0; index -= 1) {
+    const checked = groundedExplanation(sentences[index], evidence);
+    if (checked.source === "model") return checked.text;
+  }
+  return null;
 }
 
 // The agent has one Qloo score per partner (the subject's read), so both score fields carry

@@ -42,7 +42,10 @@ export async function groqChat(input: {
     model: GROQ_MODEL,
     messages: input.messages,
     temperature: 0,
+    // gpt-oss counts reasoning against the completion budget and reads
+    // max_completion_tokens. max_tokens alone comes back with empty content.
     max_tokens: input.maxTokens,
+    max_completion_tokens: input.maxTokens,
   };
   if (input.tools && input.tools.length > 0) body.tools = input.tools;
   body.reasoning_effort = input.reasoningEffort ?? "low";
@@ -68,9 +71,22 @@ export async function groqChat(input: {
   }
   const message = (data as { choices?: { message?: { content?: unknown; tool_calls?: unknown } }[] })?.choices?.[0]?.message;
   if (!message || typeof message !== "object") throw new GroqError(null, "bad-response");
-  const content = typeof message.content === "string" ? message.content : null;
+  const content = readContent(message.content);
   const toolCalls = Array.isArray(message.tool_calls) ? (message.tool_calls as GroqToolCall[]) : [];
   return { content, toolCalls };
+}
+
+function readContent(content: unknown): string | null {
+  if (typeof content === "string") return content;
+  if (!Array.isArray(content)) return null;
+  const text = content
+    .map((part) => {
+      if (typeof part === "string") return part;
+      if (part && typeof part === "object" && typeof (part as { text?: unknown }).text === "string") return (part as { text: string }).text;
+      return "";
+    })
+    .join("");
+  return text.trim() ? text : null;
 }
 
 // One retry after 5 seconds when Groq answers HTTP 429 (free-tier per-minute limit).

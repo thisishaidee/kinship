@@ -72,13 +72,15 @@ export function createGroqModel(apiKey: string, seedName: string): AgentModel {
           });
         });
       }
-      if (final) history.push({ role: "user", content: "No more tool calls. Write the one-sentence answer now." });
+      if (final) history.push({ role: "user", content: "No more tool calls. Write exactly one sentence now, naming only entities and scores from the tool results. No preamble." });
       const reply = await groqChatRetry({
         apiKey,
         messages: history,
-        maxTokens: 200,
+        // 200 tokens is spent on reasoning, so the visible sentence comes back empty.
+        maxTokens: 2048,
         timeoutMs: 20000,
         tools: final ? undefined : TOOLS,
+        reasoningEffort: "low",
       });
       const toolCalls: GroqToolCall[] = reply.toolCalls ?? [];
       const parsed: AgentCall[] = [];

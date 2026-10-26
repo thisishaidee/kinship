@@ -224,19 +224,20 @@ export async function compareKinship(
       rightScore: formatAffinity(overlap.rightScore),
     })),
   };
-  // Agent path: each side's final validated text, merged into one sentence, checked against the compare evidence.
-  // Any failure or grounding miss falls through to the single-call explanation.
   const agentTexts = deps.agent
     ? await deps.agent({
         left: { entity: left.entity, tags: left.tags },
         right: { entity: right.entity, tags: right.tags },
       }).catch(() => null)
     : null;
-  const agentChecked = agentTexts ? groundedExplanation(mergeAgentTexts(agentTexts), evidence) : null;
-  const explanation =
-    agentChecked && agentChecked.source === "model"
-      ? { text: agentChecked.text, source: "agent" as const }
-      : groundedExplanation(await deps.explain(evidence), evidence);
+  // Each side already passed groundedExplanation against its own Qloo reads.
+  // Checking the join again, against only the shared overlaps, drops those
+  // sentences whenever a partner is not in the intersection, and the page
+  // falls through to the one-shot line. Show the two sentences instead.
+  const merged = agentTexts ? mergeAgentTexts(agentTexts) : "";
+  const explanation = merged
+    ? { text: merged, source: "agent" as const }
+    : groundedExplanation(await deps.explain(evidence), evidence);
   return {
     status: "matched",
     left: publicEntity(left.entity),
@@ -248,19 +249,21 @@ export async function compareKinship(
   };
 }
 
-// One short sentence built from both sides' agent pitches: the first sentence of each side,
-// joined. The caller re-checks the merged line against the compare evidence.
+// One validated sentence from each side, kept as the agent wrote it.
+// These already passed the checker against that side's Qloo reads.
 function firstSentence(text: string): string {
   const cleaned = text.replace(/\s+/g, " ").trim();
-  return cleaned.split(/(?<=[.!?])\s+/)[0] ?? "";
+  const sentence = cleaned.split(/(?<=[.!?])\s+/)[0] ?? "";
+  if (!sentence) return "";
+  return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
 }
 
 function mergeAgentTexts(texts: { left: string; right: string }): string {
-  const first = firstSentence(texts.left).replace(/[.!?]+$/, "");
-  const second = firstSentence(texts.right).replace(/[.!?]+$/, "");
-  if (!first || !second) return "";
-  if (first.toLowerCase() === second.toLowerCase()) return `${first}.`;
-  return `${first}; ${second.charAt(0).toLowerCase()}${second.slice(1)}.`;
+  const left = firstSentence(texts.left);
+  const right = firstSentence(texts.right);
+  if (!left || !right) return "";
+  if (left.toLowerCase() === right.toLowerCase()) return left;
+  return `${left} ${right}`;
 }
 
 function strongestById(graph: GraphCategory[]): Map<string, { name: string; score: number; category: string }> {
