@@ -710,8 +710,8 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
                   <p className="text-xs text-muted">{overlap.category}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
-                  {index === highMatchIndex(pairing.overlaps) ? (
-                    <span className="rounded-full border border-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent">High match</span>
+                  {index === 0 ? (
+                    <span className="rounded-full border border-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent">Highest shared score</span>
                   ) : null}
                   <p className="text-sm tabular-nums">
                     <span className={scoreTone(overlap.leftScore)}>{formatAffinity(overlap.leftScore)}</span>
@@ -741,16 +741,6 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
       {note ? <p className="text-sm text-muted">{note}</p> : null}
     </section>
   );
-}
-
-function highMatchIndex(overlaps: CompareMatch["overlaps"]): number {
-  const first = overlaps[0];
-  if (!first) return -1;
-  const weak = Math.min(first.leftScore, first.rightScore);
-  if (weak < 0.95) return -1;
-  const next = overlaps[1];
-  if (!next) return 0;
-  return weak - Math.min(next.leftScore, next.rightScore) >= 0.015 ? 0 : -1;
 }
 
 function scoreTone(score: number): string {
