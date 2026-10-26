@@ -111,23 +111,8 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
   if (evidence.overlaps.length === 0 ? numbers.length > 0 : numbers.some((number) => !allowedScores.has(number))) {
     return { text: fallback, source: "scores" };
   }
-  // If a sentence names an overlap entity, it must cite that entity's own score.
-  // Entities are matched by id upstream; here a shared display name counts as one mention,
-  // so a sentence must cite a real score from at least one overlap carrying that name.
-  for (const sentence of sentences) {
-    const lower = sentence.toLowerCase();
-    const sentenceScores: string[] = sentence.match(/\d+\.\d+/g) ?? [];
-    const names = new Set(evidence.overlaps.map((overlap) => overlap.name.toLowerCase()));
-    for (const name of names) {
-      if (!lower.includes(name)) continue;
-      const scoresForName = evidence.overlaps
-        .filter((overlap) => overlap.name.toLowerCase() === name)
-        .flatMap((overlap) => [overlap.leftScore, overlap.rightScore]);
-      if (!sentenceScores.some((score) => scoresForName.includes(score))) {
-        return { text: fallback, source: "scores" };
-      }
-    }
-  }
+  // A name is grounded when Qloo returned it. Citing a score next to a name is optional:
+  // the rendered sentence must carry no numbers, so requiring one here rejected valid warm sentences.
   const allowedWords = new Set<string>(SAFE_WORDS);
   for (const name of [
     evidence.left.name,

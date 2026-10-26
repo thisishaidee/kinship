@@ -160,7 +160,7 @@ export const runAgenticPitch = createServerFn({ method: "POST" })
 // Compare agent path: one runKinshipAgent loop per side, in parallel, capped to a short wall
 // clock so the compare request still returns quickly. Any failure or timeout returns null and
 // compare keeps the single-call explanation.
-const COMPARE_AGENT_WALL_MS = 25_000;
+const COMPARE_AGENT_WALL_MS = 45_000;
 async function compareAgentPitches(
   sides: { left: CompareSide; right: CompareSide },
   overlaps: CompareEvidence["overlaps"],
