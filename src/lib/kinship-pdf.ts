@@ -8,6 +8,8 @@ export type PairingPdfInput = {
   rightType: string;
   overlaps: { name: string; category: string; leftScore: string; rightScore: string }[];
   explanation: string;
+  // Single-pitch PDFs have no overlap table; this line replaces the empty-state text.
+  score?: string;
 };
 
 export function isIos(userAgent: string, touchPoints: number): boolean {
@@ -86,14 +88,20 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
   const colCategory = 290;
   const colLeft = 428;
   const colRight = 500;
-  text(colName, 420, 8, F_SANS_BOLD, "SHARED FAN INTEREST", MUTED, 1);
-  text(colCategory, 420, 8, F_SANS_BOLD, "CATEGORY", MUTED, 1);
-  text(colLeft, 420, 8, F_SANS_BOLD, "FIRST", MUTED, 1);
-  text(colRight, 420, 8, F_SANS_BOLD, "SECOND", MUTED, 1);
-  hairline(MARGIN, RIGHT, 412, INK, 0.6);
-
+  // Single-pitch PDFs (score set, no overlaps) skip the table header and show the score instead.
+  const singlePitch = input.overlaps.length === 0 && Boolean(input.score);
   let y = 392;
-  if (input.overlaps.length === 0) {
+  if (!singlePitch) {
+    text(colName, 420, 8, F_SANS_BOLD, "SHARED FAN INTEREST", MUTED, 1);
+    text(colCategory, 420, 8, F_SANS_BOLD, "CATEGORY", MUTED, 1);
+    text(colLeft, 420, 8, F_SANS_BOLD, "FIRST", MUTED, 1);
+    text(colRight, 420, 8, F_SANS_BOLD, "SECOND", MUTED, 1);
+    hairline(MARGIN, RIGHT, 412, INK, 0.6);
+  }
+  if (singlePitch) {
+    text(colName, 420, 11, F_SANS_BOLD, `Qloo affinity score: ${input.score}`, INK);
+    y = 392;
+  } else if (input.overlaps.length === 0) {
     text(colName, y, 11, F_SANS, "No shared entity in these Qloo results.", MUTED);
     y -= 26;
   } else {

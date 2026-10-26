@@ -792,51 +792,147 @@ function ResultCard({ name, href, category, score, top = false, seed, line, onOp
   );
 }
 
-function PitchDetail({ data, onBack }: { data: { seed: string; seedType: string; partner: string; partnerType: string; score: number; line: string }; onBack: () => void }) {
+type PitchData = { seed: string; seedType: string; partner: string; partnerType: string; score: number; line: string };
+
+function pitchPdfInput(data: PitchData) {
+  return {
+    leftName: data.seed,
+    leftType: data.seedType,
+    rightName: data.partner,
+    rightType: data.partnerType,
+    overlaps: [],
+    explanation: data.line,
+    score: formatAffinity(data.score),
+  };
+}
+
+export function PitchDetail({ data, onBack }: { data: PitchData; onBack: () => void }) {
+  const pdfUrl = useRef<string | null>(null);
+  const pdfFile = useRef<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [note, setNote] = useState("");
+
+  // Desktop preview: build the same one-pager once per pitch; revoke on change/unmount.
+  useEffect(() => {
+    const url = URL.createObjectURL(pdfBlob(buildPairingPdf(pitchPdfInput(data))));
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [data]);
+
+  useEffect(() => {
+    return () => {
+      if (pdfUrl.current) URL.revokeObjectURL(pdfUrl.current);
+    };
+  }, []);
+
+  function arm(anchor: HTMLAnchorElement) {
+    const blob = pdfBlob(buildPairingPdf(pitchPdfInput(data)));
+    pdfFile.current = new File([blob], PDF_FILENAME, { type: "application/pdf" });
+    preparePdfAnchor(anchor, navigator.userAgent, navigator.maxTouchPoints);
+    if (pdfUrl.current) URL.revokeObjectURL(pdfUrl.current);
+    const url = URL.createObjectURL(blob);
+    pdfUrl.current = url;
+    anchor.href = url;
+  }
+
+  function onPointerDown(event: PointerEvent<HTMLAnchorElement>) {
+    arm(event.currentTarget);
+  }
+
+  function onClick(event: MouseEvent<HTMLAnchorElement>) {
+    const anchor = event.currentTarget;
+    if (!anchor.href.startsWith("blob:") || !pdfFile.current) arm(anchor);
+    const file = pdfFile.current;
+    if (!file) return;
+    let shareable = false;
+    try {
+      shareable = typeof navigator.canShare === "function" && navigator.canShare({ files: [file] });
+    } catch {
+      shareable = false;
+    }
+    if (!shareable) return;
+    event.preventDefault();
+    void navigator.share({ files: [file], title: "Kinship pitch" }).then(
+      () => setNote(""),
+      (error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        window.open(anchor.href, "_blank", "noopener");
+        setNote("The download was blocked. The PDF is open in a new tab so you can save it.");
+      },
+    );
+  }
+
   return (
     <section className="flex flex-col gap-4" aria-label="Partnership pitch">
       <button type="button" onClick={onBack} className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent">
         <ArrowRight className="size-4 rotate-180" aria-hidden="true" /> Back to results
       </button>
-      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">Partnership pitch</p>
-      <h2 className="font-display text-3xl leading-tight text-white sm:text-4xl">
-        {data.seed} × {data.partner}
-      </h2>
-      <div className="flex flex-col gap-1">
-        <p className="font-mono text-[56px] leading-none text-accent tabular-nums">{formatAffinity(data.score)}</p>
-        <p className="text-xs uppercase tracking-[0.18em] text-muted">Qloo affinity score</p>
-      </div>
-      <article className="rounded-2xl border border-[#242424] bg-[#161616] p-5">
-        <p className="text-sm leading-relaxed text-fg">{data.line}</p>
-      </article>
-      <dl className="flex flex-col divide-y divide-[#242424] rounded-2xl border border-[#242424] bg-[#161616]">
-        {([["Seed", `${data.seed}${data.seedType ? ` · ${data.seedType}` : ""}`], ["Partner", `${data.partner} · ${data.partnerType}`]] as const).map(([k, v]) => (
-          <div key={k} className="flex items-center justify-between gap-4 px-5 py-3">
-            <dt className="text-xs uppercase tracking-[0.18em] text-muted">{k}</dt>
-            <dd className="min-w-0 break-words text-right text-sm font-medium text-fg">{v}</dd>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start lg:gap-10">
+        <div className="flex min-w-0 flex-col gap-4">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">Partnership pitch</p>
+          <h2 className="font-display text-3xl leading-tight text-white sm:text-4xl">
+            {data.seed} × {data.partner}
+          </h2>
+          <div className="flex flex-col gap-1">
+            <p className="font-mono text-[56px] leading-none text-accent tabular-nums">{formatAffinity(data.score)}</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted">Qloo affinity score</p>
           </div>
-        ))}
-      </dl>
-      <p className="flex items-center gap-2 text-xs text-muted">
-        <span className="h-1.5 w-1.5 flex-none rounded-full bg-[#7fe3b3]" />
-        Checked: every name and number above appears in Qloo’s response
-      </p>
-      <div className="flex flex-col gap-2.5">
-        <CopyLine line={`${data.line}`} />
-        <a
-          href={partnerSearchHref(data.seed, data.partner)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#242424] bg-transparent px-4 text-sm font-semibold text-accent hover:border-accent"
-        >
-          Open {data.partner} on Qloo search
-        </a>
+          <article className="rounded-2xl border border-[#242424] bg-[#161616] p-5">
+            <p className="text-sm leading-relaxed text-fg">{data.line}</p>
+          </article>
+          <dl className="flex flex-col divide-y divide-[#242424] rounded-2xl border border-[#242424] bg-[#161616]">
+            {([["Seed", `${data.seed}${data.seedType ? ` · ${data.seedType}` : ""}`], ["Partner", `${data.partner} · ${data.partnerType}`]] as const).map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between gap-4 px-5 py-3">
+                <dt className="text-xs uppercase tracking-[0.18em] text-muted">{k}</dt>
+                <dd className="min-w-0 break-words text-right text-sm font-medium text-fg">{v}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="flex items-center gap-2 text-xs text-muted">
+            <span className="h-1.5 w-1.5 flex-none rounded-full bg-[#7fe3b3]" />
+            Checked: every name and number above appears in Qloo’s response
+          </p>
+          <div className="flex flex-col gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <CopyLine line={data.line} label="Copy pitch" primary />
+              <a
+                href={pdfUrl.current ?? "#"}
+                download={PDF_FILENAME}
+                onPointerDown={onPointerDown}
+                onClick={onClick}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#242424] bg-transparent px-4 text-sm font-semibold text-accent hover:border-accent"
+              >
+                <Download className="size-4" aria-hidden="true" />
+                Export one-page PDF
+              </a>
+            </div>
+            {note ? <p className="text-xs text-muted" aria-live="polite">{note}</p> : null}
+            <a
+              href={partnerSearchHref(data.seed, data.partner)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-full px-1 text-sm font-medium text-muted hover:text-accent"
+            >
+              Open {data.partner} on Qloo search
+            </a>
+          </div>
+        </div>
+        <div className="hidden min-w-0 flex-col gap-3 lg:flex">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">PDF preview</p>
+          {previewUrl ? (
+            <iframe
+              title="One-page PDF preview"
+              src={`${previewUrl}#toolbar=0&navpanes=0&view=FitH`}
+              className="aspect-[612/792] w-full rounded-2xl border border-[#242424] bg-white"
+            />
+          ) : null}
+        </div>
       </div>
     </section>
   );
 }
 
-function CopyLine({ line }: { line: string }) {
+function CopyLine({ line, label = "Copy", primary = false }: { line: string; label?: string; primary?: boolean }) {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
 
   async function onCopy() {
@@ -853,10 +949,12 @@ function CopyLine({ line }: { line: string }) {
     <button
       type="button"
       onClick={onCopy}
-      className="inline-flex h-10 items-center justify-center gap-2 self-start rounded-full border border-line bg-surface px-4 text-sm font-medium text-fg hover:border-accent"
+      className={`inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-sm font-medium ${
+        primary ? "bg-accent font-semibold text-accent-fg hover:opacity-90" : "self-start border border-line bg-surface text-fg hover:border-accent"
+      }`}
     >
       {state === "copied" ? <Check className="size-4" aria-hidden="true" /> : <Copy className="size-4" aria-hidden="true" />}
-      {state === "copied" ? "Copied" : state === "failed" ? copyFailureMessage() : "Copy"}
+      {state === "copied" ? "Copied" : state === "failed" ? copyFailureMessage() : label}
     </button>
   );
 }
