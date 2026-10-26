@@ -36,7 +36,7 @@ export const Route = createFileRoute("/app")({
 });
 
 const EXAMPLES = ["Radiohead", "Nike", "Drake"] as const;
-const RESULT_NOTE = "Shared-fans scores show a connection in Qloo’s data, not partnership availability.";
+const RESULT_NOTE = "This shows who their fans overlap with — not whether a deal will happen.";
 
 type Phase = "idle" | "loading" | "matched" | "ambiguous" | "no-match" | "missing-key" | "refused" | "unavailable";
 type Mode = "single" | "compare";
@@ -250,7 +250,7 @@ function Home() {
         </h1>
         <p className="text-base text-muted">
           {mode === "single"
-            ? "Type an artist, film, or brand. Names and scores come from Qloo."
+            ? "Type an artist, film, or brand. Kinship checks who their fans already love."
             : "Compare two exact Qloo entities. A shared name appears only when both results use the same entity."}
         </p>
       </header>
@@ -327,6 +327,9 @@ function Home() {
 
       {mode === "single" && phase === "idle" ? (
         <section className="flex flex-col gap-3">
+          <p className="rounded-2xl border border-[#242424] bg-[#161616] px-4 py-3 text-sm text-muted">
+            How it works: type a name, we check who its fans already love on Qloo, and you get partners with proof. Scores near 1.0 mean the strongest fan overlap.
+          </p>
           <h2 className="text-sm font-medium text-fg">No pitch yet</h2>
           <p className="text-base text-muted">The field starts empty. Pick a name, or type your own.</p>
           <div className="flex flex-wrap gap-2">
@@ -697,7 +700,7 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
         <h2 className="text-sm font-medium text-fg">Shared-fans scores</h2>
         <p className="text-sm leading-snug text-muted">{RESULT_NOTE}</p>
         {pairing.overlaps.length === 0 ? (
-          <p className="text-base text-muted">No entity appeared in both Qloo results.</p>
+          <p className="text-base text-muted">These two don’t share a fan base in the data. Try another pair, like Nike vs Adidas.</p>
         ) : (
           <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
             {pairing.overlaps.map((overlap, index) => (
@@ -880,7 +883,7 @@ export function PitchDetail({ data, onBack }: { data: PitchData; onBack: () => v
             </h2>
             <div className="flex flex-col gap-1">
               <p className="font-mono text-[56px] leading-none text-[#141310] tabular-nums">{formatAffinity(data.score)}</p>
-              <p className="text-xs uppercase tracking-[0.18em] text-[#6b6963]">Qloo affinity score</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-[#6b6963]">Fans in common</p>
             </div>
             <article className="rounded-2xl border border-[#e3ddd0] bg-white p-5">
               <p className="text-sm leading-relaxed text-[#141310]">{data.line}</p>
@@ -895,7 +898,7 @@ export function PitchDetail({ data, onBack }: { data: PitchData; onBack: () => v
             </dl>
             <p className="flex items-center gap-2 text-xs text-[#2e5c40]">
               <span className="h-1.5 w-1.5 flex-none rounded-full bg-[#2e9e5b]" />
-              Checked: every name and number above appears in Qloo’s response
+              Every name and score here comes straight from Qloo’s fan data
             </p>
             <div className="flex flex-col gap-2.5">
               <div className="flex flex-wrap items-center gap-2.5">
