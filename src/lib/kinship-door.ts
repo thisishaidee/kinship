@@ -161,21 +161,24 @@ export const runAgenticPitch = createServerFn({ method: "POST" })
 // clock so the compare request still returns quickly. Any failure or timeout returns null and
 // compare keeps the single-call explanation.
 const COMPARE_AGENT_WALL_MS = 25_000;
-async function compareAgentPitches(sides: { left: CompareSide; right: CompareSide }): Promise<{ left: string; right: string } | null> {
+async function compareAgentPitches(
+  sides: { left: CompareSide; right: CompareSide },
+  overlaps: CompareEvidence["overlaps"],
+): Promise<{ left: string; right: string } | null> {
   const { env } = await import("@/lib/env.server");
   const groqKey = env("GROQ_API_KEY");
   const qKey = await qlooKey();
   if (!groqKey || !qKey) return null;
   const { runKinshipAgent } = await import("@/lib/kinship-agent");
   const { createGroqModel, createQlooTools } = await import("@/lib/kinship-agent-adapters.server");
-  const runSide = async (side: CompareSide): Promise<string | null> => {
+  const runSide = async (side: CompareSide, column: "left" | "right"): Promise<string | null> => {
     const outcome = await runKinshipAgent(
       side.entity,
       {
         model: createGroqModel(groqKey, side.entity.name),
         tools: createQlooTools(qKey, qlooGet, side.tags, seedKindFromLabel(side.entity.typeLabel)),
       },
-      { wallMs: COMPARE_AGENT_WALL_MS },
+      { wallMs: COMPARE_AGENT_WALL_MS, pair: { side: column, overlaps } },
     );
     if (outcome.status !== "pitch") {
       console.error(`agentic-compare: ${outcome.reason}`);
@@ -183,7 +186,7 @@ async function compareAgentPitches(sides: { left: CompareSide; right: CompareSid
     }
     return outcome.text;
   };
-  const [left, right] = await Promise.all([runSide(sides.left), runSide(sides.right)]);
+  const [left, right] = await Promise.all([runSide(sides.left, "left"), runSide(sides.right, "right")]);
   return left && right ? { left, right } : null;
 }
 

@@ -282,3 +282,21 @@ describe("evidence shape", () => {
     );
   });
 });
+
+describe("compare evidence per side", () => {
+  it("gives each side its own score in its own column", async () => {
+    const pitch = "Rihanna sits at 0.959 for this side.";
+    const model = scriptedModel([
+      { kind: "calls", calls: [{ name: "read_partners", args: { entity_id: "seed-1", category: "artist" } }] },
+      { kind: "final", text: pitch },
+    ]);
+    const outcome = await runKinshipAgent(SEED, { model, tools: tools() }, {
+      pair: { side: "right", overlaps: [{ entityId: RIHANNA, leftScore: "0.974", rightScore: "0.959" }] },
+    });
+    assert.equal(outcome.status, "pitch");
+    if (outcome.status !== "pitch") return;
+    const rihanna = outcome.evidence.overlaps.find((o) => o.entityId === RIHANNA);
+    assert.equal(rihanna?.leftScore, "0.974");
+    assert.equal(rihanna?.rightScore, "0.959");
+  });
+});

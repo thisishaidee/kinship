@@ -267,3 +267,31 @@ describe("pdf layout on long inputs", () => {
     assert.equal(/[\u0080-\uFFFF]/.test(text), false);
   });
 });
+
+describe("groundedExplanation names and scores", () => {
+  const evidence: CompareEvidence = {
+    left: { name: "Nike", typeLabel: "Brand" },
+    right: { name: "Adidas", typeLabel: "Brand" },
+    overlaps: [{ name: "Rihanna", category: "artist", leftScore: "0.974", rightScore: "0.959" }],
+  };
+
+  it("accepts a sentence that cites left and right scores separately", () => {
+    const out = groundedExplanation("Both pull toward Rihanna (0.974 / 0.959).", evidence);
+    assert.equal(out.source, "model");
+  });
+
+  it("accepts a possessive form of a returned name", () => {
+    const out = groundedExplanation("Rihanna's audience sits close to Nike at 0.974, and Adidas at 0.959.", evidence);
+    assert.equal(out.source, "model");
+  });
+
+  it("still rejects a name that was never returned", () => {
+    const out = groundedExplanation("Beyonce's audience sits close to Nike at 0.974.", evidence);
+    assert.equal(out.source, "scores");
+  });
+
+  it("still rejects a score that was never returned", () => {
+    const out = groundedExplanation("Rihanna sits at 0.500 for Nike.", evidence);
+    assert.equal(out.source, "scores");
+  });
+});

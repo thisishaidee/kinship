@@ -141,8 +141,10 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
   for (const sentence of sentences) {
     const words = sentence.replace(/[().,"“”]/g, "").split(/\s+/);
     for (const word of words) {
-      if (!/^[A-Z]/.test(word)) continue;
-      const plain = word.toLowerCase().replace(/[^a-z0-9']/g, "");
+      // Possessives ("Rihanna's") and trailing punctuation are not part of the name.
+      const bare = word.replace(/['’]s$/i, "").replace(/[^A-Za-z0-9]+$/, "");
+      if (!/^[A-Z]/.test(bare)) continue;
+      const plain = bare.toLowerCase().replace(/[^a-z0-9]/g, "");
       if (plain && !allowedWords.has(plain)) return { text: fallback, source: "scores" };
     }
   }
@@ -178,7 +180,11 @@ export async function compareKinship(
     get: QlooGetter;
     explain: (evidence: CompareEvidence) => Promise<string | null>;
     // Optional agent path: one agent run per side. Null when either side fails or times out.
-    agent?: (sides: { left: CompareSide; right: CompareSide }) => Promise<{ left: string; right: string } | null>;
+    // overlaps carries the real left and right score for every shared entity, so each side's check can use both.
+    agent?: (
+      sides: { left: CompareSide; right: CompareSide },
+      overlaps: CompareEvidence["overlaps"],
+    ) => Promise<{ left: string; right: string } | null>;
   },
 ): Promise<CompareResult> {
   const parsed = readCompare(input);
@@ -225,10 +231,13 @@ export async function compareKinship(
     })),
   };
   const agentTexts = deps.agent
-    ? await deps.agent({
-        left: { entity: left.entity, tags: left.tags },
-        right: { entity: right.entity, tags: right.tags },
-      }).catch(() => null)
+    ? await deps.agent(
+        {
+          left: { entity: left.entity, tags: left.tags },
+          right: { entity: right.entity, tags: right.tags },
+        },
+        evidence.overlaps,
+      ).catch(() => null)
     : null;
   // Each side already passed groundedExplanation against its own Qloo reads.
   // Checking the join again, against only the shared overlaps, drops those

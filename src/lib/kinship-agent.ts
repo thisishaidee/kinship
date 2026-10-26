@@ -54,10 +54,17 @@ export type AgentFallback = "model-error" | "budget" | "invalid-output" | "no-ev
 type EvidenceEntry = { entityId: string; name: string; category: string; score: number; from: string };
 type Evidence = Map<string, EvidenceEntry>;
 
+// `pair` is set for one side of a compare. `side` says which column this agent's seed is,
+// and `overlaps` holds the real score for each shared entity on both sides (from compare).
+export type ComparePair = {
+  side: "left" | "right";
+  overlaps: { entityId?: string; leftScore: string; rightScore: string }[];
+};
+
 export async function runKinshipAgent(
   seed: ResolvedEntity,
   deps: { model: AgentModel; tools: AgentTools },
-  options: { wallMs?: number } = {},
+  options: { wallMs?: number; pair?: ComparePair } = {},
 ): Promise<AgentOutcome> {
   const steps: AgentStep[] = [];
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -65,7 +72,7 @@ export async function runKinshipAgent(
     timer = setTimeout(() => resolve(fallback("timeout", steps)), options.wallMs ?? AGENT_WALL_MS);
   });
   try {
-    return await Promise.race([runLoop(seed, deps, steps), deadline]);
+    return await Promise.race([runLoop(seed, deps, steps, options.pair), deadline]);
   } finally {
     clearTimeout(timer);
   }
@@ -75,6 +82,7 @@ async function runLoop(
   seed: ResolvedEntity,
   deps: { model: AgentModel; tools: AgentTools },
   steps: AgentStep[],
+  pair: ComparePair | undefined,
 ): Promise<AgentOutcome> {
   const known = new Map<string, string>([[seed.entityId, seed.name]]);
   const evidence: Evidence = new Map();
@@ -94,7 +102,7 @@ async function runLoop(
 
     if (turn.kind === "final") {
       if (evidence.size === 0) return fallback("no-evidence", steps);
-      const shown = toEvidence(seed, evidence);
+      const shown = toEvidence(seed, evidence, pair);
       const text = pitchSentence(turn.text, shown);
       if (!text) return fallback("invalid-output", steps);
       return { status: "pitch", text, steps, evidence: shown };
@@ -219,19 +227,21 @@ function pitchSentence(text: string, evidence: CompareEvidence): string | null {
   return null;
 }
 
-// The agent has one Qloo score per partner (the subject's read), so both score fields carry
-// that same real value. Nothing is invented for the second side.
-function toEvidence(seed: ResolvedEntity, evidence: Evidence): CompareEvidence {
+// Each side's evidence carries its own score in its own column. The other column is the other
+// side's real score from the compare overlaps. A partner that only this side read has no real
+// other-side score, so that column stays empty and no sentence can cite a number for it.
+function toEvidence(seed: ResolvedEntity, evidence: Evidence, pair?: ComparePair): CompareEvidence {
   const overlaps = [...evidence.values()]
     .sort((a, b) => b.score - a.score)
     .slice(0, MAX_EVIDENCE)
-    .map((entry) => ({
-      entityId: entry.entityId,
-      name: entry.name,
-      category: entry.category,
-      leftScore: entry.score.toFixed(3),
-      rightScore: entry.score.toFixed(3),
-    }));
+    .map((entry) => {
+      const shared = pair?.overlaps.find((overlap) => overlap.entityId === entry.entityId);
+      const own = shared ? (pair?.side === "right" ? shared.rightScore : shared.leftScore) : entry.score.toFixed(3);
+      const other = shared ? (pair?.side === "right" ? shared.leftScore : shared.rightScore) : pair ? "" : own;
+      const leftScore = pair?.side === "right" ? other : own;
+      const rightScore = pair?.side === "right" ? own : other;
+      return { entityId: entry.entityId, name: entry.name, category: entry.category, leftScore, rightScore };
+    });
   return { left: { name: seed.name, typeLabel: seed.typeLabel }, right: { name: seed.name, typeLabel: seed.typeLabel }, overlaps };
 }
 
