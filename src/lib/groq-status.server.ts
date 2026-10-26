@@ -42,7 +42,35 @@ function classify(error: unknown): { reason: GroqReason; detail: string } {
   return { reason: "unknown-error", detail: sanitize(message || "unknown error") };
 }
 
+// Public endpoint protection: one live ping per STATUS_TTL_MS at most, and concurrent
+// callers share the in-flight check instead of each billing a Groq request.
+export const STATUS_TTL_MS = 5 * 60 * 1000;
+
+export function createStatusCache(load: () => Promise<GroqStatus>, ttlMs = STATUS_TTL_MS) {
+  let cached: { at: number; value: GroqStatus } | null = null;
+  let inflight: Promise<GroqStatus> | null = null;
+  return async function get(now: number = Date.now()): Promise<GroqStatus> {
+    if (cached && now - cached.at < ttlMs) return cached.value;
+    if (inflight) return inflight;
+    inflight = load()
+      .then((value) => {
+        cached = { at: now, value };
+        return value;
+      })
+      .finally(() => {
+        inflight = null;
+      });
+    return inflight;
+  };
+}
+
+const liveStatus = createStatusCache(() => checkGroq());
+
 export async function groqStatus(): Promise<GroqStatus> {
+  return liveStatus();
+}
+
+async function checkGroq(): Promise<GroqStatus> {
   const { env } = await import("@/lib/env.server");
   const key = env("GROQ_API_KEY");
   if (!key) return { ok: false, reason: "missing-key", detail: "GROQ_API_KEY is not set" };
