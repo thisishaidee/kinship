@@ -189,7 +189,13 @@ export type HeroResult = { name: string; score: string };
 // Landing hero: the top hit of up to three partner categories for the example seed,
 // fetched live through the same server proxy. Null when Qloo cannot answer, so the
 // page shows no names or numbers rather than invented ones.
-export const getHeroResults = createServerFn({ method: "GET" }).handler(async (): Promise<HeroResult[] | null> => {
+// Module-level hero cache: landing loader and /app auto-Nike reuse one set of Qloo calls.
+// Successful rows live 10 minutes; a null (Qloo down or no match) is retried after 60 seconds.
+const HERO_TTL_MS = 10 * 60 * 1000;
+const HERO_NULL_TTL_MS = 60 * 1000;
+let heroCache: { at: number; ttl: number; rows: HeroResult[] | null } | null = null;
+
+async function fetchHeroRows(): Promise<HeroResult[] | null> {
   try {
     const result = await resolveWithDemoFallback({ seed: "Nike" });
     if (result.status !== "matched") return null;
@@ -202,4 +208,12 @@ export const getHeroResults = createServerFn({ method: "GET" }).handler(async ()
   } catch {
     return null;
   }
+}
+
+export const getHeroResults = createServerFn({ method: "GET" }).handler(async (): Promise<HeroResult[] | null> => {
+  const now = Date.now();
+  if (heroCache && now - heroCache.at < heroCache.ttl) return heroCache.rows;
+  const rows = await fetchHeroRows();
+  heroCache = { at: now, ttl: rows ? HERO_TTL_MS : HERO_NULL_TTL_MS, rows };
+  return rows;
 });
