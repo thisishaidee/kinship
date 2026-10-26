@@ -42,6 +42,38 @@ const PAGE_H = 792;
 const MARGIN = 56;
 const RIGHT = PAGE_W - MARGIN;
 
+// Vector lens mark, same geometry as the app logo (viewBox 64): outlined circles at x=24 and x=40,
+// r=17, stroke 3.5, and the shared lens filled amber. The lens is sampled as a polygon so it prints
+// exactly. Position (x, y) is the mark's bottom-left corner, `size` is its width and height.
+function lensMark(x: number, y: number, size: number): string[] {
+  const k = size / 64;
+  const cx1 = x + 24 * k;
+  const cx2 = x + 40 * k;
+  const cy = y + (64 - 32) * k;
+  const r = 17 * k;
+  const w = 3.5 * k;
+  const d = cx2 - cx1;
+  const theta0 = Math.acos(d / 2 / r); // angle where the two circles cross, measured from each centre
+  const pts = (ccx: number, from: number, to: number, steps = 40) => {
+    const out: string[] = [];
+    for (let i = 0; i <= steps; i++) {
+      const t = from + ((to - from) * i) / steps;
+      out.push(`${(ccx + r * Math.cos(t)).toFixed(3)} ${(cy + r * Math.sin(t)).toFixed(3)}`);
+    }
+    return out;
+  };
+  // Lens: right arc of the left circle (bottom to top), then left arc of the right circle (top to bottom).
+  const lens = [...pts(cx1, -theta0, theta0), ...pts(cx2, Math.PI - theta0, Math.PI + theta0).reverse()];
+  const ops = [`${INK} rg ${lens[0]} m ${lens.slice(1).map((p) => `${p} l`).join(" ")} h f`];
+  const circle = (ccx: number) => {
+    const ring = pts(ccx, 0, 2 * Math.PI, 72);
+    return `${ring[0]} m ${ring.slice(1).map((p) => `${p} l`).join(" ")} h S`;
+  };
+  ops.push(`${INK} RG ${w.toFixed(3)} w ${circle(cx1)}`);
+  ops.push(`${INK} RG ${w.toFixed(3)} w ${circle(cx2)}`);
+  return ops;
+}
+
 export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
   const ops: string[] = [];
 
@@ -68,7 +100,13 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
 
   // Header band: amber, with the wordmark in the serif face.
   rect(0, PAGE_H - 104, PAGE_W, 104, AMBER);
-  text(MARGIN, PAGE_H - 64, 34, F_SERIF_BOLD, "Kinship", INK);
+  // Kinship lens mark (same geometry as the app logo): two outlined circles, shared lens filled.
+  // Drawn as vector strokes so it prints crisp and needs no image asset. Sits left of the wordmark.
+  const markSize = 40;
+  const markX = MARGIN;
+  const markY = PAGE_H - 64 - 10;
+  ops.push(...lensMark(markX, markY, markSize));
+  text(MARGIN + markSize + 12, PAGE_H - 64, 34, F_SERIF_BOLD, "Kinship", INK);
   text(RIGHT - 160, PAGE_H - 58, 8, F_SANS_BOLD, "PAIRING REPORT", INK, 1.5);
 
   // Subtitle under the band.
