@@ -99,7 +99,7 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
     hairline(MARGIN, RIGHT, 412, INK, 0.6);
   }
   if (singlePitch) {
-    text(colName, 420, 11, F_SANS_BOLD, `Qloo affinity score: ${input.score}`, INK);
+    text(colName, 420, 11, F_SANS_BOLD, `Shared-fans score: ${input.score}`, INK);
     y = 392;
   } else if (input.overlaps.length === 0) {
     text(colName, y, 11, F_SANS, "No shared entity in these Qloo results.", MUTED);

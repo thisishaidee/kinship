@@ -59,7 +59,10 @@ const SAFE_WORDS = new Set<string>([
 ]);
 
 // Claims a sentence must never make, even when every name and score is real.
-const FORBIDDEN_CLAIM = /partners with|partner with|proves|proof that|will sign|should sign|sign tomorrow|guarantees|guaranteed|sealed|secured deal|confirmed deal|confirmed partnership|partnership is available|guarantee|probability|percent chance/i;
+// Relationship or news claims the Qloo payload never returns. Any of these means the model invented context.
+const UNSUPPORTED_CONTEXT = /\b(recently|just|newly|signed|signs|signing|endorse[sd]?|sponsor(s|ed)?|deal with|contract with|launched a|collab(orat(ed|es|ing))?|announced|partnered|teamed up)\b/i;
+
+const FORBIDDEN_CLAIM = /partners with|partner with|proves|proof|shows they|guarantee|proof that|will sign|should sign|sign tomorrow|guarantees|guaranteed|sealed|secured deal|confirmed deal|confirmed partnership|partnership is available|guarantee|probability|percent chance/i;
 
 export function sharedAffinities(left: GraphCategory[], right: GraphCategory[]): Overlap[] {
   const leftHits = strongestById(left);
@@ -140,6 +143,16 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
       const plain = word.toLowerCase().replace(/[^a-z0-9']/g, "");
       if (plain && !allowedWords.has(plain)) return { text: fallback, source: "scores" };
     }
+  }
+  // Relationship or news claims the returned data never contains are invented context.
+  if (UNSUPPORTED_CONTEXT.test(cleaned)) return { text: fallback, source: "scores" };
+  // A second sentence must add something the data supports: a returned entity name or score.
+  if (sentences.length === 2) {
+    const second = sentences[1].toLowerCase();
+    const secondScores = sentences[1].match(/\d+\.\d+/g) ?? [];
+    const addsEntity = evidence.overlaps.some((overlap) => second.includes(overlap.name.toLowerCase()));
+    const addsScore = secondScores.length > 0;
+    if (!addsEntity && !addsScore) return { text: fallback, source: "scores" };
   }
   return { text: cleaned, source: "model" };
 }

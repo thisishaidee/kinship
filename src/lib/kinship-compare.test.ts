@@ -172,3 +172,27 @@ describe("pairing pdf", () => {
     assert.equal(desktop.target, "");
   });
 });
+
+describe("explanation safety (adversarial)", () => {
+  const sample = evidence([{ name: "Rihanna", category: "Artist", leftScore: "0.959", rightScore: "0.910" }]);
+  it("falls back on an unsupported causal claim", () => {
+    const result = groundedExplanation("This proves the audiences are the same (0.959 / 0.910).", sample);
+    assert.equal(result.source, "scores");
+    assert.equal(result.text, fallbackExplanation(sample));
+  });
+
+  it("falls back on invented context that uses valid names", () => {
+    const result = groundedExplanation("Rihanna recently signed Adidas (0.959 / 0.910).", sample);
+    assert.equal(result.source, "scores");
+  });
+
+  it("falls back when a second sentence adds no grounded entity or score", () => {
+    const result = groundedExplanation("Both pull toward Rihanna (0.959 / 0.910). It is a striking pattern.", sample);
+    assert.equal(result.source, "scores");
+  });
+
+  it("keeps a second sentence that adds a returned score", () => {
+    const result = groundedExplanation("Both pull toward Rihanna (0.959 / 0.910). Adidas appears too (0.959 / 0.910).", sample);
+    assert.equal(result.source, "model");
+  });
+});

@@ -328,7 +328,7 @@ function Home() {
       {mode === "single" && phase === "idle" ? (
         <section className="flex flex-col gap-3">
           <p className="rounded-2xl border border-[#242424] bg-[#161616] px-4 py-3 text-sm text-muted">
-            How it works: type a name, we check who its fans already love on Qloo, and you get partners with proof. Scores near 1.0 mean the strongest fan overlap.
+            How it works: type a name, we check whose fans overlap with it on Qloo. Scores near 1.0 mean the strongest shared-fan overlap in that data. It shows a connection in the data, not that a partnership is available.
           </p>
           <h2 className="text-sm font-medium text-fg">No pitch yet</h2>
           <p className="text-base text-muted">The field starts empty. Pick a name, or type your own.</p>
