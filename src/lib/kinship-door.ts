@@ -47,8 +47,8 @@ const qlooGet: QlooGetter = async (key, path, params) =>
   });
 
 // Live lookup with a private fallback for the three demo seeds. A successful Qloo
-// answer is saved to a gitignored file; if the key dies or quota runs out, the last
-// saved answer is served instead. Only a live match or ambiguity is ever saved.
+// answer can be saved locally; if the key dies or quota runs out, that saved
+// answer is served and marked cached. The file never arms on Vercel.
 async function resolveWithDemoFallback(input: unknown): Promise<ResolveResult> {
   const seed = typeof (input as { seed?: unknown })?.seed === "string" ? ((input as { seed: string }).seed).trim() : "";
   const demo = (DEMO_SEEDS as readonly string[]).includes(seed);
@@ -228,7 +228,7 @@ async function explainWithGroq(evidence: CompareEvidence): Promise<string | null
   }
 }
 
-export type HeroResult = { name: string; score: string };
+export type HeroResult = { name: string; score: string; cached?: boolean };
 
 // Landing hero: the top hit of up to three partner categories for the example seed,
 // fetched live through the same server proxy. Null when Qloo cannot answer, so the
@@ -247,7 +247,11 @@ async function fetchHeroRows(): Promise<HeroResult[] | null> {
       .map((pitch) => pitch.hits[0])
       .filter((hit): hit is NonNullable<typeof hit> => Boolean(hit))
       .slice(0, 3)
-      .map((hit) => ({ name: hit.name, score: formatAffinity(hit.score) }));
+      .map((hit) => ({
+        name: hit.name,
+        score: formatAffinity(hit.score),
+        ...(result.cached ? { cached: true as const } : {}),
+      }));
     return top.length === 3 ? top : null;
   } catch {
     return null;

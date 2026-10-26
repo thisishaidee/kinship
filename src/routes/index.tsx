@@ -94,6 +94,14 @@ function Landing() {
 }
 
 
+function CachedNote() {
+  return (
+    <p className="m-0 text-center text-xs leading-normal text-[#a3a09a]" role="status">
+      Cached copy, not a live Qloo answer.
+    </p>
+  );
+}
+
 function QlooDiagram({ rows }: { rows: HeroResult[] | null }) {
   const real = rows && rows.length >= 2 ? rows.slice(0, 2) : null;
   return (
@@ -244,6 +252,7 @@ function Hero({ rows }: { rows: HeroResult[] | null }) {
         </div>
 
         <QlooDiagram rows={rows} />
+        {rows?.some((row) => row.cached) ? <CachedNote /> : null}
       </div>
     </section>
   );
@@ -252,6 +261,11 @@ function Hero({ rows }: { rows: HeroResult[] | null }) {
 function SampleSection({ rows }: { rows: HeroResult[] }) {
   return (
     <section className="px-5 md:px-16">
+      {rows.some((row) => row.cached) ? (
+        <div className="mx-auto mb-3 max-w-[1152px]">
+          <CachedNote />
+        </div>
+      ) : null}
       <div className="mx-auto max-w-[1152px] rounded-3xl border border-[#2a2a30] bg-[#101014] p-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:p-5">
         {rows.slice(0, 3).map((r, i) => (
           <div

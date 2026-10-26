@@ -65,8 +65,9 @@ export type ResolveResult =
       pitches: Pitch[];
       graphStatus: GraphStatus;
       unchecked: UncheckedCategory[];
+      cached?: boolean;
     }
-  | { status: "ambiguous"; seed: string; candidates: Candidate[]; exact: boolean }
+  | { status: "ambiguous"; seed: string; candidates: Candidate[]; exact: boolean; cached?: boolean }
   | { status: "no-match"; seed: string }
   | { status: "missing-key"; seed: string }
   | { status: "refused"; seed: string }

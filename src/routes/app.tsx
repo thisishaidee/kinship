@@ -77,6 +77,7 @@ function Home() {
   const [agentPitched, setAgentPitched] = useState(false);
   const [openPitch, setOpenPitch] = useState<{ seed: string; seedType: string; partner: string; partnerType: string; score: number; line: string } | null>(null);
   const [agentReason, setAgentReason] = useState<string | null>(null);
+  const [fromCache, setFromCache] = useState(false);
   const runAgent = useServerFn(runAgenticPitch);
 
   async function run(next: string, entityId?: string) {
@@ -94,6 +95,7 @@ function Home() {
     setAgentSteps([]);
     setAgentPitched(false);
     setAgentReason(null);
+    setFromCache(false);
     setPhase("loading");
     try {
       const result = await resolveSeed({ data: { seed: next, entityId } });
@@ -107,6 +109,7 @@ function Home() {
       if (result.status === "ambiguous") {
         setCandidates(result.candidates);
         setCandidatesExact(result.exact);
+        setFromCache(result.cached === true);
         setPhase("ambiguous");
         return;
       }
@@ -115,6 +118,7 @@ function Home() {
         setPitches(result.pitches);
         setUnchecked(result.unchecked);
         setGraphStatus(result.graphStatus);
+        setFromCache(result.cached === true);
         setPhase("matched");
         void runAgent({ data: { seed: next, entityId } }).then((agent) => {
           if (!isLatestRequest(requestId, requestSeq.current)) return;
@@ -350,9 +354,17 @@ function Home() {
         </section>
       ) : null}
 
+      {mode === "single" && fromCache && (phase === "matched" || phase === "ambiguous") ? (
+        <p className="text-sm text-muted" role="status">
+          Cached copy, not a live Qloo answer.
+        </p>
+      ) : null}
+
       {mode === "single" && match ? (
         <section className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-5 shadow-card">
-          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">Resolved on Qloo</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
+            {fromCache ? "Cached copy" : "Resolved on Qloo"}
+          </p>
           <p className="font-sans text-2xl font-semibold leading-tight text-white">{match.name}</p>
           <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-accent">{match.typeLabel}</p>
         </section>
