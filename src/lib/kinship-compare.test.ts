@@ -37,28 +37,29 @@ describe("grounded explanation", () => {
   const sample = evidence([{ name: "Rihanna", category: "Artist", leftScore: "0.959", rightScore: "0.910" }]);
 
   it("accepts one sentence that cites only returned scores", () => {
-    const result = groundedExplanation("Both pull toward Rihanna (0.959 / 0.910).", sample);
+    const result = groundedExplanation("Both pull toward Rihanna.", sample);
     assert.equal(result.source, "model");
   });
 
   it("accepts type and category words that are already in the evidence", () => {
     const result = groundedExplanation(
-      "Both pull toward the Artist Wiz Khalifa (0.979 / 0.947).",
+      "Both pull toward the Artist Wiz Khalifa.",
       evidence([{ name: "Wiz Khalifa", category: "Artist", leftScore: "0.979", rightScore: "0.947" }]),
     );
     assert.equal(result.source, "model");
   });
 
   it("rejects an invented name or score and uses the returned scores", () => {
-    const invented = groundedExplanation("Both pull toward Drake (0.999 / 0.910).", sample);
+    const invented = groundedExplanation("Both pull toward Drake.", sample);
     assert.equal(invented.source, "scores");
     assert.equal(invented.text, fallbackExplanation(sample));
-    assert.equal(invented.text.includes("0.959"), true);
+    assert.equal(invented.text.includes("0"), false);
     assert.equal(invented.text.includes("Drake"), false);
+    assert.equal(/\d/.test(invented.text), false);
   });
 
   it("falls back when the first word is an unlisted claim (no first-word bypass)", () => {
-    const result = groundedExplanation("Tesla already partners with both (0.959 / 0.910).", sample);
+    const result = groundedExplanation("Tesla already partners with both.", sample);
     assert.equal(result.source, "scores");
     assert.equal(result.text, fallbackExplanation(sample));
   });
@@ -70,12 +71,12 @@ describe("grounded explanation", () => {
 
   it("never keeps a developer note about the model draft", () => {
     const leaked = groundedExplanation(
-      "The model draft went outside the returned scores, so this line cites those scores directly. Nike and Adidas both connect to Rihanna at 0.959 and 0.910.",
+      "The model draft went outside the returned names, so this line cites those names directly. Nike and Adidas both connect to Rihanna.",
       sample,
     );
     assert.equal(leaked.source, "scores");
     assert.equal(leaked.text.includes("model draft"), false);
-    assert.equal(leaked.text.includes("0.959"), true);
+    assert.equal(leaked.text.includes("0"), false);
   });
 
   it("does not invent a reason when nothing overlaps", () => {
@@ -130,7 +131,7 @@ describe("compareKinship", () => {
       {
         key: async () => "test-key",
         get,
-        explain: async (evidence) => `Both pull toward Rihanna (${evidence.overlaps[0].leftScore} / ${evidence.overlaps[0].rightScore}).`,
+        explain: async () => "Both pull toward Rihanna, and most of the same fans follow both brands.",
       },
     );
     assert.equal(result.status, "matched");
@@ -210,23 +211,23 @@ describe("pairing pdf", () => {
 describe("explanation safety (adversarial)", () => {
   const sample = evidence([{ name: "Rihanna", category: "Artist", leftScore: "0.959", rightScore: "0.910" }]);
   it("falls back on an unsupported causal claim", () => {
-    const result = groundedExplanation("This proves the audiences are the same (0.959 / 0.910).", sample);
+    const result = groundedExplanation("This proves the audiences are the same.", sample);
     assert.equal(result.source, "scores");
     assert.equal(result.text, fallbackExplanation(sample));
   });
 
   it("falls back on invented context that uses valid names", () => {
-    const result = groundedExplanation("Rihanna recently signed Adidas (0.959 / 0.910).", sample);
+    const result = groundedExplanation("Rihanna recently signed Adidas.", sample);
     assert.equal(result.source, "scores");
   });
 
   it("falls back when a second sentence adds no grounded entity or score", () => {
-    const result = groundedExplanation("Both pull toward Rihanna (0.959 / 0.910). It is a striking pattern.", sample);
+    const result = groundedExplanation("Both pull toward Rihanna. It is a striking pattern.", sample);
     assert.equal(result.source, "scores");
   });
 
-  it("keeps a second sentence that adds a returned score", () => {
-    const result = groundedExplanation("Both pull toward Rihanna (0.959 / 0.910). Adidas appears too (0.959 / 0.910).", sample);
+  it("keeps a second sentence that adds a returned name", () => {
+    const result = groundedExplanation("Both pull toward Rihanna. Rihanna is a shared name across both fans.", sample);
     assert.equal(result.source, "model");
   });
 });
@@ -268,6 +269,38 @@ describe("pdf layout on long inputs", () => {
   });
 });
 
+describe("groundedExplanation digit and dash rules", () => {
+  const evidence: CompareEvidence = {
+    left: { name: "Nike", typeLabel: "Brand" },
+    right: { name: "Adidas", typeLabel: "Brand" },
+    overlaps: [{ name: "Rihanna", category: "artist", leftScore: "0.974", rightScore: "0.959" }],
+  };
+
+  it("rejects any sentence with a percentage", () => {
+    const out = groundedExplanation("Nike and Adidas share a huge audience, about 97% of their fans.", evidence);
+    assert.equal(out.source, "scores");
+  });
+
+  it("rejects a sentence with a bare digit even without a decimal", () => {
+    const out = groundedExplanation("Both pull toward Rihanna, and 2 brands share the same fans.", evidence);
+    assert.equal(out.source, "scores");
+  });
+
+  it("rejects em and en dashes", () => {
+    assert.equal(groundedExplanation("Both pull toward Rihanna \u2014 most of the same fans.", evidence).source, "scores");
+    assert.equal(groundedExplanation("Both pull toward Rihanna \u2013 most of the same fans.", evidence).source, "scores");
+  });
+
+  it("accepts a warm number-free sentence that names Rihanna", () => {
+    const out = groundedExplanation("Rihanna's fans are most of the same people who follow both brands.", evidence);
+    assert.equal(out.source, "model");
+  });
+
+  it("fallback sentence carries no digits", () => {
+    assert.equal(/\d/.test(fallbackExplanation(evidence)), false);
+  });
+});
+
 describe("groundedExplanation names and scores", () => {
   const evidence: CompareEvidence = {
     left: { name: "Nike", typeLabel: "Brand" },
@@ -276,21 +309,21 @@ describe("groundedExplanation names and scores", () => {
   };
 
   it("accepts a sentence that cites left and right scores separately", () => {
-    const out = groundedExplanation("Both pull toward Rihanna (0.974 / 0.959).", evidence);
+    const out = groundedExplanation("Both pull toward Rihanna.", evidence);
     assert.equal(out.source, "model");
   });
 
   it("accepts a possessive form of a returned name", () => {
-    const out = groundedExplanation("Rihanna's audience sits close to Nike at 0.974, and Adidas at 0.959.", evidence);
+    const out = groundedExplanation("Rihanna's audience sits close to Nike, and Adidas too.", evidence);
     assert.equal(out.source, "model");
   });
 
   it("still rejects a name that was never returned", () => {
-    const out = groundedExplanation("Beyonce's audience sits close to Nike at 0.974.", evidence);
+    const out = groundedExplanation("Beyonce's audience sits close to Nike.", evidence);
     assert.equal(out.source, "scores");
   });
 
-  it("still rejects a score that was never returned", () => {
+  it("still rejects a sentence that contains a digit", () => {
     const out = groundedExplanation("Rihanna sits at 0.500 for Nike.", evidence);
     assert.equal(out.source, "scores");
   });

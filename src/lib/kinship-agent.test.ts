@@ -42,7 +42,7 @@ function tools(overrides: Partial<AgentTools> = {}): AgentTools {
   };
 }
 
-const GOOD_TEXT = "Both pull toward Adidas (0.953 / 0.953) and Puma (0.912 / 0.912).";
+const GOOD_TEXT = "Both pull toward Adidas and Puma, and most of the same fans follow both.";
 
 describe("runKinshipAgent", () => {
   it("runs the model's reads, then accepts a grounded final sentence", async () => {
@@ -61,27 +61,27 @@ describe("runKinshipAgent", () => {
   it("keeps the last grounded sentence when the model adds a preamble", async () => {
     const model = scriptedModel([
       { kind: "calls", calls: [{ name: "read_partners", args: { entity_id: "seed-1", category: "brand" } }] },
-      { kind: "final", text: "The model considered several names before answering. Both pull toward Adidas (0.953 / 0.953)." },
+      { kind: "final", text: "The model considered several names before answering. Both pull toward Adidas." },
     ]);
     const out = await runKinshipAgent(SEED, { model, tools: tools() });
     assert.equal(out.status, "pitch");
     if (out.status !== "pitch") return;
-    assert.equal(out.text, "Both pull toward Adidas (0.953 / 0.953).");
+    assert.equal(out.text, "Both pull toward Adidas.");
   });
 
   it("rejects a final sentence that names something Qloo did not return", async () => {
     const model = scriptedModel([
       { kind: "calls", calls: [{ name: "read_partners", args: { entity_id: "seed-1", category: "brand" } }] },
-      { kind: "final", text: "Both pull toward Reebok (0.953 / 0.953)." },
+      { kind: "final", text: "Both pull toward Reebok." },
     ]);
     const out = await runKinshipAgent(SEED, { model, tools: tools() });
     assert.deepEqual(out.status === "fallback" ? out.reason : null, "invalid-output");
   });
 
-  it("rejects a final sentence with a score Qloo did not return", async () => {
+  it("rejects a final sentence that contains any digit", async () => {
     const model = scriptedModel([
       { kind: "calls", calls: [{ name: "read_partners", args: { entity_id: "seed-1", category: "brand" } }] },
-      { kind: "final", text: "Both pull toward Adidas (0.999 / 0.999)." },
+      { kind: "final", text: "Both pull toward Adidas, about 95% of the same fans." },
     ]);
     const out = await runKinshipAgent(SEED, { model, tools: tools() });
     assert.equal(out.status, "fallback");
@@ -90,7 +90,7 @@ describe("runKinshipAgent", () => {
   it("rejects a final sentence that claims a partnership", async () => {
     const model = scriptedModel([
       { kind: "calls", calls: [{ name: "read_partners", args: { entity_id: "seed-1", category: "brand" } }] },
-      { kind: "final", text: "Adidas is a confirmed partnership for Nike (0.953 / 0.953)." },
+      { kind: "final", text: "Adidas is a confirmed partnership for Nike." },
     ]);
     const out = await runKinshipAgent(SEED, { model, tools: tools() });
     assert.equal(out.status, "fallback");
@@ -173,7 +173,7 @@ describe("runKinshipAgent", () => {
     const model = scriptedModel([
       { kind: "calls", calls: [{ name: "read_partners", args: { entity_id: "seed-1", category: "brand" } }] },
       { kind: "calls", calls: [{ name: "read_partners", args: { entity_id: "seed-1", category: "artist" } }] },
-      { kind: "final", text: "Both pull toward Adidas (0.953 / 0.953)." },
+      { kind: "final", text: "Both pull toward Adidas." },
     ]);
     const twin = tools({
       async readPartners(entityId, category) {
@@ -187,7 +187,7 @@ describe("runKinshipAgent", () => {
     assert.equal(out.status, "fallback");
     const out2 = await runKinshipAgent(SEED, { model: scriptedModel([
       { kind: "calls", calls: [{ name: "read_partners", args: { entity_id: "seed-1", category: "brand" } }] },
-      { kind: "final", text: "Both pull toward Jordan (0.700 / 0.700) and Jordan (0.600 / 0.600)." },
+      { kind: "final", text: "Both pull toward Jordan and most of the same fans follow it." },
     ]), tools: twin });
     assert.equal(out2.status, "pitch");
     if (out2.status !== "pitch") return;
@@ -285,7 +285,7 @@ describe("evidence shape", () => {
 
 describe("compare evidence per side", () => {
   it("gives each side its own score in its own column", async () => {
-    const pitch = "Rihanna sits at 0.959 for this side.";
+    const pitch = "Rihanna is shared by a huge part of both audiences.";
     const model = scriptedModel([
       { kind: "calls", calls: [{ name: "read_partners", args: { entity_id: "seed-1", category: "artist" } }] },
       { kind: "final", text: pitch },

@@ -89,8 +89,9 @@ export function fallbackExplanation(evidence: CompareEvidence): string {
   if (!first) {
     return `${evidence.left.name} and ${evidence.right.name} have no shared entity in these Qloo results.`;
   }
-  const lead = `Both pull toward ${first.name} (${first.leftScore} / ${first.rightScore})`;
-  const tail = second ? ` and ${second.name} (${second.leftScore} / ${second.rightScore})` : "";
+  // Numbers live in the shared-fans list, never in the explanation sentence.
+  const lead = `Both pull toward ${first.name}`;
+  const tail = second ? ` and ${second.name}` : "";
   return `${lead}${tail}.`;
 }
 
@@ -106,13 +107,12 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
   if (FORBIDDEN_CLAIM.test(cleaned)) {
     return { text: fallback, source: "scores" };
   }
-  const numbers = cleaned.match(/\d+\.\d+/g) ?? [];
-  const allowedScores = new Set(evidence.overlaps.flatMap((overlap) => [overlap.leftScore, overlap.rightScore]));
-  if (evidence.overlaps.length === 0 ? numbers.length > 0 : numbers.some((number) => !allowedScores.has(number))) {
+  // The explanation carries no numbers of any kind: no digits, percentages, or decimals.
+  // Em and en dashes are also rejected so the sentence stays plain.
+  if (/\d/.test(cleaned) || /[\u2013\u2014]/.test(cleaned)) {
     return { text: fallback, source: "scores" };
   }
-  // A name is grounded when Qloo returned it. Citing a score next to a name is optional:
-  // the rendered sentence must carry no numbers, so requiring one here rejected valid warm sentences.
+  // A name is grounded when Qloo returned it.
   const allowedWords = new Set<string>(SAFE_WORDS);
   for (const name of [
     evidence.left.name,
@@ -138,10 +138,8 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
   // A second sentence must add something the data supports: a returned entity name or score.
   if (sentences.length === 2) {
     const second = sentences[1].toLowerCase();
-    const secondScores = sentences[1].match(/\d+\.\d+/g) ?? [];
     const addsEntity = evidence.overlaps.some((overlap) => second.includes(overlap.name.toLowerCase()));
-    const addsScore = secondScores.length > 0;
-    if (!addsEntity && !addsScore) return { text: fallback, source: "scores" };
+    if (!addsEntity) return { text: fallback, source: "scores" };
   }
   return { text: cleaned, source: "model" };
 }
