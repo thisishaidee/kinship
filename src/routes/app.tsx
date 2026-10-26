@@ -75,6 +75,7 @@ function Home() {
   const [pairing, setPairing] = useState<CompareMatch | null>(null);
   const [agentSteps, setAgentSteps] = useState<AgentStep[]>([]);
   const [agentPitched, setAgentPitched] = useState(false);
+  const [agentText, setAgentText] = useState<string | null>(null);
   const [openPitch, setOpenPitch] = useState<{ seed: string; seedType: string; partner: string; partnerType: string; score: number; line: string } | null>(null);
   const [agentReason, setAgentReason] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
@@ -94,6 +95,7 @@ function Home() {
     setGraphStatus("empty");
     setAgentSteps([]);
     setAgentPitched(false);
+    setAgentText(null);
     setAgentReason(null);
     setFromCache(false);
     setPhase("loading");
@@ -125,6 +127,7 @@ function Home() {
           if (agent) {
             setAgentSteps(agent.steps);
             setAgentPitched(agent.status === "pitch");
+            setAgentText(agent.status === "pitch" ? agent.text : null);
             setAgentReason(agent.status === "fallback" ? agentReasonCopy(agent.reason) : null);
           }
         }).catch(() => undefined);
@@ -398,6 +401,12 @@ function Home() {
           ) : null}
           {phase === "unavailable" && match ? (
             <p className="text-base text-muted">Qloo resolved {match.name}, but the categories could not be checked.</p>
+          ) : null}
+          {phase === "matched" && agentText ? (
+            <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-5 shadow-card">
+              <h2 className="text-sm font-medium text-fg">Why this pitch</h2>
+              <p className="text-base leading-snug text-fg">{agentText}</p>
+            </div>
           ) : null}
           {phase === "matched" && (agentSteps.length > 0 || agentReason) ? <AgentTrace steps={agentSteps} pitched={agentPitched} reason={agentReason} /> : null}
           {phase === "matched" && pitches.length > 0 ? (
