@@ -3,6 +3,7 @@ import { compareKinship, type CompareEvidence, type CompareSide } from "@/lib/ki
 import { formatAffinity, readRequest, resolveKinship, searchEntity, seedKindFromLabel, type QlooGetter, type ResolveResult } from "@/lib/kinship-resolve";
 import { DEMO_SEEDS, readDemoCache, writeDemoCache } from "@/lib/kinship-demo-cache.server";
 import { groundedExplanation } from "@/lib/kinship-compare";
+import { createQlooCallCache, qlooCallKey } from "@/lib/kinship-qloo-cache";
 
 export type {
   Candidate,
@@ -29,18 +30,21 @@ async function qlooKey(): Promise<string | undefined> {
   }
 }
 
-const qlooGet: QlooGetter = async (key, path, params) => {
-  try {
-    const response = await fetch(`https://hackathon.api.qloo.com${path}?${params}`, {
-      headers: { "X-Api-Key": key },
-      signal: AbortSignal.timeout(12000),
-    });
-    if (!response.ok) return { ok: false, status: response.status };
-    return { ok: true, body: await response.json() };
-  } catch {
-    return { ok: false, status: 0 };
-  }
-};
+const qlooCalls = createQlooCallCache();
+
+const qlooGet: QlooGetter = async (key, path, params) =>
+  qlooCalls(qlooCallKey(path, params), async () => {
+    try {
+      const response = await fetch(`https://hackathon.api.qloo.com${path}?${params}`, {
+        headers: { "X-Api-Key": key },
+        signal: AbortSignal.timeout(12000),
+      });
+      if (!response.ok) return { ok: false, status: response.status };
+      return { ok: true, body: await response.json() };
+    } catch {
+      return { ok: false, status: 0 };
+    }
+  });
 
 // Live lookup with a private fallback for the three demo seeds. A successful Qloo
 // answer is saved to a gitignored file; if the key dies or quota runs out, the last
