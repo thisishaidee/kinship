@@ -82,7 +82,7 @@ function Landing() {
       className="min-h-screen bg-[#0A0A0A] text-[#f4f1ea]"
       style={{ fontFamily: SANS }}
     >
-      <Hero />
+      <Hero rows={sample} />
       {sample ? <SampleSection rows={sample} /> : null}
       <HowItWorks />
       <CompareSection rows={sample} />
@@ -94,7 +94,8 @@ function Landing() {
 }
 
 
-function QlooDiagram() {
+function QlooDiagram({ rows }: { rows: HeroResult[] | null }) {
+  const real = rows && rows.length >= 2 ? rows.slice(0, 2) : null;
   return (
     <div
       className="mx-auto mt-4 flex w-full max-w-[680px] items-center justify-between gap-2 rounded-2xl border border-[#2a2a30] bg-[#101014] px-4 py-4 md:mt-6 md:px-6"
@@ -121,34 +122,43 @@ function QlooDiagram() {
       <span className="h-px min-w-4 flex-1 bg-[#2a2a30]" />
       <div className="flex min-w-0 flex-col items-center gap-1.5">
         <span className="text-[10px] tracking-[0.8px] text-[#a3a09a] md:text-[11px]">PARTNERS</span>
-        <div className="flex items-center gap-1.5">
-          <span
-            className="text-lg text-[#f4f1ea] md:text-xl"
-            style={{ fontFamily: SERIF }}
-          >
-            Radiohead
-          </span>
-          <span className="text-sm font-semibold text-[#FFB548]" style={{ fontFamily: MONO }}>
-            87
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span
-            className="text-lg text-[#f4f1ea] md:text-xl"
-            style={{ fontFamily: SERIF }}
-          >
-            Adidas
-          </span>
-          <span className="text-sm font-semibold text-[#a3a09a]" style={{ fontFamily: MONO }}>
-            74
-          </span>
-        </div>
+        {real ? (
+          real.map((r, i) => (
+            <div key={r.name} className="flex items-center gap-1.5">
+              <span
+                className="max-w-[140px] truncate text-lg text-[#f4f1ea] md:text-xl"
+                style={{ fontFamily: SERIF }}
+              >
+                {r.name}
+              </span>
+              <span
+                className={`text-sm font-semibold ${i === 0 ? "text-[#FFB548]" : "text-[#a3a09a]"}`}
+                style={{ fontFamily: MONO }}
+              >
+                {r.score}
+              </span>
+            </div>
+          ))
+        ) : (
+          <>
+            <div className="flex items-center gap-1.5">
+              <span className="text-lg text-[#a3a09a] md:text-xl" style={{ fontFamily: SERIF }}>
+                …
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-lg text-[#a3a09a] md:text-xl" style={{ fontFamily: SERIF }}>
+                …
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-function Hero() {
+function Hero({ rows }: { rows: HeroResult[] | null }) {
   return (
     <section className="relative overflow-hidden px-5 pb-10 md:px-16 md:pb-24">
       <header className="relative mx-auto flex h-[72px] max-w-[1152px] items-center justify-between">
@@ -233,7 +243,7 @@ function Hero() {
           ))}
         </div>
 
-        <QlooDiagram />
+        <QlooDiagram rows={rows} />
       </div>
     </section>
   );
@@ -261,7 +271,7 @@ function CopyPitch({ text }: { text: string }) {
 }
 
 function SampleSection({ rows }: { rows: HeroResult[] }) {
-  const pitch = `${SAMPLE_SEED} could explore an artist partnership with ${rows[0].name} (${rows[0].score}) and ${rows[1].name} (${rows[1].score}).`;
+  const pitch = `${SAMPLE_SEED} could explore a partnership with ${rows[0].name} (${rows[0].score}) and ${rows[1].name} (${rows[1].score}).`;
   return (
     <section className="px-5 md:px-16">
       <div className="mx-auto max-w-[1152px] rounded-3xl border border-[#2a2a30] bg-[#101014] p-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:p-5">
@@ -383,14 +393,10 @@ function CompareSection({ rows }: { rows: HeroResult[] | null }) {
             {top.score}
           </div>
           <p className="m-0 mt-4 text-sm leading-[1.55] text-[#cfcbc3]">
-            {SAMPLE_SEED} and {top.name} share a strong audience overlap in Qloo’s
+            {SAMPLE_SEED} and {top.name} share a measurable audience overlap in Qloo’s
             data. The {top.score} affinity suggests the two already reach the same
             fans.
           </p>
-          <div className="mt-4 flex items-center gap-2 text-xs text-[#a3a09a]">
-            <span className="h-1.5 w-1.5 flex-none rounded-full bg-[#7fe3b3]" />
-            Checked against Qloo’s response
-          </div>
         </div>
       ) : (
         <div className="rounded-[22px] border border-[#2a2a30] bg-[#101014] p-6 lg:w-[440px] lg:flex-none md:p-7">
