@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { AGENT_MAX_CALLS, AGENT_MAX_ROUNDS, runKinshipAgent, type AgentModel, type AgentTools, type AgentTurn, type ToolResult } from "./kinship-agent.ts";
+import { AGENT_MAX_CALLS, AGENT_MAX_ROUNDS, runKinshipAgent, shouldRetryAgent, type AgentModel, type AgentTools, type AgentTurn, type ToolResult } from "./kinship-agent.ts";
 import type { ResolvedEntity } from "./kinship-resolve.ts";
 
 const SEED: ResolvedEntity = { name: "Nike", typeLabel: "Brand", entityId: "seed-1" };
@@ -298,5 +298,20 @@ describe("compare evidence per side", () => {
     const rihanna = outcome.evidence.overlaps.find((o) => o.entityId === RIHANNA);
     assert.equal(rihanna?.leftScore, "0.974");
     assert.equal(rihanna?.rightScore, "0.959");
+  });
+});
+
+describe("shouldRetryAgent", () => {
+  it("retries a fast miss when enough clock is left", () => {
+    assert.equal(shouldRetryAgent("invalid-output", 8_000, 45_000), true);
+    assert.equal(shouldRetryAgent("model-error", 5_000, 45_000), true);
+    assert.equal(shouldRetryAgent("no-evidence", 12_000, 45_000), true);
+  });
+  it("never retries a timeout or a spent budget", () => {
+    assert.equal(shouldRetryAgent("timeout", 1_000, 45_000), false);
+    assert.equal(shouldRetryAgent("budget", 1_000, 45_000), false);
+  });
+  it("skips the retry when too little clock is left for a full loop", () => {
+    assert.equal(shouldRetryAgent("invalid-output", 35_000, 45_000), false);
   });
 });

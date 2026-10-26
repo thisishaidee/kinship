@@ -61,6 +61,15 @@ export type ComparePair = {
   overlaps: { entityId?: string; leftScore: string; rightScore: string }[];
 };
 
+// One silent retry is worth it only when the first run failed fast (a bad draft or a transient
+// model error) and enough of the wall clock is left for a full second loop. A timeout has used the
+// whole budget, so it never retries.
+export function shouldRetryAgent(reason: AgentFallback, elapsedMs: number, wallMs: number): boolean {
+  if (reason === "timeout" || reason === "budget") return false;
+  return wallMs - elapsedMs >= MIN_RETRY_MS;
+}
+const MIN_RETRY_MS = 15_000;
+
 export async function runKinshipAgent(
   seed: ResolvedEntity,
   deps: { model: AgentModel; tools: AgentTools },

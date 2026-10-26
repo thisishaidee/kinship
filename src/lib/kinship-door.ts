@@ -151,15 +151,31 @@ export const runAgenticPitch = createServerFn({ method: "POST" })
         console.error("agentic: no-entity");
         return { status: "fallback", reason: "no-entity", steps: [] };
       }
-      const { runKinshipAgent } = await import("@/lib/kinship-agent");
+      const { runKinshipAgent, shouldRetryAgent } = await import("@/lib/kinship-agent");
       const { createGroqModel, createQlooTools } = await import("@/lib/kinship-agent-adapters.server");
-      const outcome = await runKinshipAgent(found.entity, {
-        model: createGroqModel(groqKey, found.entity.name),
-        tools: createQlooTools(qKey, qlooGet, found.tags, seedKindFromLabel(found.entity.typeLabel)),
-      });
-      if (outcome.status === "pitch") return { status: "pitch", text: outcome.text, steps: outcome.steps };
-      console.error(`agentic: ${outcome.reason}`);
-      return { status: "fallback", reason: outcome.reason, steps: outcome.steps };
+      const SINGLE_AGENT_WALL_MS = 45_000;
+      const started = Date.now();
+      const runOnce = (wallMs: number) =>
+        runKinshipAgent(
+          found.entity,
+          {
+            model: createGroqModel(groqKey, found.entity.name),
+            tools: createQlooTools(qKey, qlooGet, found.tags, seedKindFromLabel(found.entity.typeLabel)),
+          },
+          { wallMs },
+        );
+      // One silent retry before the thin fallback, same rule as compare: fast misses only.
+      const first = await runOnce(SINGLE_AGENT_WALL_MS);
+      if (first.status === "pitch") return { status: "pitch", text: first.text, steps: first.steps };
+      console.error(`agentic: ${first.reason}`);
+      const elapsed = Date.now() - started;
+      if (!shouldRetryAgent(first.reason, elapsed, SINGLE_AGENT_WALL_MS)) {
+        return { status: "fallback", reason: first.reason, steps: first.steps };
+      }
+      const second = await runOnce(SINGLE_AGENT_WALL_MS - elapsed);
+      if (second.status === "pitch") return { status: "pitch", text: second.text, steps: second.steps };
+      console.error(`agentic retry: ${second.reason}`);
+      return { status: "fallback", reason: second.reason, steps: second.steps };
     } catch (error) {
       console.error(`agentic: agent-error (${error instanceof Error ? error.name : "unknown"})`);
       return { status: "fallback", reason: "agent-error", steps: [] };
@@ -183,7 +199,7 @@ async function compareAgentPitches(
   const groqKey = env("GROQ_API_KEY");
   const qKey = await qlooKey();
   if (!groqKey || !qKey) return null;
-  const { runKinshipAgent } = await import("@/lib/kinship-agent");
+  const { runKinshipAgent, shouldRetryAgent } = await import("@/lib/kinship-agent");
   const { createGroqModel, createQlooTools } = await import("@/lib/kinship-agent-adapters.server");
   const attempt = async (side: CompareSide, column: "left" | "right", wallMs: number) => {
     const outcome = await runKinshipAgent(
@@ -204,7 +220,7 @@ async function compareAgentPitches(
     if (first.status === "pitch") return first.text;
     console.error(`agentic-compare: ${first.reason}`);
     const elapsed = Date.now() - started;
-    if (first.reason === "timeout" || elapsed >= COMPARE_AGENT_WALL_MS / 2) return null;
+    if (!shouldRetryAgent(first.reason, elapsed, COMPARE_AGENT_WALL_MS)) return null;
     const second = await attempt(side, column, COMPARE_AGENT_WALL_MS - elapsed);
     if (second.status === "pitch") return second.text;
     console.error(`agentic-compare retry: ${second.reason}`);
