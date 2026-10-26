@@ -173,15 +173,21 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
   return new TextEncoder().encode(pdf);
 }
 
+// The base-14 fonts use WinAnsiEncoding, which matches Unicode for U+0020 to U+007E and U+00A0 to U+00FF.
+// Accented Latin letters (é, ñ, ü) are written as octal escapes so the stream stays plain ASCII and
+// the byte length matches the string length. Anything outside those ranges falls back to "?".
 function pdfText(value: string): string {
   return value
+    .normalize("NFC")
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/[\u2013\u2014]/g, "-")
-    .replace(/[^\x20-\x7E]/gu, "?")
+    .replace(/\u2026/g, "...")
+    .replace(/[^\x20-\x7E\u00A0-\u00FF]/gu, "?")
     .replace(/\\/g, "\\\\")
     .replace(/\(/g, "\\(")
-    .replace(/\)/g, "\\)");
+    .replace(/\)/g, "\\)")
+    .replace(/[\u00A0-\u00FF]/gu, (char) => `\\${char.charCodeAt(0).toString(8).padStart(3, "0")}`);
 }
 
 function wrap(value: string, width: number): string[] {
