@@ -40,6 +40,8 @@ export type CompareResult =
       rightSeed: string;
       leftCandidates?: Candidate[];
       rightCandidates?: Candidate[];
+      leftExact: boolean;
+      rightExact: boolean;
       leftEntity?: ResolvedEntity;
       rightEntity?: ResolvedEntity;
     }
@@ -173,6 +175,8 @@ export async function compareKinship(
       rightSeed: parsed.right,
       leftCandidates: left.status === "choose" ? left.candidates : undefined,
       rightCandidates: right.status === "choose" ? right.candidates : undefined,
+      leftExact: left.status === "choose" ? left.exact : true,
+      rightExact: right.status === "choose" ? right.exact : true,
       leftEntity: left.status === "use" ? publicEntity(left.entity) : undefined,
       rightEntity: right.status === "use" ? publicEntity(right.entity) : undefined,
     };

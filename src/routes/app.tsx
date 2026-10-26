@@ -70,6 +70,8 @@ function Home() {
   const [compareError, setCompareError] = useState("");
   const [leftCandidates, setLeftCandidates] = useState<Candidate[]>([]);
   const [rightCandidates, setRightCandidates] = useState<Candidate[]>([]);
+  const [leftExact, setLeftExact] = useState(true);
+  const [rightExact, setRightExact] = useState(true);
   const [pairing, setPairing] = useState<CompareMatch | null>(null);
   const [agentSteps, setAgentSteps] = useState<AgentStep[]>([]);
   const [agentPitched, setAgentPitched] = useState(false);
@@ -165,6 +167,8 @@ function Home() {
       if (result.status === "ambiguous") {
         setLeftCandidates(result.leftCandidates ?? []);
         setRightCandidates(result.rightCandidates ?? []);
+        setLeftExact(result.leftExact);
+        setRightExact(result.rightExact);
         setComparePhase("ambiguous");
         return;
       }
@@ -430,7 +434,7 @@ function Home() {
         <div className="flex flex-col gap-6">
           {leftCandidates.length > 0 ? (
             <Chooser
-              title={`More than one Qloo entity matches “${leftSeed.trim()}”.`}
+              title={leftExact ? `More than one Qloo entity matches “${leftSeed.trim()}”.` : `No exact Qloo match for “${leftSeed.trim()}”. Closest Qloo results, pick one:`}
               candidates={leftCandidates}
               busy={busy}
               onPick={(id) => {
@@ -441,7 +445,7 @@ function Home() {
           ) : null}
           {rightCandidates.length > 0 ? (
             <Chooser
-              title={`More than one Qloo entity matches “${rightSeed.trim()}”.`}
+              title={rightExact ? `More than one Qloo entity matches “${rightSeed.trim()}”.` : `No exact Qloo match for “${rightSeed.trim()}”. Closest Qloo results, pick one:`}
               candidates={rightCandidates}
               busy={busy}
               onPick={(id) => {
