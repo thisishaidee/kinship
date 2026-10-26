@@ -161,6 +161,11 @@ export const runAgenticPitch = createServerFn({ method: "POST" })
 // clock so the compare request still returns quickly. Any failure or timeout returns null and
 // compare keeps the single-call explanation.
 const COMPARE_AGENT_WALL_MS = 45_000;
+// Each side gets a different opening angle so the two sentences do not echo each other.
+const COMPARE_ANGLES = {
+  left: "For this side, lead with the idea that the partner's fans already follow this name.",
+  right: "For this side, lead with the idea that this name's fans already follow the partner.",
+} as const;
 async function compareAgentPitches(
   sides: { left: CompareSide; right: CompareSide },
   overlaps: CompareEvidence["overlaps"],
@@ -175,7 +180,7 @@ async function compareAgentPitches(
     const outcome = await runKinshipAgent(
       side.entity,
       {
-        model: createGroqModel(groqKey, side.entity.name),
+        model: createGroqModel(groqKey, side.entity.name, COMPARE_ANGLES[column]),
         tools: createQlooTools(qKey, qlooGet, side.tags, seedKindFromLabel(side.entity.typeLabel)),
       },
       { wallMs: COMPARE_AGENT_WALL_MS, pair: { side: column, overlaps } },

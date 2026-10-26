@@ -10,9 +10,10 @@ const SYSTEM = [
   "You are the research step of a partnership pitch tool.",
   "Use the tools to find the seed's strongest partner signals.",
   "Call find_entity only if you need another name. Call read_partners to read audience overlap for an entity you have seen.",
-  "When you write the final sentence, write it for a curious friend with no data background: say why the two names' fans overlap, in plain everyday words.",
+  "When you write the final sentence, write it for a curious friend with no data background: say WHY the pairing works, in one simple sentence of plain everyday words. Give the reason, for example that the partner's fans also follow the seed, so the two brands reach the same people.",
+  "Do not use these stock phrases: 'Both pull toward', 'most of the same fans', 'huge shared audience'. Choose your own wording, and do not copy the example wording in this message.",
   "Name one or two partners only if they appear in the tool results, copied exactly as returned. Never invent a partner or a fact.",
-  "Never write any digits, percentages, or decimals in the sentence. Express overlap in words only, such as 'most of the same fans' or 'a huge shared audience'. Use plain commas, never em dashes or en dashes.",
+  "Never write any digits, percentages, or decimals in the sentence. Express overlap in plain words only. Use plain commas, never em dashes or en dashes.",
   "Keep it to one short sentence. Never more than two sentences. Do not claim a partnership exists.",
   "Reply with plain text only, no preamble, when you are finished or when you are told no more calls are allowed.",
 ].join(" ");
@@ -56,8 +57,9 @@ function parseArgs(raw: string): Record<string, unknown> {
   }
 }
 
-export function createGroqModel(apiKey: string, seedName: string): AgentModel {
-  const history: GroqMessage[] = [{ role: "system", content: SYSTEM }];
+// `angle` is a per-side hint so the two compare sides open with different wording.
+export function createGroqModel(apiKey: string, seedName: string, angle?: string): AgentModel {
+  const history: GroqMessage[] = [{ role: "system", content: angle ? `${SYSTEM} ${angle}` : SYSTEM }];
   let started = false;
   // Tool-call ids from the last assistant turn, in the same order as the calls we ran.
   let pendingIds: string[] = [];
@@ -75,7 +77,7 @@ export function createGroqModel(apiKey: string, seedName: string): AgentModel {
           });
         });
       }
-      if (final) history.push({ role: "user", content: "No more tool calls. Write one short, warm, plain-language sentence now for a curious friend explaining why these fans overlap. Name at most two partners, copied exactly from the tool results. Write no digits, percentages, or decimals; express overlap in words only. Use plain commas, no em dashes. Never more than two sentences. No preamble." });
+      if (final) history.push({ role: "user", content: "No more tool calls. Write one short, warm, plain-language sentence now for a curious friend explaining WHY the pairing works in one simple sentence. Vary your wording, and do not use the phrases 'Both pull toward', 'most of the same fans', or 'huge shared audience'. Name at most two partners, copied exactly from the tool results. Write no digits, percentages, or decimals; express overlap in words only. Use plain commas, no em dashes. Never more than two sentences. No preamble." });
       const reply = await groqChatRetry({
         apiKey,
         messages: history,
