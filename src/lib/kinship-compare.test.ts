@@ -57,6 +57,17 @@ describe("grounded explanation", () => {
     assert.equal(invented.text.includes("Drake"), false);
   });
 
+  it("falls back when the first word is an unlisted claim (no first-word bypass)", () => {
+    const result = groundedExplanation("Tesla already partners with both (0.959 / 0.910).", sample);
+    assert.equal(result.source, "scores");
+    assert.equal(result.text, fallbackExplanation(sample));
+  });
+
+  it("falls back on a forbidden future-sign claim", () => {
+    const result = groundedExplanation("They should sign tomorrow.", sample);
+    assert.equal(result.source, "scores");
+  });
+
   it("never keeps a developer note about the model draft", () => {
     const leaked = groundedExplanation(
       "The model draft went outside the returned scores, so this line cites those scores directly. Nike and Adidas both connect to Rihanna at 0.959 and 0.910.",

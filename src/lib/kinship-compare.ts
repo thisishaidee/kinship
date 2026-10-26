@@ -51,7 +51,13 @@ export type CompareResult =
 
 type CompareCandidate = ResolvedEntity & { detail?: string };
 
-const SAFE_WORDS = new Set(["qloo", "these", "both", "this", "audience", "affinity", "scores", "no", "kinship", "they", "those", "figures"]);
+const SAFE_WORDS = new Set<string>([
+  "qloo", "these", "both", "this", "audience", "affinity", "scores", "no", "kinship", "they", "those", "figures", "data",
+  "fans", "listeners", "viewers", "shoppers", "audiences", "the", "their", "across", "together",
+]);
+
+// Claims a sentence must never make, even when every name and score is real.
+const FORBIDDEN_CLAIM = /partners with|partner with|proves|proof that|will sign|should sign|sign tomorrow|guarantees|guaranteed|sealed|secured deal|confirmed deal|confirmed partnership|partnership is available|guarantee|probability|percent chance/i;
 
 export function sharedAffinities(left: GraphCategory[], right: GraphCategory[]): Overlap[] {
   const leftHits = strongestById(left);
@@ -90,7 +96,7 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
   }
   const sentences = cleaned.split(/(?<=[.!?])\s+/).filter(Boolean);
   if (sentences.length < 1 || sentences.length > 2) return { text: fallback, source: "scores" };
-  if (/confirmed partnership|partnership is available|guarantee|probability|percent chance/i.test(cleaned)) {
+  if (FORBIDDEN_CLAIM.test(cleaned)) {
     return { text: fallback, source: "scores" };
   }
   const numbers = cleaned.match(/\d+\.\d+/g) ?? [];
@@ -98,7 +104,18 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
   if (evidence.overlaps.length === 0 ? numbers.length > 0 : numbers.some((number) => !allowedScores.has(number))) {
     return { text: fallback, source: "scores" };
   }
-  const allowedWords = new Set(SAFE_WORDS);
+  // If a sentence names an overlap entity, it must cite that entity's own score.
+  for (const sentence of sentences) {
+    const lower = sentence.toLowerCase();
+    const sentenceScores: string[] = sentence.match(/\d+\.\d+/g) ?? [];
+    for (const overlap of evidence.overlaps) {
+      if (!lower.includes(overlap.name.toLowerCase())) continue;
+      if (!sentenceScores.includes(overlap.leftScore) && !sentenceScores.includes(overlap.rightScore)) {
+        return { text: fallback, source: "scores" };
+      }
+    }
+  }
+  const allowedWords = new Set<string>(SAFE_WORDS);
   for (const name of [
     evidence.left.name,
     evidence.right.name,
@@ -109,7 +126,7 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
     for (const word of name.split(/\s+/)) allowedWords.add(word.toLowerCase().replace(/[^a-z0-9']/g, ""));
   }
   for (const sentence of sentences) {
-    const words = sentence.replace(/[().,"“”]/g, "").split(/\s+/).slice(1);
+    const words = sentence.replace(/[().,"“”]/g, "").split(/\s+/);
     for (const word of words) {
       if (!/^[A-Z]/.test(word)) continue;
       const plain = word.toLowerCase().replace(/[^a-z0-9']/g, "");
