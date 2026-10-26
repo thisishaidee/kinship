@@ -932,7 +932,7 @@ export function PitchDetail({ data, onBack }: { data: PitchData; onBack: () => v
                 rel="noopener noreferrer"
                 className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-full px-1 text-sm font-medium text-[#6b6963] hover:text-accent"
               >
-                Open {data.partner} on Qloo search
+                Search {data.partner} on Google
               </a>
             </div>
           </div>
