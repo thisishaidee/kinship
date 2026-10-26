@@ -53,7 +53,7 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
   };
   const text = (x: number, y: number, size: number, font: string, value: string, colour = INK, tracking = 0) => {
     ops.push(
-      `BT /${font} ${size} Tf ${colour} rg ${tracking} Tc 1 0 0 1 ${x} ${y} Tm (${pdfText(value)}) Tj 0 Tc ET`,
+      `BT /${font} ${size} Tf ${colour} rg ${tracking} Tc 1 0 0 1 ${x} ${y} Tm ${pdfText(value)} Tj 0 Tc ET`,
     );
   };
   // Shrink a headline so a long name stays on the line.
@@ -173,21 +173,43 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
   return new TextEncoder().encode(pdf);
 }
 
-// The base-14 fonts use WinAnsiEncoding, which matches Unicode for U+0020 to U+007E and U+00A0 to U+00FF.
-// Accented Latin letters (é, ñ, ü) are written as octal escapes so the stream stays plain ASCII and
-// the byte length matches the string length. Anything outside those ranges falls back to "?".
+// The base-14 fonts use WinAnsiEncoding. Each character is mapped to its WinAnsi byte and written
+// as a hex string, so accents (é, ñ, ü) and typographic dashes come out as real glyphs, never "?".
+// Characters with no WinAnsi code are first decomposed (é -> e + combining mark) and their marks dropped;
+// anything still unmapped becomes "?".
+const WIN_ANSI_EXTRA: Record<string, number> = {
+  "\u20AC": 0x80, "\u201A": 0x82, "\u0192": 0x83, "\u201E": 0x84, "\u2026": 0x85, "\u2020": 0x86,
+  "\u2021": 0x87, "\u02C6": 0x88, "\u2030": 0x89, "\u0160": 0x8a, "\u2039": 0x8b, "\u0152": 0x8c,
+  "\u017D": 0x8e, "\u2018": 0x91, "\u2019": 0x92, "\u201C": 0x93, "\u201D": 0x94, "\u2022": 0x95,
+  "\u02DC": 0x98, "\u2122": 0x99, "\u0161": 0x9a, "\u203A": 0x9b,
+  "\u0153": 0x9c, "\u017E": 0x9e, "\u0178": 0x9f,
+  // Typographic dashes and minus sign read as a plain ASCII hyphen.
+  "\u2010": 0x2d, "\u2011": 0x2d, "\u2012": 0x2d, "\u2013": 0x2d, "\u2014": 0x2d, "\u2015": 0x2d, "\u2212": 0x2d,
+};
+
+function winAnsiByte(char: string): number | null {
+  const code = char.codePointAt(0) ?? 0;
+  if ((code >= 0x20 && code <= 0x7e) || (code >= 0xa0 && code <= 0xff)) return code;
+  return WIN_ANSI_EXTRA[char] ?? null;
+}
+
 function pdfText(value: string): string {
-  return value
-    .normalize("NFC")
-    .replace(/[\u2018\u2019]/g, "'")
-    .replace(/[\u201C\u201D]/g, '"')
-    .replace(/[\u2013\u2014]/g, "-")
-    .replace(/\u2026/g, "...")
-    .replace(/[^\x20-\x7E\u00A0-\u00FF]/gu, "?")
-    .replace(/\\/g, "\\\\")
-    .replace(/\(/g, "\\(")
-    .replace(/\)/g, "\\)")
-    .replace(/[\u00A0-\u00FF]/gu, (char) => `\\${char.charCodeAt(0).toString(8).padStart(3, "0")}`);
+  const bytes: number[] = [];
+  for (const char of value.normalize("NFC")) {
+    let byte = winAnsiByte(char);
+    if (byte === null) {
+      // No WinAnsi code: keep the base letter when the character is a letter with a mark.
+      const base = char.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (base !== char) {
+        for (const inner of base) bytes.push(winAnsiByte(inner) ?? 0x3f);
+        continue;
+      }
+      byte = 0x3f;
+    }
+    bytes.push(byte);
+  }
+  const hex = bytes.map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `<${hex}>`;
 }
 
 function wrap(value: string, width: number): string[] {

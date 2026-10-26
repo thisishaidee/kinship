@@ -204,6 +204,16 @@ describe("compareKinship", () => {
   });
 });
 
+
+// The PDF writes text as hex strings (<4e696b65>), so decode them back to the glyphs they carry.
+function pdfGlyphs(bytes: Uint8Array): string {
+  const raw = new TextDecoder("latin1").decode(bytes);
+  const runs = [...raw.matchAll(/<([0-9a-f]+)>\s*Tj/g)].map((m) => m[1]);
+  return runs
+    .map((hex) => hex.match(/../g)!.map((byte) => String.fromCharCode(parseInt(byte, 16))).join(""))
+    .join("\n");
+}
+
 describe("pairing pdf", () => {
   it("contains both entities, the shared score, the explanation, and the disclaimer", () => {
     const bytes = buildPairingPdf({
@@ -215,11 +225,12 @@ describe("pairing pdf", () => {
       explanation: "Nike and Adidas both connect to Rihanna at 0.959 and 0.910. Those figures are the shared scores.",
     });
     const text = new TextDecoder().decode(bytes);
-    assert.equal(text.includes("Nike"), true);
-    assert.equal(text.includes("Adidas"), true);
-    assert.equal(text.includes("Rihanna"), true);
-    assert.equal(text.includes("0.959"), true);
-    assert.equal(text.includes(PAIRING_DISCLAIMER), true);
+    const glyphs = pdfGlyphs(bytes);
+    assert.equal(glyphs.includes("Nike"), true);
+    assert.equal(glyphs.includes("Adidas"), true);
+    assert.equal(glyphs.includes("Rihanna"), true);
+    assert.equal(glyphs.includes("0.959"), true);
+    assert.equal(glyphs.includes(PAIRING_DISCLAIMER), true);
     assert.equal(text.includes("%%EOF"), true);
   });
 
@@ -258,6 +269,24 @@ describe("explanation safety (adversarial)", () => {
   });
 });
 
+describe("pdf text round-trip", () => {
+  it("keeps accents as glyphs and turns typographic dashes into a plain hyphen", () => {
+    const bytes = buildPairingPdf({
+      leftName: "Beyonc\u00e9",
+      leftType: "Artist",
+      rightName: "Caf\u00e9 del Mar",
+      rightType: "Place",
+      overlaps: [{ name: "street\u2011style", category: "Brand", leftScore: "0.959", rightScore: "0.910" }],
+      explanation: "Beyonc\u00e9 fans love street\u2011style and Caf\u00e9 del Mar.",
+    });
+    const glyphs = pdfGlyphs(bytes);
+    assert.equal(glyphs.includes("Beyonc\u00e9"), true);
+    assert.equal(glyphs.includes("Caf\u00e9 del Mar"), true);
+    assert.equal(glyphs.includes("street-style"), true);
+    assert.equal(glyphs.includes("?"), false);
+  });
+});
+
 describe("pdf layout on long inputs", () => {
   it("builds a PDF for a 120-character entity name and keeps the disclaimer intact", () => {
     const long = "A".repeat(120);
@@ -271,10 +300,10 @@ describe("pdf layout on long inputs", () => {
     });
     const text = new TextDecoder().decode(bytes);
     assert.equal(text.startsWith("%PDF-1.4"), true);
-    assert.equal(text.includes(PAIRING_DISCLAIMER), true);
+    assert.equal(pdfGlyphs(bytes).includes(PAIRING_DISCLAIMER), true);
     assert.equal(text.includes("%%EOF"), true);
     // Clipped with an ellipsis, so the raw 120-char run never reaches the page.
-    assert.equal(text.includes("A".repeat(120)), false);
+    assert.equal(pdfGlyphs(bytes).includes("A".repeat(120)), false);
   });
 
   it("builds a PDF for an explanation with emoji, curly quotes and CJK, keeping the disclaimer", () => {
@@ -288,10 +317,11 @@ describe("pdf layout on long inputs", () => {
     });
     const text = new TextDecoder().decode(bytes);
     assert.equal(text.startsWith("%PDF-1.4"), true);
-    assert.equal(text.includes(PAIRING_DISCLAIMER), true);
+    assert.equal(pdfGlyphs(bytes).includes(PAIRING_DISCLAIMER), true);
     assert.equal(text.includes("%%EOF"), true);
     // Unsupported glyphs become ASCII placeholders, never raw non-ASCII bytes in the content stream.
     assert.equal(/[\u0080-\uFFFF]/.test(text), false);
+
   });
 });
 
