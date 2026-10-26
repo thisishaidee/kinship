@@ -8,10 +8,13 @@ import { categoryInsights, graphCategory, searchCandidates, type QlooGetter, typ
 
 const SYSTEM = [
   "You are the research step of a partnership pitch tool.",
-  "Use the tools to find the seed's strongest partner signals, then reply with one short sentence.",
+  "Use the tools to find the seed's strongest partner signals.",
   "Call find_entity only if you need another name. Call read_partners to read audience overlap for an entity you have seen.",
-  "The final sentence may only name entities and numbers that appear in tool results. Do not claim a partnership exists.",
-  "Reply with plain text, one sentence, when you are finished or when you are told no more calls are allowed.",
+  "When you write the final sentence, write it for a curious friend with no data background: say why the two names' fans overlap, in plain everyday words.",
+  "Name one or two partners only if they appear in the tool results, copied exactly as returned. Never invent a partner or a fact.",
+  "If you cite a score, copy the number exactly from the tool results, and use at most one or two scores. Do not list scores.",
+  "Keep it to one short sentence. Never more than two sentences. Do not claim a partnership exists.",
+  "Reply with plain text only, no preamble, when you are finished or when you are told no more calls are allowed.",
 ].join(" ");
 
 const TOOLS: GroqTool[] = [
@@ -72,7 +75,7 @@ export function createGroqModel(apiKey: string, seedName: string): AgentModel {
           });
         });
       }
-      if (final) history.push({ role: "user", content: "No more tool calls. Write exactly one sentence now, naming only entities and scores from the tool results. No preamble." });
+      if (final) history.push({ role: "user", content: "No more tool calls. Write one short, warm, plain-language sentence now for a curious friend explaining why these fans overlap. Name at most two partners and at most two scores, copied exactly from the tool results. Never more than two sentences. No preamble." });
       const reply = await groqChatRetry({
         apiKey,
         messages: history,
