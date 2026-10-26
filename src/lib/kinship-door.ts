@@ -180,20 +180,30 @@ async function compareAgentPitches(
   if (!groqKey || !qKey) return null;
   const { runKinshipAgent } = await import("@/lib/kinship-agent");
   const { createGroqModel, createQlooTools } = await import("@/lib/kinship-agent-adapters.server");
-  const runSide = async (side: CompareSide, column: "left" | "right"): Promise<string | null> => {
+  const attempt = async (side: CompareSide, column: "left" | "right", wallMs: number) => {
     const outcome = await runKinshipAgent(
       side.entity,
       {
         model: createGroqModel(groqKey, side.entity.name, COMPARE_ANGLES[column]),
         tools: createQlooTools(qKey, qlooGet, side.tags, seedKindFromLabel(side.entity.typeLabel)),
       },
-      { wallMs: COMPARE_AGENT_WALL_MS, pair: { side: column, overlaps } },
+      { wallMs, pair: { side: column, overlaps } },
     );
-    if (outcome.status !== "pitch") {
-      console.error(`agentic-compare: ${outcome.reason}`);
-      return null;
-    }
-    return outcome.text;
+    return outcome;
+  };
+  // One silent retry per side. A fast miss (bad draft, a transient model error) gets a second run
+  // with the time left on the clock. A slow miss (timeout) is not retried, so the request stays short.
+  const runSide = async (side: CompareSide, column: "left" | "right"): Promise<string | null> => {
+    const started = Date.now();
+    const first = await attempt(side, column, COMPARE_AGENT_WALL_MS);
+    if (first.status === "pitch") return first.text;
+    console.error(`agentic-compare: ${first.reason}`);
+    const elapsed = Date.now() - started;
+    if (first.reason === "timeout" || elapsed >= COMPARE_AGENT_WALL_MS / 2) return null;
+    const second = await attempt(side, column, COMPARE_AGENT_WALL_MS - elapsed);
+    if (second.status === "pitch") return second.text;
+    console.error(`agentic-compare retry: ${second.reason}`);
+    return null;
   };
   const [left, right] = await Promise.all([runSide(sides.left, "left"), runSide(sides.right, "right")]);
   return left && right ? { left, right } : null;

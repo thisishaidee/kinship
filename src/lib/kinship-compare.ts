@@ -58,6 +58,12 @@ type CompareCandidate = ResolvedEntity & { detail?: string };
 const SAFE_WORDS = new Set<string>([
   "qloo", "these", "both", "this", "audience", "affinity", "scores", "no", "kinship", "they", "those", "figures", "data",
   "fans", "listeners", "viewers", "shoppers", "audiences", "the", "their", "across", "together",
+  // Ordinary capitalized openers and category nouns. They name no entity, so the name check lets them through.
+  "most", "many", "some", "each", "people", "followers", "buyers", "consumers", "customers", "customer",
+  "also", "because", "so", "plus", "and", "or", "but", "if", "as", "while", "who", "which", "what", "when",
+  "it", "its", "this", "that", "they", "those", "these", "there", "here", "in", "on", "for", "with", "from",
+  "fan", "follower", "buyer", "consumer", "brand", "brands", "sports", "music", "fashion", "streetwear", "sneaker", "sneakers",
+  "pop", "hip", "hop", "rap", "shared", "overlap", "similar", "natural", "match", "group", "groups",
 ]);
 
 // Claims a sentence must never make, even when every name and score is real.
@@ -259,17 +265,20 @@ function firstSentence(text: string): string {
   return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
 }
 
-// Two sides that share any run of three words read as an echo. Keep the page's fallback
-// line in that case instead of showing the same pattern twice.
-function sharesThreeWordPhrase(a: string, b: string): boolean {
+// Two sides that open with the same three words, or share a five-word run, read as an echo.
+// Shorter ordinary phrases ("so the two", "fans also follow") do not count, so a valid pair is kept.
+function sharesEchoPhrase(a: string, b: string): boolean {
   const words = (s: string) => s.toLowerCase().replace(/[^a-z0-9' ]/g, " ").split(/\s+/).filter(Boolean);
+  const left = words(a);
+  const right = words(b);
+  if (left.length >= 3 && right.length >= 3 && left.slice(0, 3).join(" ") === right.slice(0, 3).join(" ")) return true;
   const grams = (w: string[]) => {
     const out = new Set<string>();
-    for (let i = 0; i + 3 <= w.length; i++) out.add(w.slice(i, i + 3).join(" "));
+    for (let i = 0; i + 5 <= w.length; i++) out.add(w.slice(i, i + 5).join(" "));
     return out;
   };
-  const left = grams(words(a));
-  for (const g of grams(words(b))) if (left.has(g)) return true;
+  const seen = grams(left);
+  for (const g of grams(right)) if (seen.has(g)) return true;
   return false;
 }
 
@@ -278,7 +287,7 @@ function mergeAgentTexts(texts: { left: string; right: string }): string {
   const right = firstSentence(texts.right);
   if (!left || !right) return "";
   if (left.toLowerCase() === right.toLowerCase()) return left;
-  if (sharesThreeWordPhrase(left, right)) return "";
+  if (sharesEchoPhrase(left, right)) return "";
   return `${left} ${right}`;
 }
 
