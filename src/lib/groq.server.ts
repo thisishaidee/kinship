@@ -32,6 +32,31 @@ export class GroqError extends Error {
   }
 }
 
+// Key rotation. When the primary key keeps returning 429 after the retries, calls switch to
+// GROQ_API_KEY_2 through a module-level cursor. The cursor holds for one rate-limit window
+// (Groq limits are per minute), then the primary key is tried again.
+const BACKUP_WINDOW_MS = 60_000;
+let backupSwitchedAt: number | null = null;
+
+function backupKey(): string | null {
+  const value = process.env.GROQ_API_KEY_2?.trim();
+  return value ? value : null;
+}
+
+function activeKey(apiKey: string): string {
+  if (backupSwitchedAt !== null && Date.now() - backupSwitchedAt < BACKUP_WINDOW_MS) {
+    const backup = backupKey();
+    if (backup) return backup;
+  }
+  return apiKey;
+}
+
+function logRateLimit(response: Response, status: number): void {
+  const remaining = response.headers.get("x-ratelimit-remaining-requests") ?? "n/a";
+  const limit = response.headers.get("x-ratelimit-limit-requests") ?? "n/a";
+  console.log(`groq: ratelimit status=${status} remaining=${remaining} limit=${limit}`);
+}
+
 export async function groqChat(input: {
   apiKey: string;
   messages: GroqMessage[];
@@ -52,10 +77,11 @@ export async function groqChat(input: {
   if (input.tools && input.tools.length > 0) body.tools = input.tools;
   body.reasoning_effort = input.reasoningEffort ?? "low";
   let response: Response;
+  const key = activeKey(input.apiKey);
   try {
     response = await fetch(GROQ_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${input.apiKey}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(input.timeoutMs),
     });
@@ -64,6 +90,7 @@ export async function groqChat(input: {
     if (name === "TimeoutError" || name === "AbortError") throw new GroqError(null, "timeout");
     throw new GroqError(null, "network");
   }
+  logRateLimit(response, response.status);
   if (!response.ok) throw new GroqError(response.status, `http ${response.status}`);
   let data: unknown;
   try {
@@ -110,7 +137,15 @@ export async function groqChatRetry(
       if (!(error instanceof GroqError)) throw error;
       if (error.reason === "timeout") throw error;
       if (error.status === 429) {
-        if (waits >= rateLimit.length) throw error;
+        if (waits >= rateLimit.length) {
+          // Primary key is exhausted. Switch once to the backup key and give it the same backoff.
+          const onBackup = activeKey(input.apiKey) !== input.apiKey;
+          if (onBackup || !backupKey()) throw error;
+          backupSwitchedAt = Date.now();
+          console.log("groq: switched to backup key");
+          waits = 0;
+          continue;
+        }
         await new Promise((resolve) => setTimeout(resolve, rateLimit[waits]));
         waits++;
         continue;
