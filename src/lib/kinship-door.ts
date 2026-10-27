@@ -226,7 +226,10 @@ async function compareAgentPitches(
     console.error(`agentic-compare retry: ${second.reason}`);
     return null;
   };
-  const [left, right] = await Promise.all([runSide(sides.left, "left"), runSide(sides.right, "right")]);
+  // Sequential, not parallel: two agent runs at once double the per-minute Groq burn and trigger 429s.
+  // Each side still gets its own 45s wall.
+  const left = await runSide(sides.left, "left");
+  const right = await runSide(sides.right, "right");
   return left && right ? { left, right } : null;
 }
 
