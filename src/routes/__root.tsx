@@ -1,6 +1,4 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import { AuthProvider } from "@/lib/auth/provider";
-import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "Kinship";
@@ -31,7 +29,6 @@ export const Route = createRootRoute({
       { rel: "icon", type: "image/svg+xml", href: "https://kinshipp.vercel.app/favicon.svg" },
       { rel: "icon", type: "image/x-icon", href: "https://kinshipp.vercel.app/favicon.ico", sizes: "16x16 32x32 48x48" },
       { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: "/__grok/manifest.webmanifest" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "https://kinshipp.vercel.app/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
@@ -44,10 +41,7 @@ export const Route = createRootRoute({
         <HeadContent />
       </head>
       <body>
-        <PreviewHostBridge />
-        <AuthProvider>
-          <Outlet />
-        </AuthProvider>
+        <Outlet />
         <Scripts />
       </body>
     </html>

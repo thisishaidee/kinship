@@ -22,14 +22,7 @@ export { copyFailureMessage, formatAffinity, isLatestRequest, partnerSearchHref 
 async function qlooKey(): Promise<string | undefined> {
   const { env } = await import("@/lib/env.server");
   const fromEnv = env("QLOO_API_KEY");
-  if (fromEnv) return fromEnv;
-  try {
-    const { readFile } = await import("node:fs/promises");
-    const text = (await readFile("/workspace/.secrets/qloo-api-key", "utf8")).trim();
-    return text || undefined;
-  } catch {
-    return undefined;
-  }
+  return fromEnv;
 }
 
 const qlooCalls = createQlooCallCache();
