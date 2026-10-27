@@ -105,7 +105,11 @@ async function runLoop(
     let turn: AgentTurn;
     try {
       turn = await deps.model.next(results, final);
-    } catch {
+    } catch (error) {
+      // Log only the status or message (never a key or response body) so the real cause is visible.
+      const status = error && typeof error === "object" && "status" in error ? (error as { status?: unknown }).status : null;
+      const message = error instanceof Error ? error.message.slice(0, 40) : "unknown";
+      console.error(`agent-model-error: status=${String(status)} detail=${message}`);
       return fallback("model-error", steps);
     }
 
