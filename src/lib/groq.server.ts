@@ -91,19 +91,35 @@ function readContent(content: unknown): string | null {
   return text.trim() ? text : null;
 }
 
-// One retry after 5 seconds when Groq answers HTTP 429 (free-tier per-minute limit).
-// Any other failure, or a second 429, is thrown to the caller, which falls back quietly.
-// Transient failures (HTTP 429, a network blip, a malformed body) get one retry. A timeout is not
-// retried here, because the caller's wall clock is already the limit.
-export async function groqChatRetry(input: Parameters<typeof groqChat>[0]): Promise<GroqReply> {
-  try {
-    return await groqChat(input);
-  } catch (error) {
-    if (!(error instanceof GroqError)) throw error;
-    if (error.reason === "timeout") throw error;
-    if (error.status !== 429 && error.reason !== "network" && error.reason !== "bad-response") throw error;
-    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-    return groqChat(input);
+// Free-tier Groq limits are per minute, so a 429 usually clears only after several seconds. A 429
+// gets two retries (6s, then 12s). Other transient failures (a network blip, a malformed body)
+// get one retry after 5 seconds. A timeout is never retried, because the caller's wall clock is the limit.
+// Any other failure, or a 429 that survives every retry, is thrown to the caller, which falls back quietly.
+export const GROQ_429_DELAYS_MS = [6000, 12000];
+export async function groqChatRetry(
+  input: Parameters<typeof groqChat>[0],
+  delays: { rateLimit?: number[]; transient?: number } = {},
+): Promise<GroqReply> {
+  const rateLimit = delays.rateLimit ?? GROQ_429_DELAYS_MS;
+  const transient = delays.transient ?? RETRY_DELAY_MS;
+  let waits = 0;
+  for (;;) {
+    try {
+      return await groqChat(input);
+    } catch (error) {
+      if (!(error instanceof GroqError)) throw error;
+      if (error.reason === "timeout") throw error;
+      if (error.status === 429) {
+        if (waits >= rateLimit.length) throw error;
+        await new Promise((resolve) => setTimeout(resolve, rateLimit[waits]));
+        waits++;
+        continue;
+      }
+      if (error.reason !== "network" && error.reason !== "bad-response") throw error;
+      if (waits > 0) throw error;
+      waits++;
+      await new Promise((resolve) => setTimeout(resolve, transient));
+    }
   }
 }
 
