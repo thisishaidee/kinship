@@ -474,13 +474,6 @@ export async function resolveKinship(
   };
 }
 
-function listNames(hits: GraphHit[]): string {
-  const names = hits.map((hit) => hit.name);
-  if (names.length <= 1) return names[0] ?? "";
-  if (names.length === 2) return `${names[0]} and ${names[1]}`;
-  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
-}
-
 function asCandidate(item: unknown): Candidate | null {
   if (!item || typeof item !== "object") return null;
   const record = item as Record<string, unknown>;

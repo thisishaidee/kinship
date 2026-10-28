@@ -4,7 +4,7 @@ import { formatAffinity, readRequest, resolveKinship, searchEntity, seedKindFrom
 import { DEMO_SEEDS, readDemoCache, writeDemoCache } from "@/lib/kinship-demo-cache.server";
 import { groundedExplanation } from "@/lib/kinship-compare";
 import { createQlooCallCache, qlooCallKey } from "@/lib/kinship-qloo-cache";
-import { cardLine, pageCardLines } from "@/lib/kinship-card-line";
+import { pageCardLines } from "@/lib/kinship-card-line";
 
 export type {
   Candidate,
