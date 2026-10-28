@@ -79,7 +79,7 @@ async function pitchForCard(seedName: string, partnerType: string, hits: { name:
       system: CARD_PITCH_PROMPT,
       user: JSON.stringify({ seed: seedName, partnerType, hits: top }),
       maxTokens: 512,
-      timeoutMs: 15000,
+      timeoutMs: 5000,
     });
     if (!text) return null;
     const checked = groundedExplanation(text, evidence as never);

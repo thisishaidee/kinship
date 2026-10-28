@@ -5,7 +5,7 @@
 // else (timeout, 5xx) is not stored, so the next try still reaches Qloo.
 export type QlooCallResult = { ok: true; body: unknown } | { ok: false; status: number };
 
-export const QLOO_CALL_TTL_MS = 60_000;
+export const QLOO_CALL_TTL_MS = 600_000;
 export const QLOO_RATE_LIMIT_TTL_MS = 15_000;
 
 export function qlooCallKey(path: string, params: URLSearchParams): string {
