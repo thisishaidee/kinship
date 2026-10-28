@@ -418,7 +418,7 @@ function Home() {
                     {pitch.hits.map((hit, hitIndex) => (
                       <li
                         key={hit.entityId}
-                        className={hitIndex === pitch.hits.length - 1 && pitch.hits.length % 2 === 1 ? "md:col-span-2" : undefined}
+                        className={undefined}
                       >
                         <ResultCard
                           name={hit.name}
