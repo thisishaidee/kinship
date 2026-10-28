@@ -19,7 +19,7 @@ import {
 } from "@/lib/kinship-door";
 import { KinshipLogo } from "@/components/KinshipLogo";
 import { cardLine } from "@/lib/kinship-card-line";
-import { PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/kinship-pdf";
+import { PAIRING_DISCLAIMER, PDF_FILENAME, buildPairingPdf, pdfBlob, preparePdfAnchor } from "@/lib/kinship-pdf";
 import type { AgentStep } from "@/lib/kinship-agent";
 
 // Set once per page load; a module-level flag survives client-side navigations back to /app.
@@ -832,15 +832,7 @@ function pitchPdfInput(data: PitchData) {
 export function PitchDetail({ data, onBack }: { data: PitchData; onBack: () => void }) {
   const pdfUrl = useRef<string | null>(null);
   const pdfFile = useRef<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [note, setNote] = useState("");
-
-  // Desktop preview: build the same one-pager once per pitch; revoke on change/unmount.
-  useEffect(() => {
-    const url = URL.createObjectURL(pdfBlob(buildPairingPdf(pitchPdfInput(data))));
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [data]);
 
   useEffect(() => {
     return () => {
@@ -943,17 +935,51 @@ export function PitchDetail({ data, onBack }: { data: PitchData; onBack: () => v
           </div>
           <div className="hidden min-w-0 flex-col gap-3 lg:flex">
             <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#6b6963]">PDF preview</p>
-            {previewUrl ? (
-              <iframe
-                title="One-page PDF preview"
-                src={`${previewUrl}#toolbar=0&navpanes=0&view=FitH`}
-                className="aspect-[612/792] w-full rounded-2xl border border-[#e3ddd0] bg-white shadow-sm"
-              />
-            ) : null}
+            <PdfPagePreview data={data} />
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+// In-page mirror of the exported one-pager (src/lib/kinship-pdf.ts buildPairingPdf).
+// Rendered as HTML instead of a PDF blob so the preview is visible in every browser,
+// including ones that leave PDF iframes blank.
+function PdfPagePreview({ data }: { data: PitchData }) {
+  const generated = new Date().toISOString().slice(0, 10);
+  return (
+    <div className="flex aspect-[612/792] w-full flex-col overflow-hidden rounded-2xl border border-[#e3ddd0] bg-white font-sans shadow-sm" aria-label="One-page PDF preview">
+      <div className="flex items-center justify-between bg-accent px-7 py-4">
+        <div className="flex items-center gap-3">
+          <KinshipLogo size={26} />
+          <span className="font-display text-xl text-[#141310]">Kinship</span>
+        </div>
+        <span className="text-[8px] font-semibold uppercase tracking-[0.14em] text-[#141310]">Pairing report</span>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-3 px-7 py-5 text-[#141310]">
+        <p className="text-[9px] text-[#6b6963]">A pairing from shared fans on Qloo</p>
+        <div>
+          <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-[#6b6963]">First</p>
+          <p className="font-display text-lg leading-tight">{data.seed}</p>
+          <p className="text-[9px] text-[#6b6963]">{data.seedType}</p>
+        </div>
+        <div>
+          <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-[#6b6963]">Second</p>
+          <p className="font-display text-lg leading-tight">{data.partner}</p>
+          <p className="text-[9px] text-[#6b6963]">{data.partnerType}</p>
+        </div>
+        <div className="h-0.5 bg-accent" />
+        <p className="text-[10px] font-bold">Shared-fans score: {formatAffinity(data.score)}</p>
+        <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.12em] text-[#6b6963]">Why this pairing</p>
+        <p className="text-[10px] leading-snug">{data.why || data.line}</p>
+        <div className="mt-auto border-t border-[#e3ddd0] pt-2 text-[7px] leading-relaxed text-[#6b6963]">
+          <p>Scores show how much two audiences overlap.</p>
+          <p>{PAIRING_DISCLAIMER}</p>
+          <p>Generated {generated} with Kinship</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
