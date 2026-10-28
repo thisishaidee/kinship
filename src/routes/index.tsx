@@ -223,7 +223,7 @@ function Hero({ rows }: { rows: HeroResult[] | null }) {
           <input
             id="seed"
             name="q"
-            defaultValue={SAMPLE_SEED}
+            placeholder={SAMPLE_SEED}
             autoComplete="off"
             className="h-14 w-full min-w-0 rounded-full bg-[#f4f1ea] px-6 text-[17px] text-[#111] outline-none md:h-12 md:flex-1 md:bg-transparent md:px-0 md:text-lg"
           />

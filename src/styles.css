@@ -45,6 +45,26 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* Themed scrollbar: matches the app palette instead of the browser default */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-muted);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
