@@ -22,7 +22,7 @@ The landing page is at `/`, the web tool is at `/app`.
 
 ## Tech stack
 
-- **Frontend:** React 19, TanStack Start, TanStack Router, Tailwind CSS 4, Instrument Serif + Inter + JetBrains Mono
+- **Frontend:** React 19, TanStack Start, TanStack Router, Tailwind CSS 4, Inter + JetBrains Mono
 - **Backend:** Vite + TypeScript server functions (`createServerFn`), no database needed
 - **Data source:** Qloo API for entity search and affinity insights
 - **Explanations:** Groq (`openai/gpt-oss-20b`)
