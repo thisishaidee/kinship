@@ -1,6 +1,6 @@
 # Kinship
 
-Zero-fabrication partnership pitches from qloo's taste graph. Type a name, get scored pitch cards or a side-by-side comparison, and export a one-page PDF for a partner.
+Partnership pitches from qloo's taste graph, every name and score straight from Qloo. Type a name, get scored pitch cards or a side-by-side comparison, and export a one-page PDF for a partner.
 
 Live demo: https://kinshipp.vercel.app
 
