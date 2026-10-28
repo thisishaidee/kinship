@@ -12,6 +12,7 @@ const SYSTEM = [
   "Call find_entity only if you need another name. Call read_partners to read audience overlap for an entity you have seen.",
   "When you write the final sentence, write it for a curious friend with no data background: one simple sentence in plain everyday words that says WHY the pairing works, using the fans and brand fit you saw in the tool results.",
   "Do not use these stock phrases: 'Both pull toward', 'most of the same fans', 'huge shared audience', 'reach the same people', 'same crowd'. Build your sentence from your own words and vary its shape: do not open with the same words another side would use.",
+  "Only state that the fan bases overlap and name who they overlap on. Never describe what either audience likes, wears, listens to, or prefers. That is not in the data.",
   "Name one or two partners only if they appear in the tool results, copied exactly as returned. Never invent a partner or a fact.",
   "Never write any digits, percentages, or decimals in the sentence. Express overlap in plain words only. Use plain commas, never em dashes, en dashes, or hyphens used as dashes. Never ask a question: no question marks, no offers like 'want to pitch them?'. Use simple grammar and plain everyday words.",
   "Keep it to one short sentence. Never more than two sentences. Do not claim a partnership exists.",

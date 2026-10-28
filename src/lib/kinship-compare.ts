@@ -70,6 +70,9 @@ const SAFE_WORDS = new Set<string>([
 // Relationship or news claims the Qloo payload never returns. Any of these means the model invented context.
 const UNSUPPORTED_CONTEXT = /\b(recently|just|newly|signed|signs|signing|endorse[sd]?|sponsor(s|ed)?|deal with|contract with|launched a|collab(orat(ed|es|ing))?|announced|partnered|teamed up)\b/i;
 
+// Audience-trait claims ("fans love X", "they prefer Y") are not in any Qloo payload.
+const AUDIENCE_TRAIT = /\b(love[sd]?|loving|prefer[s]?|preferring|favor|favour[sd]?|known for|famous for|obsessed|drawn to|attracted to|care about|swear by|loyal to)\b/i;
+
 const FORBIDDEN_CLAIM = /partners with|partner with|proves|proof|shows they|guarantee|proof that|will sign|should sign|sign tomorrow|guarantees|guaranteed|sealed|secured deal|confirmed deal|confirmed partnership|partnership is available|guarantee|probability|percent chance/i;
 
 export function sharedAffinities(left: GraphCategory[], right: GraphCategory[]): Overlap[] {
@@ -122,7 +125,7 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
   }
   const sentences = cleaned.split(/(?<=[.!?])\s+/).filter(Boolean);
   if (sentences.length < 1 || sentences.length > 2) return { text: fallback, source: "scores" };
-  if (FORBIDDEN_CLAIM.test(cleaned)) {
+  if (FORBIDDEN_CLAIM.test(cleaned) || AUDIENCE_TRAIT.test(cleaned)) {
     return { text: fallback, source: "scores" };
   }
   // The explanation carries no numbers of any kind, no dashes, and no questions.

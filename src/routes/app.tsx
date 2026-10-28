@@ -736,7 +736,7 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                   {index === 0 ? (
-                    <span className="rounded-full border border-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent">Highest shared score</span>
+                    <span className="rounded-full border border-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent">Strongest shared fan</span>
                   ) : null}
                   <p className="text-sm tabular-nums">
                     <span className={scoreTone(overlap.leftScore)}>{formatAffinity(overlap.leftScore)}</span>
