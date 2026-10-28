@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
   component: Landing,
 });
 
-const SERIF = "'Instrument Serif', Georgia, serif";
+const SERIF = "'Inter', ui-sans-serif, system-ui, sans-serif";
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
 const SANS = "'Space Grotesk', system-ui, sans-serif";
 

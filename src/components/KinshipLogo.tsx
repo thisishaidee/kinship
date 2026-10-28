@@ -35,7 +35,7 @@ export function KinshipLogo({ size = 32, className }: LogoProps) {
       <KinshipMark size={size} />
       <span
         style={{
-          fontFamily: "'Instrument Serif', Georgia, serif",
+          fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
           fontSize: size * 0.9,
           lineHeight: 1,
         }}
