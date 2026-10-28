@@ -564,6 +564,7 @@ function LoadingSteps({ mode }: { mode: Mode }) {
           </li>
         ))}
       </ol>
+      <p className="text-xs text-muted">Qloo lookups take up to ~15s, still working.</p>
       <div className="flex flex-col gap-2" aria-hidden="true">
         {[0, 1].map((slot) => (
           <div key={slot} className="h-16 animate-pulse rounded-2xl border border-line bg-surface" />
