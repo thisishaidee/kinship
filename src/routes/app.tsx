@@ -492,6 +492,7 @@ function Home() {
         <a href="https://github.com/thisishaidee/kinship/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="text-fg underline decoration-1 underline-offset-4">
           MIT license
         </a>
+        <span>Fan data via Qloo</span>
       </footer>
     </main>
     </div>

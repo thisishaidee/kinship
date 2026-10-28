@@ -453,7 +453,7 @@ function Footer() {
       </div>
       <p className="m-0 border-t border-[#26262c] pt-4 text-xs leading-normal text-[#a3a09a]">
         Scores show how much two audiences overlap, not whether a partnership is
-        available. Beta: scores are estimates. © 2026 Kinship
+        available. Beta: scores are estimates. Fan data via Qloo. © 2026 Kinship
       </p>
     </footer>
   );
