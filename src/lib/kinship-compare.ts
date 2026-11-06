@@ -255,9 +255,11 @@ export async function compareKinship(
   // sentences whenever a partner is not in the intersection, and the page
   // falls through to the one-shot line. Show the two sentences instead.
   const merged = agentTexts ? mergeAgentTexts(agentTexts) : "";
-  const explanation = merged
-    ? { text: merged, source: "agent" as const }
-    : groundedExplanation(await deps.explain(evidence), evidence);
+  const checkedAgent = merged ? groundedExplanation(merged, evidence) : null;
+  const explanation =
+    checkedAgent?.source === "model"
+      ? { text: checkedAgent.text, source: "agent" as const }
+      : groundedExplanation(await deps.explain(evidence), evidence);
   return {
     status: "matched",
     left: publicEntity(left.entity),
