@@ -724,8 +724,13 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
       <div className="flex flex-col gap-3">
         <h2 className="text-sm font-medium text-fg">Shared cultural signals</h2>
         <p className="text-sm leading-snug text-muted">{RESULT_NOTE}</p>
+        {pairing.unchecked.length > 0 ? (
+          <p className="text-sm text-muted" role="status">
+            Some Qloo categories could not be checked: {pairing.unchecked.map((item) => `${item.side === "left" ? pairing.left.name : pairing.right.name}: ${item.line}`).join(" ")}
+          </p>
+        ) : null}
         {pairing.overlaps.length === 0 ? (
-          <p className="text-base text-muted">These results have no shared cultural signals. Try another pair, like Nike vs Adidas.</p>
+          <p className="text-base text-muted">No shared cultural signals appeared in the categories Qloo checked. Try another pair, like Nike vs Adidas.</p>
         ) : (
           <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
             {pairing.overlaps.map((overlap, index) => (
