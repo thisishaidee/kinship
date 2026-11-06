@@ -101,12 +101,13 @@ export function sharedAffinities(left: GraphCategory[], right: GraphCategory[]):
 export function fallbackExplanation(evidence: CompareEvidence): string {
   const [first, second] = evidence.overlaps;
   if (!first) {
-    return `${evidence.left.name} and ${evidence.right.name} have no shared entity in these Qloo results.`;
+    return `No shared cultural affinity signal appeared in these Qloo results for ${evidence.left.name} and ${evidence.right.name}.`;
   }
-  // Scores live in the evidence list, never in the explanation sentence.
-  const lead = `Both pull toward ${first.name}`;
-  const tail = second ? ` and ${second.name}` : "";
-  return `${lead}${tail}.`;
+  const lead = `Qloo returned ${first.name} as a cultural affinity signal for both ${evidence.left.name} and ${evidence.right.name}.`;
+  const tail = second
+    ? ` It also returned ${second.name} as a cultural affinity signal for both.`
+    : "";
+  return `${lead}${tail}`;
 }
 
 // Plain-sentence rule shared by every model-written line: no digits, no percentages or decimals,
