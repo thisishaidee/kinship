@@ -549,7 +549,7 @@ function LoadingSteps({ mode }: { mode: Mode }) {
   const steps =
     mode === "compare"
       ? ["resolving both names", "reading Qloo cultural data", "building the compare"]
-      : ["resolving the name", "reading the fan data", "building your pitch"];
+      : ["resolving the name", "reading Qloo cultural data", "building your pitch"];
   const [step, setStep] = useState(0);
   useEffect(() => {
     const id = window.setInterval(() => setStep((current) => (current + 1 >= steps.length ? current : current + 1)), 1600);
