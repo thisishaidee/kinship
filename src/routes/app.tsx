@@ -500,7 +500,7 @@ function Home() {
 }
 
 function HowItWorks() {
-  const steps = ["type a name", "qloo finds shared fans", "get your partners, compare, export"];
+  const steps = ["type a name", "qloo surfaces cultural affinity signals", "get your partners, compare, export"];
   return (
     <section className="flex flex-col gap-3" aria-labelledby="how-it-works">
       <h2 id="how-it-works" className="text-sm font-medium text-fg">
@@ -548,7 +548,7 @@ function AgentTrace({ steps, pitched, reason }: { steps: AgentStep[]; pitched: b
 function LoadingSteps({ mode }: { mode: Mode }) {
   const steps =
     mode === "compare"
-      ? ["resolving both names", "reading the fan data", "building the compare"]
+      ? ["resolving both names", "reading Qloo cultural data", "building the compare"]
       : ["resolving the name", "reading the fan data", "building your pitch"];
   const [step, setStep] = useState(0);
   useEffect(() => {
@@ -722,10 +722,10 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
         <SeedTicket entity={pairing.right} />
       </div>
       <div className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium text-fg">Shared-fans scores</h2>
+        <h2 className="text-sm font-medium text-fg">Shared cultural signals</h2>
         <p className="text-sm leading-snug text-muted">{RESULT_NOTE}</p>
         {pairing.overlaps.length === 0 ? (
-          <p className="text-base text-muted">These two don’t share a fan base in the data. Try another pair, like Nike vs Adidas.</p>
+          <p className="text-base text-muted">These results have no shared cultural signals. Try another pair, like Nike vs Adidas.</p>
         ) : (
           <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
             {pairing.overlaps.map((overlap, index) => (
@@ -736,7 +736,7 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                   {index === 0 ? (
-                    <span className="rounded-full border border-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent">Strongest shared fan</span>
+                    <span className="rounded-full border border-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent">Strongest shared signal</span>
                   ) : null}
                   <p className="text-sm tabular-nums">
                     <span className={scoreTone(overlap.leftScore)}>{formatAffinity(overlap.leftScore)}</span>
@@ -906,7 +906,7 @@ export function PitchDetail({ data, onBack }: { data: PitchData; onBack: () => v
             </dl>
             <p className="flex items-center gap-2 text-xs text-[#2e5c40]">
               <span className="h-1.5 w-1.5 flex-none rounded-full bg-[#2e9e5b]" />
-              Every name and score here comes straight from the fan data
+              Every name and score here comes straight from Qloo's cultural affinity data
             </p>
             <div className="flex flex-col gap-2.5">
               <div className="flex flex-wrap items-center gap-2.5">
@@ -958,7 +958,7 @@ function PdfPagePreview({ data }: { data: PitchData }) {
         <span className="text-[8px] font-semibold uppercase tracking-[0.14em] text-[#141310]">Pairing report</span>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-3 px-7 py-5 text-[#141310]">
-        <p className="text-[9px] text-[#6b6963]">A pairing from shared fans on Qloo</p>
+        <p className="text-[9px] text-[#6b6963]">A pairing from shared cultural signals on Qloo</p>
         <div>
           <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-[#6b6963]">First</p>
           <p className="font-display text-lg leading-tight">{data.seed}</p>
@@ -970,11 +970,11 @@ function PdfPagePreview({ data }: { data: PitchData }) {
           <p className="text-[9px] text-[#6b6963]">{data.partnerType}</p>
         </div>
         <div className="h-0.5 bg-accent" />
-        <p className="text-[10px] font-bold">Shared-fans score: {formatAffinity(data.score)}</p>
+        <p className="text-[10px] font-bold">Qloo affinity score: {formatAffinity(data.score)}</p>
         <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.12em] text-[#6b6963]">Why this pairing</p>
         <p className="text-[10px] leading-snug">{data.why || data.line}</p>
         <div className="mt-auto border-t border-[#e3ddd0] pt-2 text-[7px] leading-relaxed text-[#6b6963]">
-          <p>Scores show how much two audiences overlap.</p>
+          <p>Scores indicate the strength of a cultural affinity signal.</p>
           <p>{PAIRING_DISCLAIMER}</p>
           <p>Generated {generated} with Kinship</p>
         </div>
