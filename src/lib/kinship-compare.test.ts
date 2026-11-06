@@ -143,6 +143,26 @@ describe("compareKinship", () => {
     assert.equal(JSON.stringify(result).includes("test-key"), false);
   });
 
+  it("reports categories that failed instead of treating them as checked empty results", async () => {
+    const get: QlooGetter = async (_key, path, params) => {
+      if (path === "/search") {
+        const id = params.get("query") === "Nike" ? LEFT : RIGHT;
+        return { ok: true, body: { results: [{ name: params.get("query"), entity_id: id, types: ["urn:entity:brand"], disambiguation: "" }] } };
+      }
+      if (params.get("filter.type") === "urn:entity:artist" && params.get("signal.interests.entities") === LEFT) {
+        return { ok: false, status: 503 };
+      }
+      return { ok: true, body: { results: { entities: [] } } };
+    };
+    const result = await compareKinship(
+      { left: "Nike", right: "Adidas" },
+      { key: async () => "test-key", get, explain: async () => null },
+    );
+    assert.equal(result.status, "matched");
+    if (result.status !== "matched") return;
+    assert.deepEqual(result.unchecked, [{ side: "left", line: "Artists couldn't be checked this time." }]);
+  });
+
   it("does not show two agent sentences that open with the same words", async () => {
     const get: QlooGetter = async (_key, path, params) => {
       if (path === "/search") {
