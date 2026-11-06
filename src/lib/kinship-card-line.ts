@@ -126,5 +126,5 @@ export function acceptAgentCardLine(line: string, seed: string, name: string, ta
 
 // True when a line names Qloo or uses dev-speak; such lines never reach a card.
 export function isCardSafe(line: string): boolean {
-  return !/qloo|in data|taste graph|entity|fans? of|fan base|audience overlap|same crowd|same people|listeners? follow|reach the same|shared audience/i.test(line);
+  return !/qloo|in data|taste graph|entity|fans? of|fan base|audience overlap|same crowd|same people|listeners? follow|show up for|reach the same|shared audience/i.test(line);
 }
