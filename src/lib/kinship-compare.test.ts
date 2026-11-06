@@ -131,7 +131,7 @@ describe("compareKinship", () => {
       {
         key: async () => "test-key",
         get,
-        explain: async () => "Both pull toward Rihanna, and most of the same fans follow both brands.",
+        explain: async () => "The results place Rihanna among the cultural affinity signals returned for Nike and Adidas.",
       },
     );
     assert.equal(result.status, "matched");
@@ -176,10 +176,10 @@ describe("compareKinship", () => {
       {
         key: async () => "test-key",
         get,
-        explain: async () => "Both pull toward Wiz Khalifa, and the same crowd follows both.",
+        explain: async () => "The results place Wiz Khalifa among the cultural affinity signals returned for Nike and Adidas.",
         agent: async () => ({
-          left: "Wiz Khalifa fans also follow Nike, so the two reach the same people.",
-          right: "Wiz Khalifa fans also follow Adidas, so the two reach the same people.",
+          left: "Wiz Khalifa appears among the cultural affinity results returned for Nike.",
+          right: "Wiz Khalifa appears among the cultural affinity results returned for Adidas.",
         }),
       },
     );
@@ -208,8 +208,8 @@ describe("compareKinship", () => {
           return "Both pull toward nobody (0.100 / 0.100).";
         },
         agent: async () => ({
-          left: "Wiz Khalifa's listeners also follow Nike, so the two reach a similar crowd.",
-          right: "Rihanna fans tend to follow Adidas too, which makes them a natural match.",
+          left: "Wiz Khalifa appears among the cultural affinity results returned for Nike.",
+          right: "Rihanna appears among the cultural affinity results returned for Adidas.",
         }),
       },
     );
@@ -219,7 +219,7 @@ describe("compareKinship", () => {
     assert.equal(result.explanationSource, "agent");
     assert.equal(
       result.explanation,
-      "Wiz Khalifa's listeners also follow Nike, so the two reach a similar crowd. Rihanna fans tend to follow Adidas too, which makes them a natural match.",
+      "Wiz Khalifa appears among the cultural affinity results returned for Nike. Rihanna appears among the cultural affinity results returned for Adidas.",
     );
   });
 });
@@ -289,7 +289,7 @@ describe("explanation safety (adversarial)", () => {
   });
 
   it("keeps a second sentence that adds a returned name", () => {
-    const result = groundedExplanation("Both pull toward Rihanna. Rihanna is a shared name across both fans.", sample);
+    const result = groundedExplanation("Both pull toward Rihanna. Rihanna appears in the cultural affinity results for both entities.", sample);
     assert.equal(result.source, "model");
   });
 });
@@ -373,7 +373,7 @@ describe("groundedExplanation digit and dash rules", () => {
   });
 
   it("accepts a warm number-free sentence that names Rihanna", () => {
-    const out = groundedExplanation("Rihanna's fans are most of the same people who follow both brands.", evidence);
+    const out = groundedExplanation("Rihanna appears among the cultural affinity signals returned for Nike and Adidas.", evidence);
     assert.equal(out.source, "model");
   });
 
@@ -395,7 +395,7 @@ describe("groundedExplanation names and scores", () => {
   });
 
   it("accepts a possessive form of a returned name", () => {
-    const out = groundedExplanation("Rihanna's audience sits close to Nike, and Adidas too.", evidence);
+    const out = groundedExplanation("Rihanna appears among the cultural affinity signals returned for Nike and Adidas.", evidence);
     assert.equal(out.source, "model");
   });
 
