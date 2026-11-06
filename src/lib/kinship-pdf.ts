@@ -169,7 +169,7 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
   y -= 18;
   const explanationLines = wrap(input.explanation, 92);
   for (const line of explanationLines) {
-    if (y < 124) {
+    if (y < 148) {
       // Never let the explanation run into the footer: mark the cut instead of overprinting.
       text(MARGIN, y, 11, F_SANS, "...", MUTED);
       break;
