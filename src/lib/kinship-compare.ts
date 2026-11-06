@@ -8,6 +8,7 @@ import {
   type QlooGetter,
   type ResolvedEntity,
   type SeedProblem,
+  uncheckedCategories,
 } from "./kinship-resolve.ts";
 
 export type Overlap = {
@@ -32,6 +33,7 @@ export type CompareResult =
       left: ResolvedEntity;
       right: ResolvedEntity;
       overlaps: Overlap[];
+      unchecked: { side: "left" | "right"; line: string }[];
       explanation: string;
       explanationSource: "agent" | "model" | "scores";
       evidence: CompareEvidence;
@@ -221,6 +223,10 @@ export async function compareKinship(
   ]);
   if (leftGraph === "refused" || rightGraph === "refused") return { status: "refused" };
   const overlaps = sharedAffinities(leftGraph, rightGraph).slice(0, 6);
+  const unchecked = [
+    ...uncheckedCategories(leftGraph).map((category) => ({ side: "left" as const, line: category.line })),
+    ...uncheckedCategories(rightGraph).map((category) => ({ side: "right" as const, line: category.line })),
+  ];
   const evidence: CompareEvidence = {
     left: { name: left.entity.name, typeLabel: left.entity.typeLabel },
     right: { name: right.entity.name, typeLabel: right.entity.typeLabel },
@@ -253,6 +259,7 @@ export async function compareKinship(
     left: publicEntity(left.entity),
     right: publicEntity(right.entity),
     overlaps,
+    unchecked,
     explanation: explanation.text,
     explanationSource: explanation.source,
     evidence,
