@@ -678,6 +678,7 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
         rightType: pairing.right.typeLabel,
         overlaps: pairing.evidence.overlaps,
         explanation: pairing.explanation,
+        unchecked: pairing.unchecked,
       }),
     );
     pdfFile.current = new File([blob], PDF_FILENAME, { type: "application/pdf" });
@@ -732,26 +733,31 @@ function CompareView({ pairing }: { pairing: CompareMatch }) {
         {pairing.overlaps.length === 0 ? (
           <p className="text-base text-muted">No shared cultural signals appeared in the categories Qloo checked. Try another pair, like Nike vs Adidas.</p>
         ) : (
-          <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
-            {pairing.overlaps.map((overlap, index) => (
-              <li key={overlap.entityId} className="flex items-center justify-between gap-4 border-t border-line px-4 py-3 first:border-t-0">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-fg">{overlap.name}</p>
-                  <p className="text-xs text-muted">{overlap.category}</p>
-                </div>
-                <div className="flex shrink-0 items-center gap-3">
-                  {index === 0 ? (
-                    <span className="rounded-full border border-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent">Strongest shared signal</span>
-                  ) : null}
-                  <p className="text-sm tabular-nums">
+          <>
+            <p className="text-xs leading-relaxed text-muted">
+              Scores are shown as ${pairing.left.name} / ${pairing.right.name}. Results are ranked by the lower of the two scores, so a strong result on only one side cannot lead the list.
+            </p>
+            <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
+              {pairing.overlaps.map((overlap, index) => (
+                <li key={overlap.entityId} className="flex flex-col gap-2 border-t border-line px-4 py-3 first:border-t-0 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center justify-between gap-3 sm:justify-start">
+                    <div className="min-w-0">
+                      <p className="break-words text-sm font-medium text-fg">{overlap.name}</p>
+                      <p className="text-xs text-muted">{overlap.category}</p>
+                    </div>
+                    {index === 0 ? (
+                      <span className="shrink-0 rounded-full border border-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent">Highest balanced signal</span>
+                    ) : null}
+                  </div>
+                  <p className="flex shrink-0 items-center justify-end gap-2 text-sm tabular-nums">
                     <span className={scoreTone(overlap.leftScore)}>{formatAffinity(overlap.leftScore)}</span>
                     <span className="text-muted"> / </span>
                     <span className={scoreTone(overlap.rightScore)}>{formatAffinity(overlap.rightScore)}</span>
                   </p>
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </div>
       <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-5 shadow-card">
