@@ -90,7 +90,7 @@ async function pitchForCard(seedName: string, partnerType: string, hits: { name:
 }
 
 const CARD_PITCH_PROMPT =
-  "Write exactly one short sentence pitching the named partner type, using only the JSON in the user message. Name only entities and numbers in the JSON. Do not claim a partnership exists or will succeed. Do not add causes or facts not in the JSON.";
+  "Write exactly one short sentence explaining why the named partner type appears in the returned Qloo cultural affinity results. Use only the JSON in the user message. Name only entities in the JSON. Do not claim shared fans, shared customers, audience reach, or that a partnership exists or will succeed. Do not add causes or facts not in the JSON.";
 
 export const resolveKinshipSeed = createServerFn({ method: "POST" })
   .validator((input: unknown) => input)
@@ -181,8 +181,8 @@ export const runAgenticPitch = createServerFn({ method: "POST" })
 const COMPARE_AGENT_WALL_MS = 45_000;
 // Each side gets a different opening angle so the two sentences do not echo each other.
 const COMPARE_ANGLES = {
-  left: "For this side, open with the partner's name, then say its fans already follow this name, in a sentence shaped differently from the other side.",
-  right: "For this side, open with this name's own audience, then say why the partner suits it, in a sentence shaped differently from the other side.",
+  left: "For this side, open with the partner's name and explain its place in the cultural affinity results, in a sentence shaped differently from the other side.",
+  right: "For this side, open with the seed name and describe the returned cultural affinity signal, in a sentence shaped differently from the other side.",
 } as const;
 async function compareAgentPitches(
   sides: { left: CompareSide; right: CompareSide },
@@ -233,7 +233,7 @@ export const compareKinshipSeeds = createServerFn({ method: "POST" })
   );
 
 const EXPLAIN_PROMPT =
-  "You explain a pairing using only the JSON in the user message. Write exactly two sentences. First sentence: name the top one or two shared entities from the JSON, in the shape Both pull toward NAME. Second sentence: one plain-words line about what the two audiences share, written differently from the first sentence and never starting with 'Both pull toward', still using only entity names present in the JSON. Write no digits, percentages, or decimals; express overlap in words only, such as 'most of the same fans'. Use plain commas, never em dashes. Never use the words 'entity' or 'taste graph'. Do not claim a partnership exists, is available, or will succeed. Do not add causes, history, genres, or locations that are not fields in the JSON. If overlaps is empty, say nothing.";
+  "You explain Qloo cultural affinity results using only the JSON in the user message. Write one or two short sentences. Name the top one or two shared entities returned in both sets of results and describe them as shared cultural affinity signals. Do not say that fans, customers, or audiences overlap or reach the same people. Do not infer what either audience likes or prefers. Write no digits, percentages, or decimals. Use plain commas, never em dashes. Never use the words entity or taste graph. Do not claim a partnership exists, is available, or will succeed. Do not add causes, history, genres, or locations not present in the JSON. If overlaps is empty, say nothing.";
 
 async function explainWithGroq(evidence: CompareEvidence): Promise<string | null> {
   const { env } = await import("@/lib/env.server");
