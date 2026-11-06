@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { compareKinship, type CompareEvidence, type CompareSide } from "@/lib/kinship-compare";
+import { compareKinship, type CompareEvidence } from "@/lib/kinship-compare";
 import { formatAffinity, readRequest, resolveKinship, searchEntity, seedKindFromLabel, type QlooGetter, type ResolveResult } from "@/lib/kinship-resolve";
 import { DEMO_SEEDS, readDemoCache, writeDemoCache } from "@/lib/kinship-demo-cache.server";
 import { groundedExplanation } from "@/lib/kinship-compare";
@@ -90,7 +90,7 @@ async function pitchForCard(seedName: string, partnerType: string, hits: { name:
 }
 
 const CARD_PITCH_PROMPT =
-  "Write exactly one short sentence pitching the named partner type, using only the JSON in the user message. Name only entities and numbers in the JSON. Do not claim a partnership exists or will succeed. Do not add causes or facts not in the JSON.";
+  "Write exactly one short sentence explaining why the named partner type appears in the returned Qloo cultural affinity results. Use only the JSON in the user message. Name only entities in the JSON. Do not claim shared fans, shared customers, audience reach, or that a partnership exists or will succeed. Do not add causes or facts not in the JSON.";
 
 export const resolveKinshipSeed = createServerFn({ method: "POST" })
   .validator((input: unknown) => input)
@@ -175,65 +175,14 @@ export const runAgenticPitch = createServerFn({ method: "POST" })
     }
   });
 
-// Compare agent path: one runKinshipAgent loop per side, in parallel, capped to a short wall
-// clock so the compare request still returns quickly. Any failure or timeout returns null and
-// compare keeps the single-call explanation.
-const COMPARE_AGENT_WALL_MS = 45_000;
-// Each side gets a different opening angle so the two sentences do not echo each other.
-const COMPARE_ANGLES = {
-  left: "For this side, open with the partner's name, then say its fans already follow this name, in a sentence shaped differently from the other side.",
-  right: "For this side, open with this name's own audience, then say why the partner suits it, in a sentence shaped differently from the other side.",
-} as const;
-async function compareAgentPitches(
-  sides: { left: CompareSide; right: CompareSide },
-  overlaps: CompareEvidence["overlaps"],
-): Promise<{ left: string; right: string } | null> {
-  const { env } = await import("@/lib/env.server");
-  const groqKey = env("GROQ_API_KEY");
-  const qKey = await qlooKey();
-  if (!groqKey || !qKey) return null;
-  const { runKinshipAgent, shouldRetryAgent } = await import("@/lib/kinship-agent");
-  const { createGroqModel, createQlooTools } = await import("@/lib/kinship-agent-adapters.server");
-  const attempt = async (side: CompareSide, column: "left" | "right", wallMs: number) => {
-    const outcome = await runKinshipAgent(
-      side.entity,
-      {
-        model: createGroqModel(groqKey, side.entity.name, COMPARE_ANGLES[column]),
-        tools: createQlooTools(qKey, qlooGet, side.tags, seedKindFromLabel(side.entity.typeLabel)),
-      },
-      { wallMs, pair: { side: column, overlaps } },
-    );
-    return outcome;
-  };
-  // One silent retry per side. A fast miss (bad draft, a transient model error) gets a second run
-  // with the time left on the clock. A slow miss (timeout) is not retried, so the request stays short.
-  const runSide = async (side: CompareSide, column: "left" | "right"): Promise<string | null> => {
-    const started = Date.now();
-    const first = await attempt(side, column, COMPARE_AGENT_WALL_MS);
-    if (first.status === "pitch") return first.text;
-    console.error(`agentic-compare: ${first.reason}`);
-    const elapsed = Date.now() - started;
-    if (!shouldRetryAgent(first.reason, elapsed, COMPARE_AGENT_WALL_MS)) return null;
-    const second = await attempt(side, column, COMPARE_AGENT_WALL_MS - elapsed);
-    if (second.status === "pitch") return second.text;
-    console.error(`agentic-compare retry: ${second.reason}`);
-    return null;
-  };
-  // Sequential, not parallel: two agent runs at once double the per-minute Groq burn and trigger 429s.
-  // Each side still gets its own 45s wall.
-  const left = await runSide(sides.left, "left");
-  const right = await runSide(sides.right, "right");
-  return left && right ? { left, right } : null;
-}
-
 export const compareKinshipSeeds = createServerFn({ method: "POST" })
   .validator((input: unknown) => input)
   .handler(async ({ data }) =>
-    compareKinship(data, { key: qlooKey, get: qlooGet, explain: explainWithGroq, agent: compareAgentPitches }),
+    compareKinship(data, { key: qlooKey, get: qlooGet, explain: explainWithGroq }),
   );
 
 const EXPLAIN_PROMPT =
-  "You explain a pairing using only the JSON in the user message. Write exactly two sentences. First sentence: name the top one or two shared entities from the JSON, in the shape Both pull toward NAME. Second sentence: one plain-words line about what the two audiences share, written differently from the first sentence and never starting with 'Both pull toward', still using only entity names present in the JSON. Write no digits, percentages, or decimals; express overlap in words only, such as 'most of the same fans'. Use plain commas, never em dashes. Never use the words 'entity' or 'taste graph'. Do not claim a partnership exists, is available, or will succeed. Do not add causes, history, genres, or locations that are not fields in the JSON. If overlaps is empty, say nothing.";
+  "You explain Qloo cultural affinity results using only the JSON in the user message. Write one or two short sentences. Name the top one or two shared entities returned in both sets of results and describe them as shared cultural affinity signals. Do not say that fans, customers, or audiences overlap or reach the same people. Do not infer what either audience likes or prefers. Write no digits, percentages, or decimals. Use plain commas, never em dashes. Never use the words entity or taste graph. Do not claim a partnership exists, is available, or will succeed. Do not add causes, history, genres, or locations not present in the JSON. If overlaps is empty, say nothing.";
 
 async function explainWithGroq(evidence: CompareEvidence): Promise<string | null> {
   const { env } = await import("@/lib/env.server");

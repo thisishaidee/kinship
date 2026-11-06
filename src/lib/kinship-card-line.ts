@@ -9,31 +9,30 @@ type Template = (seed: string, name: string, noun: string) => string;
 
 const TEMPLATES: Record<CardTier, Template[]> = {
   strong: [
-    (seed, name, noun) => `${name} is one of the closest ${noun} picks for people into ${seed}.`,
-    (seed, name) => `Most of ${seed}'s fans also show up for ${name}.`,
-    (seed, name) => `${seed} and ${name} draw from the same crowd.`,
-    (seed, name) => `${name} sits right beside ${seed} in how the same people spend their time.`,
-    (seed, name, noun) => `Few ${noun} picks sit this close to ${seed} fans.`,
-    (seed, name) => `Fans of ${seed} tend to gravitate to ${name}.`,
+    (seed, name) => name + " ranks near the top of " + seed + "'s returned cultural signals.",
+    (seed, name) => "This search places " + name + " among " + seed + "'s closest matches.",
+    (seed, name) => name + " carries top affinity weight among the returned signals for " + seed + ".",
+    (seed, name) => "The clearest result here points to " + name + " beside " + seed + ".",
+    (seed, name) => name + " returns as a leading cultural signal for " + seed + ".",
+    (seed, name) => "Among these results, " + name + " sits closest to " + seed + ".",
   ],
   mid: [
-    (seed, name) => `A fair share of ${seed}'s fans also land on ${name}.`,
-    (seed, name) => `${name} has a solid following among ${seed} listeners.`,
-    (seed, name) => `Some of ${seed}'s fans are into ${name} as well.`,
-    (seed, name) => `${name} is worth a look for people who already follow ${seed}.`,
-    (seed, name) => `Taste points to ${name} for people who also follow ${seed}, though not strongly.`,
-    (seed, name) => `${seed} fans and ${name} fans overlap in a noticeable way.`,
+    (seed, name) => "A related result appears here: " + name + ", next to " + seed + ".",
+    (seed, name) => "The returned list also includes " + name + " alongside " + seed + ".",
+    (seed, name) => name + " appears further down this particular list.",
+    (seed, name) => "There is a useful connection to inspect between " + seed + " and " + name + ".",
+    (seed, name) => "One more signal worth a look is " + name + " near " + seed + ".",
+    (seed, name) => "This search also points toward " + name + " as a useful direction.",
   ],
   light: [
-    (seed, name) => `${name} is a lighter match for ${seed} followers, still a real one.`,
-    (seed, name) => `A lighter link: a few ${seed} fans also engage with ${name}.`,
-    (seed, name) => `${name} sits at the edge of ${seed}'s fan base.`,
-    (seed, name) => `Fewer ${seed} fans lean this way, but ${name} still shows up.`,
-    (seed, name, noun) => `${name} is a secondary ${noun} pick for people into ${seed}, still worth a look.`,
-    (seed, name) => `A modest overlap: ${name} draws a handful of the same fans as ${seed}.`,
+    (seed, name) => name + " sits further from the top of this list.",
+    (seed, name) => "This is a lower-ranked signal: " + name + " still appears.",
+    (seed, name) => name + " is a more distant result in this particular search.",
+    (seed, name) => "The signal is lighter here, with " + name + " included.",
+    (seed, name) => "There is less affinity here, though " + name + " remains listed.",
+    (seed, name) => "A secondary result worth noting is " + name + " in this search.",
   ],
 };
-
 type CardTier = "strong" | "mid" | "light";
 
 export function cardTier(score: number): CardTier {
@@ -127,5 +126,5 @@ export function acceptAgentCardLine(line: string, seed: string, name: string, ta
 
 // True when a line names Qloo or uses dev-speak; such lines never reach a card.
 export function isCardSafe(line: string): boolean {
-  return !/qloo|in data|taste graph|entity/i.test(line);
+  return !/qloo|in data|taste graph|entity|fans? of|fan base|audience overlap|same crowd|same people|listeners? follow|show up for|reach the same|shared audience/i.test(line);
 }

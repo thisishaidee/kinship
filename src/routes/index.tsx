@@ -35,19 +35,19 @@ const STEPS = [
     tag: "01 · ONE SEED",
     band: "bg-[#FFB548] text-[#1a1200]",
     title: "One seed.",
-    text: "Type one name. Kinship looks it up in its fan data and shows the artists, brands and films its fans already love. You never have to invent a partner.",
+    text: "Type one name. Kinship checks Qloo's cultural data and surfaces related artists, brands and films. Every suggestion comes from a returned result.",
   },
   {
     tag: "02 · REAL DATA",
     band: "bg-[#8EF2C8] text-[#0c231a]",
     title: "Real data.",
-    text: "Every score shows how much two audiences overlap on what people listen to, watch and wear. Nothing is invented.",
+    text: "Qloo affinity scores show the strength of a relationship in its cultural data. They are not a measured count of shared customers or fans.",
   },
   {
     tag: "03 · READ WHY",
     band: "bg-[#C8C3FA] text-[#1b1830]",
     title: "You can read why.",
-    text: "Compare two names and Kinship explains the match in plain sentences. You can repeat the reasoning out loud to anyone, no data science needed.",
+    text: "Compare two names and Kinship explains the cultural signals that appear across both results, in plain language.",
   },
 ];
 
@@ -106,7 +106,7 @@ function QlooDiagram({ rows }: { rows: HeroResult[] | null }) {
   const real = rows && rows.length >= 2 ? rows.slice(0, 2) : null;
   return (
     <div
-      className="mx-auto mt-4 flex w-full max-w-[680px] items-center justify-between gap-2 rounded-2xl border border-[#2a2a30] bg-[#101014] px-4 py-4 md:mt-6 md:px-6"
+      className="qloo-flow mx-auto mt-4 flex w-full max-w-[680px] items-center justify-between gap-2 rounded-2xl border border-[#2a2a30] bg-[#101014] px-4 py-4 md:mt-6 md:px-6"
       aria-hidden="true"
     >
       <div className="flex min-w-0 flex-col items-center gap-1.5">
@@ -124,7 +124,7 @@ function QlooDiagram({ rows }: { rows: HeroResult[] | null }) {
         <span
           className="inline-flex h-9 items-center rounded-full border border-[#FFB548] px-3 text-[13px] text-[#FFB548] md:h-10 md:text-sm"
         >
-          fan data
+          taste signals
         </span>
       </div>
       <span className="h-px min-w-4 flex-1 bg-[#2a2a30]" />
@@ -199,7 +199,7 @@ function Hero({ rows }: { rows: HeroResult[] | null }) {
         </span>
 
         <h1
-          className="m-0 text-[54px] font-normal leading-[1.02] tracking-[-0.5px] md:text-[88px] md:tracking-[-1px]"
+          className="m-0 text-[clamp(2.45rem,10vw,3.375rem)] font-normal leading-[1.02] tracking-[-0.5px] md:text-[88px] md:tracking-[-1px]"
           style={{ fontFamily: SERIF }}
         >
           A partnership,<br />not a{" "}
@@ -207,8 +207,7 @@ function Hero({ rows }: { rows: HeroResult[] | null }) {
         </h1>
 
         <p className="m-0 max-w-[560px] text-base leading-normal text-[#b9b5ac] md:text-lg">
-          Type an artist, film or brand. Kinship asks Qloo who its fans already love,
-          then drafts the pitch.
+          Type an artist, film or brand. Kinship uses Qloo's cultural affinity signals to surface connections worth exploring.
         </p>
 
         {/* Plain GET form: opens /app?q=Nike. /app should read `q` (see HANDOFF.md). */}
@@ -347,8 +346,7 @@ function CompareSection({ rows }: { rows: HeroResult[] | null }) {
           Hand a partner the proof, not a hunch.
         </h2>
         <p className="m-0 max-w-[480px] text-[16px] leading-[1.55] text-[#b9b5ac]">
-          Compare two names and Kinship lists what their fans share, then explains it in
-          two sentences you can repeat out loud. Export it as a one-page PDF.
+          Compare two names and Kinship surfaces cultural signals that appear in both Qloo results, then explains why they may be worth exploring. Export the findings as a one-page PDF.
         </p>
         <a
           href="/app"
@@ -381,7 +379,7 @@ function CompareSection({ rows }: { rows: HeroResult[] | null }) {
             </span>
           </div>
           <p className="m-0 border-t border-[#2a2a30] pt-3 text-sm leading-normal text-[#cfcbc3]">
-            Pick two names. Kinship lists what their fans share and writes the explanation.
+            Pick two names. Kinship surfaces cultural signals returned for both entities and explains why they may be worth exploring.
           </p>
           <a
             href="/app?mode=compare"
@@ -441,7 +439,7 @@ function Footer() {
       <div className="flex flex-col gap-6 lg:flex-row lg:justify-between">
         <div>
           <KinshipLogo size={26} />
-          <div className="mt-1 text-sm text-[#a3a09a]">Partner discovery from shared fans.</div>
+          <div className="mt-1 text-sm text-[#a3a09a]">Partnership discovery from cultural affinity signals.</div>
         </div>
         <div className="grid grid-cols-2 gap-x-4 text-[15px] lg:grid-cols-3 lg:gap-x-16">
           {FOOTER_LINKS.map(([label, href]) => (
@@ -452,8 +450,7 @@ function Footer() {
         </div>
       </div>
       <p className="m-0 border-t border-[#26262c] pt-4 text-xs leading-normal text-[#a3a09a]">
-        Scores show how much two audiences overlap, not whether a partnership is
-        available. Beta: scores are estimates. Fan data via Qloo. © 2026 Kinship
+        Scores describe Qloo cultural affinity, not measured audience overlap or partnership availability. Data via Qloo. © 2026 Kinship
       </p>
     </footer>
   );

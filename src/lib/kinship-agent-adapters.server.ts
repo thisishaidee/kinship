@@ -9,10 +9,10 @@ import { categoryInsights, graphCategory, searchCandidates, type QlooGetter, typ
 const SYSTEM = [
   "You are the research step of a partnership pitch tool.",
   "Use the tools to find the seed's strongest partner signals.",
-  "Call find_entity only if you need another name. Call read_partners to read audience overlap for an entity you have seen.",
-  "When you write the final sentence, write it for a curious friend with no data background: one simple sentence in plain everyday words that says WHY the pairing works, using the fans and brand fit you saw in the tool results.",
-  "Do not use these stock phrases: 'Both pull toward', 'most of the same fans', 'huge shared audience', 'reach the same people', 'same crowd'. Build your sentence from your own words and vary its shape: do not open with the same words another side would use.",
-  "Only state that the fan bases overlap and name who they overlap on. Never describe what either audience likes, wears, listens to, or prefers. That is not in the data.",
+  "Call find_entity only if you need another name. Call read_partners to read Qloo cultural affinity signals for an entity you have seen.",
+  "When you write the final sentence, explain the cultural affinity signals in the tool results without claiming measured audience overlap. Use plain everyday words.",
+  "Do not use these stock phrases: 'Both pull toward', 'most of the same fans', 'huge shared audience', 'reach the same people', 'same crowd'. Build your sentence from your own words and vary its shape.",
+  "Describe only shared cultural affinity signals returned by Qloo. Do not claim customer bases, fan bases, or audiences overlap, or infer what either audience likes, wears, listens to, or prefers." ,
   "Name one or two partners only if they appear in the tool results, copied exactly as returned. Never invent a partner or a fact.",
   "Never write any digits, percentages, or decimals in the sentence. Express overlap in plain words only. Use plain commas, never em dashes, en dashes, or hyphens used as dashes. Never ask a question: no question marks, no offers like 'want to pitch them?'. Use simple grammar and plain everyday words.",
   "Keep it to one short sentence. Never more than two sentences. Do not claim a partnership exists.",
@@ -36,7 +36,7 @@ const TOOLS: GroqTool[] = [
     type: "function",
     function: {
       name: "read_partners",
-      description: "Read audience-overlap partners for a seen entity in one category. Returns hits with score.",
+      description: "Read Qloo cultural affinity results for a seen entity in one category. Returns entities with affinity scores.",
       parameters: {
         type: "object",
         properties: {
@@ -78,7 +78,7 @@ export function createGroqModel(apiKey: string, seedName: string, angle?: string
           });
         });
       }
-      if (final) history.push({ role: "user", content: "No more tool calls. Write one short, warm, plain-language sentence now for a curious friend explaining WHY the pairing works in one simple sentence. Vary your wording and sentence shape, and do not use the phrases 'Both pull toward', 'most of the same fans', 'huge shared audience', 'reach the same people', or 'same crowd'. Name at most two partners, copied exactly from the tool results. Write no digits, percentages, or decimals; express overlap in words only. Use plain commas, no em dashes or en dashes, no question marks. Never more than two sentences. Plain grammar. No preamble." });
+      if (final) history.push({ role: "user", content: "No more tool calls. Write one short, warm, plain-language sentence explaining the shared cultural signals. Do not claim measured fan or customer overlap. Vary your wording and sentence shape, and do not use the phrases 'Both pull toward', 'most of the same fans', 'huge shared audience', 'reach the same people', or 'same crowd'. Name at most two partners, copied exactly from the tool results. Write no digits, percentages, or decimals; describe affinity in plain words only. Use plain commas, no em dashes or en dashes, no question marks. Never more than two sentences. Plain grammar. No preamble." });
       const reply = await groqChatRetry({
         apiKey,
         messages: history,

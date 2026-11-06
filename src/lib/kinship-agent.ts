@@ -201,7 +201,7 @@ async function executeCall(
 
     const read = await state.tools.readPartners(entityId, category as PartnerCategory);
     if (!read.ok) {
-      state.steps.push({ kind: "read", label: `read ${category} overlap for ${subject}`, ok: false, count: 0 });
+      state.steps.push({ kind: "read", label: `read ${category} affinity results for ${subject}`, ok: false, count: 0 });
       return { name: call.name, ok: false, data: { error: "qloo did not answer" } };
     }
     for (const hit of read.hits) {
@@ -211,7 +211,7 @@ async function executeCall(
         state.evidence.set(hit.entityId, { entityId: hit.entityId, name: hit.name, category, score: hit.score, from: subject });
       }
     }
-    state.steps.push({ kind: "read", label: `read ${category} overlap for ${subject}`, ok: true, count: read.hits.length });
+    state.steps.push({ kind: "read", label: `read ${category} affinity results for ${subject}`, ok: true, count: read.hits.length });
     const result: ToolResult = {
       name: call.name,
       ok: true,

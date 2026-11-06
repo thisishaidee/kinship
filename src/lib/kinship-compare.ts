@@ -8,6 +8,7 @@ import {
   type QlooGetter,
   type ResolvedEntity,
   type SeedProblem,
+  uncheckedCategories,
 } from "./kinship-resolve.ts";
 
 export type Overlap = {
@@ -32,6 +33,7 @@ export type CompareResult =
       left: ResolvedEntity;
       right: ResolvedEntity;
       overlaps: Overlap[];
+      unchecked: { side: "left" | "right"; line: string }[];
       explanation: string;
       explanationSource: "agent" | "model" | "scores";
       evidence: CompareEvidence;
@@ -73,6 +75,9 @@ const UNSUPPORTED_CONTEXT = /\b(recently|just|newly|signed|signs|signing|endorse
 // Audience-trait claims ("fans love X", "they prefer Y") are not in any Qloo payload.
 const AUDIENCE_TRAIT = /\b(love[sd]?|loving|prefer[s]?|preferring|favor|favour[sd]?|known for|famous for|obsessed|drawn to|attracted to|care about|swear by|loyal to)\b/i;
 
+// Qloo affinity is not a measurement of shared fans, customers, or audience reach.
+const AUDIENCE_OVERLAP = /\b(?:fan\s+base|fans?\s+(?:also\s+)?(?:follow|overlap|gravitate|engage|show\s+up)|listeners?\s+(?:also\s+)?follow|same\s+(?:crowd|people|audience)|audiences?\s+(?:overlap|are\s+the\s+same|share)|customers?\s+(?:overlap|are\s+the\s+same)|customer\s+bases?\s+(?:overlap|are\s+the\s+same)|share\s+(?:a\s+)?(?:huge\s+|large\s+)?audience|reach\s+the\s+same\s+people|shared\s+audience|audience\s+overlap)\b/i;
+
 const FORBIDDEN_CLAIM = /partners with|partner with|proves|proof|shows they|guarantee|proof that|will sign|should sign|sign tomorrow|guarantees|guaranteed|sealed|secured deal|confirmed deal|confirmed partnership|partnership is available|guarantee|probability|percent chance/i;
 
 export function sharedAffinities(left: GraphCategory[], right: GraphCategory[]): Overlap[] {
@@ -96,12 +101,13 @@ export function sharedAffinities(left: GraphCategory[], right: GraphCategory[]):
 export function fallbackExplanation(evidence: CompareEvidence): string {
   const [first, second] = evidence.overlaps;
   if (!first) {
-    return `${evidence.left.name} and ${evidence.right.name} have no shared entity in these Qloo results.`;
+    return `No shared cultural affinity signal appeared in these Qloo results for ${evidence.left.name} and ${evidence.right.name}.`;
   }
-  // Numbers live in the shared-fans list, never in the explanation sentence.
-  const lead = `Both pull toward ${first.name}`;
-  const tail = second ? ` and ${second.name}` : "";
-  return `${lead}${tail}.`;
+  const lead = `Qloo returned ${first.name} as a cultural affinity signal for both ${evidence.left.name} and ${evidence.right.name}.`;
+  const tail = second
+    ? ` It also returned ${second.name} as a cultural affinity signal for both.`
+    : "";
+  return `${lead}${tail}`;
 }
 
 // Plain-sentence rule shared by every model-written line: no digits, no percentages or decimals,
@@ -125,7 +131,7 @@ export function groundedExplanation(text: string | null, evidence: CompareEviden
   }
   const sentences = cleaned.split(/(?<=[.!?])\s+/).filter(Boolean);
   if (sentences.length < 1 || sentences.length > 2) return { text: fallback, source: "scores" };
-  if (FORBIDDEN_CLAIM.test(cleaned) || AUDIENCE_TRAIT.test(cleaned)) {
+  if (FORBIDDEN_CLAIM.test(cleaned) || AUDIENCE_TRAIT.test(cleaned) || AUDIENCE_OVERLAP.test(cleaned)) {
     return { text: fallback, source: "scores" };
   }
   // The explanation carries no numbers of any kind, no dashes, and no questions.
@@ -221,6 +227,10 @@ export async function compareKinship(
   ]);
   if (leftGraph === "refused" || rightGraph === "refused") return { status: "refused" };
   const overlaps = sharedAffinities(leftGraph, rightGraph).slice(0, 6);
+  const unchecked = [
+    ...uncheckedCategories(leftGraph).map((category) => ({ side: "left" as const, line: category.line })),
+    ...uncheckedCategories(rightGraph).map((category) => ({ side: "right" as const, line: category.line })),
+  ];
   const evidence: CompareEvidence = {
     left: { name: left.entity.name, typeLabel: left.entity.typeLabel },
     right: { name: right.entity.name, typeLabel: right.entity.typeLabel },
@@ -240,19 +250,19 @@ export async function compareKinship(
         evidence.overlaps,
       ).catch(() => null)
     : null;
-  // Each side already passed groundedExplanation against its own Qloo reads.
-  // Checking the join again, against only the shared overlaps, drops those
-  // sentences whenever a partner is not in the intersection, and the page
-  // falls through to the one-shot line. Show the two sentences instead.
+  // Recheck the joined agent draft against the actual shared results before displaying it.
   const merged = agentTexts ? mergeAgentTexts(agentTexts) : "";
-  const explanation = merged
-    ? { text: merged, source: "agent" as const }
-    : groundedExplanation(await deps.explain(evidence), evidence);
+  const checkedAgent = merged ? groundedExplanation(merged, evidence) : null;
+  const explanation =
+    checkedAgent?.source === "model"
+      ? { text: checkedAgent.text, source: "agent" as const }
+      : groundedExplanation(await deps.explain(evidence), evidence);
   return {
     status: "matched",
     left: publicEntity(left.entity),
     right: publicEntity(right.entity),
     overlaps,
+    unchecked,
     explanation: explanation.text,
     explanationSource: explanation.source,
     evidence,

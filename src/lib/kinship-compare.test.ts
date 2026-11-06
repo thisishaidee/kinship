@@ -81,7 +81,7 @@ describe("grounded explanation", () => {
 
   it("does not invent a reason when nothing overlaps", () => {
     const text = fallbackExplanation(evidence());
-    assert.equal(text.includes("no shared entity"), true);
+    assert.equal(text.includes("No shared cultural affinity signal"), true);
     assert.equal(text.includes("invented"), false);
   });
 });
@@ -131,7 +131,7 @@ describe("compareKinship", () => {
       {
         key: async () => "test-key",
         get,
-        explain: async () => "Both pull toward Rihanna, and most of the same fans follow both brands.",
+        explain: async () => "The results place Rihanna among the cultural affinity signals returned for Nike and Adidas.",
       },
     );
     assert.equal(result.status, "matched");
@@ -141,6 +141,26 @@ describe("compareKinship", () => {
     assert.equal(result.explanationSource, "model");
     assert.equal(result.explanation.includes("Puma"), false);
     assert.equal(JSON.stringify(result).includes("test-key"), false);
+  });
+
+  it("reports categories that failed instead of treating them as checked empty results", async () => {
+    const get: QlooGetter = async (_key, path, params) => {
+      if (path === "/search") {
+        const id = params.get("query") === "Nike" ? LEFT : RIGHT;
+        return { ok: true, body: { results: [{ name: params.get("query"), entity_id: id, types: ["urn:entity:brand"], disambiguation: "" }] } };
+      }
+      if (params.get("filter.type") === "urn:entity:artist" && params.get("signal.interests.entities") === LEFT) {
+        return { ok: false, status: 503 };
+      }
+      return { ok: true, body: { results: { entities: [] } } };
+    };
+    const result = await compareKinship(
+      { left: "Nike", right: "Adidas" },
+      { key: async () => "test-key", get, explain: async () => null },
+    );
+    assert.equal(result.status, "matched");
+    if (result.status !== "matched") return;
+    assert.deepEqual(result.unchecked, [{ side: "left", line: "Artists couldn't be checked this time." }]);
   });
 
   it("does not show two agent sentences that open with the same words", async () => {
@@ -156,10 +176,10 @@ describe("compareKinship", () => {
       {
         key: async () => "test-key",
         get,
-        explain: async () => "Both pull toward Wiz Khalifa, and the same crowd follows both.",
+        explain: async () => "The results place Wiz Khalifa among the cultural affinity signals returned for Nike and Adidas.",
         agent: async () => ({
-          left: "Wiz Khalifa fans also follow Nike, so the two reach the same people.",
-          right: "Wiz Khalifa fans also follow Adidas, so the two reach the same people.",
+          left: "Wiz Khalifa is listed as a cultural affinity result for Nike.",
+          right: "Wiz Khalifa appears among the cultural affinity results returned for Adidas.",
         }),
       },
     );
@@ -169,7 +189,7 @@ describe("compareKinship", () => {
     assert.equal(/\d/.test(result.explanation), false);
   });
 
-  it("shows one agent sentence per side even when those partners are not in the shared overlap", async () => {
+  it("rejects agent sentences when their named partners are not in the shared overlap", async () => {
     let explained = false;
     const get: QlooGetter = async (_key, path, params) => {
       if (path === "/search") {
@@ -188,19 +208,16 @@ describe("compareKinship", () => {
           return "Both pull toward nobody (0.100 / 0.100).";
         },
         agent: async () => ({
-          left: "Wiz Khalifa's listeners also follow Nike, so the two reach a similar crowd.",
-          right: "Rihanna fans tend to follow Adidas too, which makes them a natural match.",
+          left: "Wiz Khalifa is listed as a cultural affinity result for Nike.",
+          right: "Rihanna appears in Adidas's returned cultural affinity signals.",
         }),
       },
     );
     assert.equal(result.status, "matched");
     if (result.status !== "matched") return;
-    assert.equal(explained, false);
-    assert.equal(result.explanationSource, "agent");
-    assert.equal(
-      result.explanation,
-      "Wiz Khalifa's listeners also follow Nike, so the two reach a similar crowd. Rihanna fans tend to follow Adidas too, which makes them a natural match.",
-    );
+    assert.equal(explained, true);
+    assert.notEqual(result.explanationSource, "agent");
+    assert.equal(result.explanation, "No shared cultural affinity signal appeared in these Qloo results for Nike and Adidas.");
   });
 });
 
@@ -222,7 +239,8 @@ describe("pairing pdf", () => {
       rightName: "Adidas",
       rightType: "Brand",
       overlaps: [{ name: "Rihanna", category: "Artist", leftScore: "0.959", rightScore: "0.910" }],
-      explanation: "Nike and Adidas both connect to Rihanna at 0.959 and 0.910. Those figures are the shared scores.",
+      explanation: "Nike and Adidas both connect to Rihanna at 0.959 and 0.910. Those figures are Qloo affinity scores.",
+      unchecked: [{ side: "left", line: "Artists couldn't be checked this time." }],
     });
     const text = new TextDecoder().decode(bytes);
     const glyphs = pdfGlyphs(bytes);
@@ -230,6 +248,10 @@ describe("pairing pdf", () => {
     assert.equal(glyphs.includes("Adidas"), true);
     assert.equal(glyphs.includes("Rihanna"), true);
     assert.equal(glyphs.includes("0.959"), true);
+    assert.equal(glyphs.includes("A comparison of Qloo cultural affinity signals"), true);
+    assert.equal(glyphs.includes("SHARED CULTURAL SIGNAL"), true);
+    assert.equal(glyphs.includes("COVERAGE NOTE"), true);
+    assert.equal(glyphs.includes("Nike: Artists couldn't be checked this time."), true);
     assert.equal(glyphs.includes(PAIRING_DISCLAIMER), true);
     assert.equal(text.includes("%%EOF"), true);
   });
@@ -247,6 +269,17 @@ describe("pairing pdf", () => {
 
 describe("explanation safety (adversarial)", () => {
   const sample = evidence([{ name: "Rihanna", category: "Artist", leftScore: "0.959", rightScore: "0.910" }]);
+  it("rejects claims that Qloo has measured shared fan or customer overlap", () => {
+    for (const claim of [
+      "Most of Nike's fans also follow Adidas.",
+      "Nike and Adidas draw from the same crowd.",
+      "Nike and Adidas share a huge audience.",
+      "Their customer bases overlap.",
+    ]) {
+      assert.equal(groundedExplanation(claim, sample).source, "scores", claim);
+    }
+  });
+
   it("falls back on an unsupported causal claim", () => {
     const result = groundedExplanation("This proves the audiences are the same.", sample);
     assert.equal(result.source, "scores");
@@ -264,7 +297,7 @@ describe("explanation safety (adversarial)", () => {
   });
 
   it("keeps a second sentence that adds a returned name", () => {
-    const result = groundedExplanation("Both pull toward Rihanna. Rihanna is a shared name across both fans.", sample);
+    const result = groundedExplanation("Both pull toward Rihanna. Rihanna appears in the cultural affinity results for both entities.", sample);
     assert.equal(result.source, "model");
   });
 });
@@ -277,7 +310,7 @@ describe("pdf text round-trip", () => {
       rightName: "Caf\u00e9 del Mar",
       rightType: "Place",
       overlaps: [{ name: "street\u2011style", category: "Brand", leftScore: "0.959", rightScore: "0.910" }],
-      explanation: "Beyonc\u00e9 fans love street\u2011style and Caf\u00e9 del Mar.",
+      explanation: "The results place street-style among the cultural affinity signals for Beyoncé and Café del Mar.",
     });
     const glyphs = pdfGlyphs(bytes);
     assert.equal(glyphs.includes("Beyonc\u00e9"), true);
@@ -348,7 +381,7 @@ describe("groundedExplanation digit and dash rules", () => {
   });
 
   it("accepts a warm number-free sentence that names Rihanna", () => {
-    const out = groundedExplanation("Rihanna's fans are most of the same people who follow both brands.", evidence);
+    const out = groundedExplanation("Rihanna appears among the cultural affinity signals returned for Nike and Adidas.", evidence);
     assert.equal(out.source, "model");
   });
 
@@ -370,7 +403,7 @@ describe("groundedExplanation names and scores", () => {
   });
 
   it("accepts a possessive form of a returned name", () => {
-    const out = groundedExplanation("Rihanna's audience sits close to Nike, and Adidas too.", evidence);
+    const out = groundedExplanation("Rihanna appears among the cultural affinity signals returned for Nike and Adidas.", evidence);
     assert.equal(out.source, "model");
   });
 

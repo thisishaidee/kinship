@@ -40,6 +40,12 @@ describe("card line variety", () => {
     }
   });
 
+  it("never accepts language that claims shared fans or audience reach", () => {
+    assert.equal(isCardSafe("Most of Nike's fans also show up for Adidas."), false);
+    assert.equal(isCardSafe("Nike and Adidas draw from the same crowd."), false);
+    assert.equal(isCardSafe("The results place Adidas among Nike's strongest cultural affinity signals."), true);
+  });
+
   it("drops an agent line that repeats a phrase already on the page or names another partner", () => {
     const taken = new Set(stockPhrases("Most of Nike's fans also show up for adidas.", ["Nike", "adidas"]));
     assert.equal(acceptAgentCardLine("Most of Nike's fans also show up for Puma.", "Nike", "Puma", taken), null);

@@ -42,7 +42,7 @@ function tools(overrides: Partial<AgentTools> = {}): AgentTools {
   };
 }
 
-const GOOD_TEXT = "Both pull toward Adidas and Puma, and most of the same fans follow both.";
+const GOOD_TEXT = "The results place Adidas and Puma among Nike's cultural affinity signals.";
 
 describe("runKinshipAgent", () => {
   it("runs the model's reads, then accepts a grounded final sentence", async () => {
@@ -54,7 +54,7 @@ describe("runKinshipAgent", () => {
     assert.equal(out.status, "pitch");
     if (out.status !== "pitch") return;
     assert.equal(out.text, GOOD_TEXT);
-    assert.deepEqual(out.steps, [{ kind: "read", label: "read brand overlap for Nike", ok: true, count: 2 }]);
+    assert.deepEqual(out.steps, [{ kind: "read", label: "read brand affinity results for Nike", ok: true, count: 2 }]);
     assert.equal(model.seen[1]?.[0]?.ok, true);
   });
 
@@ -187,7 +187,7 @@ describe("runKinshipAgent", () => {
     assert.equal(out.status, "fallback");
     const out2 = await runKinshipAgent(SEED, { model: scriptedModel([
       { kind: "calls", calls: [{ name: "read_partners", args: { entity_id: "seed-1", category: "brand" } }] },
-      { kind: "final", text: "Both pull toward Jordan and most of the same fans follow it." },
+      { kind: "final", text: "The results place Jordan among Nike's cultural affinity signals." },
     ]), tools: twin });
     assert.equal(out2.status, "pitch");
     if (out2.status !== "pitch") return;
@@ -285,7 +285,7 @@ describe("evidence shape", () => {
 
 describe("compare evidence per side", () => {
   it("gives each side its own score in its own column", async () => {
-    const pitch = "Rihanna is shared by a huge part of both audiences.";
+    const pitch = "Rihanna appears among the cultural affinity signals returned for Nike.";
     const model = scriptedModel([
       { kind: "calls", calls: [{ name: "read_partners", args: { entity_id: "seed-1", category: "artist" } }] },
       { kind: "final", text: pitch },
