@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { compareKinship, type CompareEvidence, type CompareSide } from "@/lib/kinship-compare";
+import { compareKinship, type CompareEvidence } from "@/lib/kinship-compare";
 import { formatAffinity, readRequest, resolveKinship, searchEntity, seedKindFromLabel, type QlooGetter, type ResolveResult } from "@/lib/kinship-resolve";
 import { DEMO_SEEDS, readDemoCache, writeDemoCache } from "@/lib/kinship-demo-cache.server";
 import { groundedExplanation } from "@/lib/kinship-compare";
@@ -175,61 +175,10 @@ export const runAgenticPitch = createServerFn({ method: "POST" })
     }
   });
 
-// Compare agent path: one runKinshipAgent loop per side, in parallel, capped to a short wall
-// clock so the compare request still returns quickly. Any failure or timeout returns null and
-// compare keeps the single-call explanation.
-const COMPARE_AGENT_WALL_MS = 45_000;
-// Each side gets a different opening angle so the two sentences do not echo each other.
-const COMPARE_ANGLES = {
-  left: "For this side, open with the partner's name and explain its place in the cultural affinity results, in a sentence shaped differently from the other side.",
-  right: "For this side, open with the seed name and describe the returned cultural affinity signal, in a sentence shaped differently from the other side.",
-} as const;
-async function compareAgentPitches(
-  sides: { left: CompareSide; right: CompareSide },
-  overlaps: CompareEvidence["overlaps"],
-): Promise<{ left: string; right: string } | null> {
-  const { env } = await import("@/lib/env.server");
-  const groqKey = env("GROQ_API_KEY");
-  const qKey = await qlooKey();
-  if (!groqKey || !qKey) return null;
-  const { runKinshipAgent, shouldRetryAgent } = await import("@/lib/kinship-agent");
-  const { createGroqModel, createQlooTools } = await import("@/lib/kinship-agent-adapters.server");
-  const attempt = async (side: CompareSide, column: "left" | "right", wallMs: number) => {
-    const outcome = await runKinshipAgent(
-      side.entity,
-      {
-        model: createGroqModel(groqKey, side.entity.name, COMPARE_ANGLES[column]),
-        tools: createQlooTools(qKey, qlooGet, side.tags, seedKindFromLabel(side.entity.typeLabel)),
-      },
-      { wallMs, pair: { side: column, overlaps } },
-    );
-    return outcome;
-  };
-  // One silent retry per side. A fast miss (bad draft, a transient model error) gets a second run
-  // with the time left on the clock. A slow miss (timeout) is not retried, so the request stays short.
-  const runSide = async (side: CompareSide, column: "left" | "right"): Promise<string | null> => {
-    const started = Date.now();
-    const first = await attempt(side, column, COMPARE_AGENT_WALL_MS);
-    if (first.status === "pitch") return first.text;
-    console.error(`agentic-compare: ${first.reason}`);
-    const elapsed = Date.now() - started;
-    if (!shouldRetryAgent(first.reason, elapsed, COMPARE_AGENT_WALL_MS)) return null;
-    const second = await attempt(side, column, COMPARE_AGENT_WALL_MS - elapsed);
-    if (second.status === "pitch") return second.text;
-    console.error(`agentic-compare retry: ${second.reason}`);
-    return null;
-  };
-  // Sequential, not parallel: two agent runs at once double the per-minute Groq burn and trigger 429s.
-  // Each side still gets its own 45s wall.
-  const left = await runSide(sides.left, "left");
-  const right = await runSide(sides.right, "right");
-  return left && right ? { left, right } : null;
-}
-
 export const compareKinshipSeeds = createServerFn({ method: "POST" })
   .validator((input: unknown) => input)
   .handler(async ({ data }) =>
-    compareKinship(data, { key: qlooKey, get: qlooGet, explain: explainWithGroq, agent: compareAgentPitches }),
+    compareKinship(data, { key: qlooKey, get: qlooGet, explain: explainWithGroq }),
   );
 
 const EXPLAIN_PROMPT =
