@@ -81,7 +81,7 @@ describe("grounded explanation", () => {
 
   it("does not invent a reason when nothing overlaps", () => {
     const text = fallbackExplanation(evidence());
-    assert.equal(text.includes("no shared entity"), true);
+    assert.equal(text.includes("No shared cultural affinity signal"), true);
     assert.equal(text.includes("invented"), false);
   });
 });
