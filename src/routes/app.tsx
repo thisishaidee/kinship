@@ -37,7 +37,7 @@ export const Route = createFileRoute("/app")({
 });
 
 const EXAMPLES = ["Radiohead", "Nike", "Drake"] as const;
-const RESULT_NOTE = "This shows who their fans overlap with, not whether a deal will happen.";
+const RESULT_NOTE = "These are Qloo cultural affinity signals, not proof of shared customers or a likely deal.";
 
 type Phase = "idle" | "loading" | "matched" | "ambiguous" | "no-match" | "missing-key" | "refused" | "unavailable";
 type Mode = "single" | "compare";
@@ -258,8 +258,8 @@ function Home() {
         </h1>
         <p className="text-base text-muted">
           {mode === "single"
-            ? "Type an artist, film, or brand. Kinship checks who their fans already love."
-            : "Compare two exact Qloo entities. A shared name appears only when both results use the same entity."}
+            ? "Type an artist, film, or brand. Kinship uses Qloo cultural affinity signals to surface connections worth exploring."
+            : "Compare two exact Qloo entities. A shared result appears only when both Qloo responses return the same entity."}
         </p>
       </header>
 
@@ -336,7 +336,7 @@ function Home() {
       {mode === "single" && phase === "idle" ? (
         <section className="flex flex-col gap-3">
           <p className="rounded-2xl border border-[#242424] bg-[#161616] px-4 py-3 text-sm text-muted">
-            How it works: type a name, we check whose fans overlap with it on Qloo. Scores near 1.0 mean the strongest shared-fan overlap in that data. It shows a connection in the data, not that a partnership is available.
+            How it works: type a name and Kinship checks Qloo for related cultural interests. Higher affinity scores indicate stronger relationships in Qloo's data. They are not a count of shared customers or proof that a partnership is available.
           </p>
           <h2 className="text-sm font-medium text-fg">No pitch yet</h2>
           <p className="text-base text-muted">The field starts empty. Pick a name, or type your own.</p>
