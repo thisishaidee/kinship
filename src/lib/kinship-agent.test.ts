@@ -54,7 +54,7 @@ describe("runKinshipAgent", () => {
     assert.equal(out.status, "pitch");
     if (out.status !== "pitch") return;
     assert.equal(out.text, GOOD_TEXT);
-    assert.deepEqual(out.steps, [{ kind: "read", label: "read brand overlap for Nike", ok: true, count: 2 }]);
+    assert.deepEqual(out.steps, [{ kind: "read", label: "read brand affinity results for Nike", ok: true, count: 2 }]);
     assert.equal(model.seen[1]?.[0]?.ok, true);
   });
 
