@@ -12,7 +12,7 @@ const TEMPLATES: Record<CardTier, Template[]> = {
     (seed, name, noun) => name + " is one of the closest cultural affinity results for " + seed + ".",
     (seed, name) => "The results place " + name + " near " + seed + " in its cultural affinity results.",
     (seed, name) => name + " appears among the strongest affinity signals returned for " + seed + ".",
-    (seed, name) => "The Qloo results place " + name + " close to " + seed + ".",
+    (seed, name) => "These results place " + name + " close to " + seed + ".",
     (seed, name, noun) => name + " is a leading " + noun + " signal in the results for " + seed + ".",
     (seed, name) => name + " stands out in the cultural results connected to " + seed + ".",
   ],
