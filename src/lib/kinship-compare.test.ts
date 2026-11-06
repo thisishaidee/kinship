@@ -313,7 +313,7 @@ describe("pdf text round-trip", () => {
       rightName: "Caf\u00e9 del Mar",
       rightType: "Place",
       overlaps: [{ name: "street\u2011style", category: "Brand", leftScore: "0.959", rightScore: "0.910" }],
-      explanation: "Beyonc\u00e9 fans love street\u2011style and Caf\u00e9 del Mar.",
+      explanation: "The results place street-style among the cultural affinity signals for Beyoncé and Café del Mar.",
     });
     const glyphs = pdfGlyphs(bytes);
     assert.equal(glyphs.includes("Beyonc\u00e9"), true);
