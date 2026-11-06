@@ -100,7 +100,7 @@ export function fallbackExplanation(evidence: CompareEvidence): string {
   if (!first) {
     return `${evidence.left.name} and ${evidence.right.name} have no shared entity in these Qloo results.`;
   }
-  // Numbers live in the shared-fans list, never in the explanation sentence.
+  // Scores live in the evidence list, never in the explanation sentence.
   const lead = `Both pull toward ${first.name}`;
   const tail = second ? ` and ${second.name}` : "";
   return `${lead}${tail}.`;
