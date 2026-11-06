@@ -201,7 +201,7 @@ async function executeCall(
 
     const read = await state.tools.readPartners(entityId, category as PartnerCategory);
     if (!read.ok) {
-      state.steps.push({ kind: "read", label: `read ${category} overlap for ${subject}`, ok: false, count: 0 });
+      state.steps.push({ kind: "read", label: `read ${category} affinity results for ${subject}`, ok: false, count: 0 });
       return { name: call.name, ok: false, data: { error: "qloo did not answer" } };
     }
     for (const hit of read.hits) {
