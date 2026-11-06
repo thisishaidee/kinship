@@ -178,7 +178,7 @@ describe("compareKinship", () => {
         get,
         explain: async () => "The results place Wiz Khalifa among the cultural affinity signals returned for Nike and Adidas.",
         agent: async () => ({
-          left: "Wiz Khalifa appears among the cultural affinity results returned for Nike.",
+          left: "Wiz Khalifa is listed as a cultural affinity result for Nike.",
           right: "Wiz Khalifa appears among the cultural affinity results returned for Adidas.",
         }),
       },
@@ -208,8 +208,8 @@ describe("compareKinship", () => {
           return "Both pull toward nobody (0.100 / 0.100).";
         },
         agent: async () => ({
-          left: "Wiz Khalifa appears among the cultural affinity results returned for Nike.",
-          right: "Rihanna appears among the cultural affinity results returned for Adidas.",
+          left: "Wiz Khalifa is listed as a cultural affinity result for Nike.",
+          right: "Rihanna appears in Adidas's returned cultural affinity signals.",
         }),
       },
     );
@@ -219,7 +219,7 @@ describe("compareKinship", () => {
     assert.equal(result.explanationSource, "agent");
     assert.equal(
       result.explanation,
-      "Wiz Khalifa appears among the cultural affinity results returned for Nike. Rihanna appears among the cultural affinity results returned for Adidas.",
+      "Wiz Khalifa is listed as a cultural affinity result for Nike. Rihanna appears in Adidas's returned cultural affinity signals.",
     );
   });
 });
@@ -272,6 +272,17 @@ describe("pairing pdf", () => {
 
 describe("explanation safety (adversarial)", () => {
   const sample = evidence([{ name: "Rihanna", category: "Artist", leftScore: "0.959", rightScore: "0.910" }]);
+  it("rejects claims that Qloo has measured shared fan or customer overlap", () => {
+    for (const claim of [
+      "Most of Nike's fans also follow Adidas.",
+      "Nike and Adidas draw from the same crowd.",
+      "Nike and Adidas share a huge audience.",
+      "Their customer bases overlap.",
+    ]) {
+      assert.equal(groundedExplanation(claim, sample).source, "scores", claim);
+    }
+  });
+
   it("falls back on an unsupported causal claim", () => {
     const result = groundedExplanation("This proves the audiences are the same.", sample);
     assert.equal(result.source, "scores");
