@@ -250,10 +250,7 @@ export async function compareKinship(
         evidence.overlaps,
       ).catch(() => null)
     : null;
-  // Each side already passed groundedExplanation against its own Qloo reads.
-  // Checking the join again, against only the shared overlaps, drops those
-  // sentences whenever a partner is not in the intersection, and the page
-  // falls through to the one-shot line. Show the two sentences instead.
+  // Recheck the joined agent draft against the actual shared results before displaying it.
   const merged = agentTexts ? mergeAgentTexts(agentTexts) : "";
   const checkedAgent = merged ? groundedExplanation(merged, evidence) : null;
   const explanation =
