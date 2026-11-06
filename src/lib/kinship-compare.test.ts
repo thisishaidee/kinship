@@ -189,7 +189,7 @@ describe("compareKinship", () => {
     assert.equal(/\d/.test(result.explanation), false);
   });
 
-  it("shows one agent sentence per side even when those partners are not in the shared overlap", async () => {
+  it("rejects agent sentences when their named partners are not in the shared overlap", async () => {
     let explained = false;
     const get: QlooGetter = async (_key, path, params) => {
       if (path === "/search") {
@@ -215,12 +215,9 @@ describe("compareKinship", () => {
     );
     assert.equal(result.status, "matched");
     if (result.status !== "matched") return;
-    assert.equal(explained, false);
-    assert.equal(result.explanationSource, "agent");
-    assert.equal(
-      result.explanation,
-      "Wiz Khalifa is listed as a cultural affinity result for Nike. Rihanna appears in Adidas's returned cultural affinity signals.",
-    );
+    assert.equal(explained, true);
+    assert.notEqual(result.explanationSource, "agent");
+    assert.equal(result.explanation, "No shared cultural affinity signal appeared in these Qloo results for Nike and Adidas.");
   });
 });
 
