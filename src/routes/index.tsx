@@ -124,7 +124,7 @@ function QlooDiagram({ rows }: { rows: HeroResult[] | null }) {
         <span
           className="inline-flex h-9 items-center rounded-full border border-[#FFB548] px-3 text-[13px] text-[#FFB548] md:h-10 md:text-sm"
         >
-          fan data
+          taste signals
         </span>
       </div>
       <span className="h-px min-w-4 flex-1 bg-[#2a2a30]" />
