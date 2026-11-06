@@ -242,7 +242,8 @@ describe("pairing pdf", () => {
       rightName: "Adidas",
       rightType: "Brand",
       overlaps: [{ name: "Rihanna", category: "Artist", leftScore: "0.959", rightScore: "0.910" }],
-      explanation: "Nike and Adidas both connect to Rihanna at 0.959 and 0.910. Those figures are the shared scores.",
+      explanation: "Nike and Adidas both connect to Rihanna at 0.959 and 0.910. Those figures are Qloo affinity scores.",
+      unchecked: [{ side: "left", line: "Artists couldn't be checked this time." }],
     });
     const text = new TextDecoder().decode(bytes);
     const glyphs = pdfGlyphs(bytes);
@@ -250,6 +251,10 @@ describe("pairing pdf", () => {
     assert.equal(glyphs.includes("Adidas"), true);
     assert.equal(glyphs.includes("Rihanna"), true);
     assert.equal(glyphs.includes("0.959"), true);
+    assert.equal(glyphs.includes("A comparison of Qloo cultural affinity signals"), true);
+    assert.equal(glyphs.includes("SHARED CULTURAL SIGNAL"), true);
+    assert.equal(glyphs.includes("COVERAGE NOTE"), true);
+    assert.equal(glyphs.includes("Nike: Artists couldn't be checked this time."), true);
     assert.equal(glyphs.includes(PAIRING_DISCLAIMER), true);
     assert.equal(text.includes("%%EOF"), true);
   });
