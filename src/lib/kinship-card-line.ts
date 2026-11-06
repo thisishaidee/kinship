@@ -10,7 +10,7 @@ type Template = (seed: string, name: string, noun: string) => string;
 const TEMPLATES: Record<CardTier, Template[]> = {
   strong: [
     (seed, name, noun) => name + " is one of the closest cultural affinity results for " + seed + ".",
-    (seed, name) => "Qloo places " + name + " near " + seed + " in its cultural affinity results.",
+    (seed, name) => "The results place " + name + " near " + seed + " in its cultural affinity results.",
     (seed, name) => name + " appears among the strongest affinity signals returned for " + seed + ".",
     (seed, name) => "The Qloo results place " + name + " close to " + seed + ".",
     (seed, name, noun) => name + " is a leading " + noun + " signal in the results for " + seed + ".",
@@ -18,7 +18,7 @@ const TEMPLATES: Record<CardTier, Template[]> = {
   ],
   mid: [
     (seed, name) => name + " is another cultural affinity result worth exploring alongside " + seed + ".",
-    (seed, name) => "Qloo returns " + name + " as a related cultural signal for " + seed + ".",
+    (seed, name) => "The results return " + name + " as a related cultural signal for " + seed + ".",
     (seed, name) => name + " has a clear place in the affinity results for " + seed + ".",
     (seed, name) => name + " is worth a closer look among the results for " + seed + ".",
     (seed, name) => "The results connect " + name + " with the cultural signals around " + seed + ".",
@@ -126,5 +126,5 @@ export function acceptAgentCardLine(line: string, seed: string, name: string, ta
 
 // True when a line names Qloo or uses dev-speak; such lines never reach a card.
 export function isCardSafe(line: string): boolean {
-  return !/in data|taste graph|entity|fans? of|fan base|audience overlap|same crowd|same people|listeners? follow|reach the same/i.test(line);
+  return !/qloo|in data|taste graph|entity|fans? of|fan base|audience overlap|same crowd|same people|listeners? follow|reach the same|shared audience/i.test(line);
 }
