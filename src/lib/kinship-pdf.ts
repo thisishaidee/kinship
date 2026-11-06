@@ -1,4 +1,4 @@
-export const PAIRING_DISCLAIMER = "Scores show how much two audiences overlap, not whether a partnership is available.";
+export const PAIRING_DISCLAIMER = "Qloo affinity scores are cultural signals, not measured audience overlap or proof of a partnership.";
 export const PDF_FILENAME = "kinship-pairing.pdf";
 
 export type PairingPdfInput = {
@@ -10,6 +10,7 @@ export type PairingPdfInput = {
   explanation: string;
   // Single-pitch PDFs have no overlap table; this line replaces the empty-state text.
   score?: string;
+  unchecked?: { side: "left" | "right"; line: string }[];
 };
 
 export function isIos(userAgent: string, touchPoints: number): boolean {
@@ -110,7 +111,7 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
   text(RIGHT - 160, PAGE_H - 58, 8, F_SANS_BOLD, "PAIRING REPORT", INK, 1.5);
 
   // Subtitle under the band.
-  text(MARGIN, PAGE_H - 134, 12, F_SANS, "A pairing from shared fans on Qloo", MUTED);
+  text(MARGIN, PAGE_H - 134, 12, F_SANS, "A comparison of Qloo cultural affinity signals", MUTED);
 
   // The two entities, each with its type.
   text(MARGIN, 608, 8, F_SANS_BOLD, "FIRST", MUTED, 1.5);
@@ -133,14 +134,14 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
   const singlePitch = input.overlaps.length === 0 && Boolean(input.score);
   let y = 392;
   if (!singlePitch) {
-    text(colName, 420, 8, F_SANS_BOLD, "SHARED FAN INTEREST", MUTED, 1);
+    text(colName, 420, 8, F_SANS_BOLD, "SHARED CULTURAL SIGNAL", MUTED, 1);
     text(colCategory, 420, 8, F_SANS_BOLD, "CATEGORY", MUTED, 1);
     text(colLeft, 420, 8, F_SANS_BOLD, "FIRST", MUTED, 1);
     text(colRight, 420, 8, F_SANS_BOLD, "SECOND", MUTED, 1);
     hairline(MARGIN, RIGHT, 412, INK, 0.6);
   }
   if (singlePitch) {
-    text(colName, 420, 11, F_SANS_BOLD, `Shared-fans score: ${input.score}`, INK);
+    text(colName, 420, 11, F_SANS_BOLD, `Qloo affinity score: ${input.score}`, INK);
     y = 392;
   } else if (input.overlaps.length === 0) {
     text(colName, y, 11, F_SANS, "No shared entity in these Qloo results.", MUTED);
@@ -177,11 +178,20 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
     y -= 15;
   }
 
+  // Incomplete coverage is called out in the report instead of being hidden.
+  if (input.unchecked?.length) {
+    const coverage = input.unchecked
+      .map((item) => `${item.side === "left" ? input.leftName : input.rightName}: ${item.line}`)
+      .join("; ");
+    text(MARGIN, 124, 8, F_SANS_BOLD, "COVERAGE NOTE", MUTED, 1);
+    text(MARGIN, 112, 8, F_SANS, clip(coverage, 105), MUTED);
+  }
+
   // Footer.
   hairline(MARGIN, RIGHT, 98, RULE, 0.6);
   const generated = new Date().toISOString().slice(0, 10);
   // Source line and disclaimer each get their own row so the disclaimer stays whole and inside the margins.
-  text(MARGIN, 82, 8, F_SANS, "Scores show how much two audiences overlap.", MUTED);
+  text(MARGIN, 82, 8, F_SANS, "Scores describe Qloo cultural affinity relationships.", MUTED);
   text(MARGIN, 71, 8, F_SANS, PAIRING_DISCLAIMER, MUTED);
   text(MARGIN, 52, 8, F_SANS, `Generated ${generated} with Kinship`, MUTED);
 
