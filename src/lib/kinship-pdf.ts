@@ -136,15 +136,15 @@ export function buildPairingPdf(input: PairingPdfInput): Uint8Array {
   if (!singlePitch) {
     text(colName, 420, 8, F_SANS_BOLD, "SHARED CULTURAL SIGNAL", MUTED, 1);
     text(colCategory, 420, 8, F_SANS_BOLD, "CATEGORY", MUTED, 1);
-    text(colLeft, 420, 8, F_SANS_BOLD, "FIRST", MUTED, 1);
-    text(colRight, 420, 8, F_SANS_BOLD, "SECOND", MUTED, 1);
+    text(colLeft, 420, 8, F_SANS_BOLD, clip(input.leftName.toUpperCase(), 10), MUTED, 0.5);
+    text(colRight, 420, 8, F_SANS_BOLD, clip(input.rightName.toUpperCase(), 10), MUTED, 0.5);
     hairline(MARGIN, RIGHT, 412, INK, 0.6);
   }
   if (singlePitch) {
     text(colName, 420, 11, F_SANS_BOLD, `Qloo affinity score: ${input.score}`, INK);
     y = 392;
   } else if (input.overlaps.length === 0) {
-    text(colName, y, 11, F_SANS, "No shared entity in these Qloo results.", MUTED);
+    text(colName, y, 11, F_SANS, input.unchecked?.length ? "No shared entity in the Qloo categories checked." : "No shared entity in these Qloo results.", MUTED);
     y -= 26;
   } else {
     const maxRows = 5;
