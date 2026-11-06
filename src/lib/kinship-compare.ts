@@ -76,7 +76,7 @@ const UNSUPPORTED_CONTEXT = /\b(recently|just|newly|signed|signs|signing|endorse
 const AUDIENCE_TRAIT = /\b(love[sd]?|loving|prefer[s]?|preferring|favor|favour[sd]?|known for|famous for|obsessed|drawn to|attracted to|care about|swear by|loyal to)\b/i;
 
 // Qloo affinity is not a measurement of shared fans, customers, or audience reach.
-const AUDIENCE_OVERLAP = /\\b(?:fan\\s+base|fans?\\s+(?:also\\s+)?(?:follow|overlap|gravitate|engage)|listeners?\\s+(?:also\\s+)?follow|same\\s+(?:crowd|people|audience)|audiences?\\s+(?:overlap|are\\s+the\\s+same)|reach\\s+the\\s+same\\s+people|shared\\s+audience|audience\\s+overlap)\\b/i;
+const AUDIENCE_OVERLAP = /\b(?:fan\s+base|fans?\s+(?:also\s+)?(?:follow|overlap|gravitate|engage)|listeners?\s+(?:also\s+)?follow|same\s+(?:crowd|people|audience)|audiences?\s+(?:overlap|are\s+the\s+same)|reach\s+the\s+same\s+people|shared\s+audience|audience\s+overlap)\b/i;
 
 const FORBIDDEN_CLAIM = /partners with|partner with|proves|proof|shows they|guarantee|proof that|will sign|should sign|sign tomorrow|guarantees|guaranteed|sealed|secured deal|confirmed deal|confirmed partnership|partnership is available|guarantee|probability|percent chance/i;
 
